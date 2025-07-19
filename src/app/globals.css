@@ -1,0 +1,99 @@
+/**
+ * Global styles for Stacks - Ultra Bold Gen Z Library Design
+ * Vibrant, saturated colors with dramatic typography
+ */
+
+@import "tailwindcss";
+
+@theme {
+  /* Ultra vibrant Gen Z color palette */
+  --color-primary-green: #4ADE80;
+  --color-primary-yellow: #FBBF24;
+  --color-primary-orange: #FB7185;
+  --color-primary-purple: #A78BFA;
+  --color-primary-teal: #14B8A6;
+  --color-primary-pink: #EC4899;
+  --color-primary-blue: #3B82F6;
+  
+  /* Background colors */
+  --color-bg-light: #F8FAFC;
+  --color-bg-dark: #0F172A;
+  
+  /* Text colors */
+  --color-text-primary: #0F172A;
+  --color-text-secondary: #475569;
+  --color-text-white: #FFFFFF;
+  
+  /* Card styling - more dramatic */
+  --radius-card: 24px;
+  --radius-xl: 32px;
+  --shadow-card: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  --spacing-card: 32px;
+}
+
+@layer base {
+  html {
+    font-feature-settings: 'cv11', 'ss01';
+    font-variation-settings: 'opsz' 32;
+  }
+  
+  body {
+    min-height: 100vh;
+    overflow-x: hidden;
+    background: var(--color-bg-light);
+  }
+  
+  /* Ultra bold typography */
+  h1 {
+    font-weight: 900;
+    letter-spacing: -0.025em;
+    line-height: 0.9;
+  }
+  
+  h2 {
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    line-height: 0.95;
+  }
+  
+  h3 {
+    font-weight: 700;
+    letter-spacing: -0.01em;
+  }
+}
+
+@layer components {
+  .card-bold {
+    border-radius: var(--radius-xl);
+    padding: var(--spacing-card);
+    box-shadow: var(--shadow-card);
+  }
+  
+  .btn-pill {
+    border-radius: 999px;
+    padding: 16px 32px;
+    font-weight: 700;
+    font-size: 16px;
+    transition: all 0.3s ease;
+    letter-spacing: -0.01em;
+  }
+  
+  .btn-pill:hover {
+    transform: translateY(-4px) scale(1.05);
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.15);
+  }
+  
+  .text-mega {
+    font-size: clamp(2rem, 8vw, 4rem);
+    font-weight: 900;
+    letter-spacing: -0.03em;
+    line-height: 0.85;
+  }
+  
+  .text-huge {
+    font-size: clamp(1.5rem, 6vw, 3rem);
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    line-height: 0.9;
+  }
+} 
