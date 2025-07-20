@@ -18,22 +18,29 @@ export const ReadingStreak = () => {
   const isGoalMet = mockStreakData.todayPages >= mockStreakData.dailyGoal;
 
   return (
-    <div className="bg-primary-purple rounded-xl-card p-12 shadow-mega relative overflow-hidden">
+    <div className="bg-primary-purple rounded-3xl p-12 shadow-[0_10px_40px_rgb(0,0,0,0.3)] relative overflow-hidden">
       <div className="space-y-8 relative z-10">
-        <div>
+        <div className="relative">
+          {/* Achievement Badge */}
+          <div className="absolute -top-2 -right-2 bg-primary-green text-white px-3 py-1 rounded-full text-xs font-black shadow-[0_4px_15px_rgb(0,0,0,0.2)] z-10">
+            ON FIRE!
+          </div>
+
           <h2 className="text-sm font-black text-text-primary mb-2 uppercase tracking-wider">YOUR</h2>
           <h1 className="text-huge font-black text-text-primary leading-extra-tight mb-4">
             <span className="text-primary-yellow">READING</span><br />
             <span className="text-mega">STREAK</span>
           </h1>
-          <div className="bg-primary-orange text-white px-6 py-4 rounded-pill inline-flex items-center gap-3 shadow-card">
+
+          <div className="bg-primary-orange text-white px-6 py-4 rounded-full inline-flex items-center gap-3 shadow-[0_4px_15px_rgb(0,0,0,0.2)] mb-4">
             <span className="text-3xl font-black">{mockStreakData.currentStreak}</span>
             <div>
               <div className="text-sm font-black uppercase">DAYS</div>
-              <div className="text-xs opacity-90 font-bold">IN A ROW! 🔥</div>
+              <div className="text-xs opacity-90 font-bold">IN A ROW!</div>
             </div>
           </div>
-          <p className="text-sm text-text-primary/80 mt-4 font-bold">
+
+          <p className="text-sm text-text-primary/80 font-bold">
             Longest streak: {mockStreakData.longestStreak} days
           </p>
         </div>
@@ -49,20 +56,20 @@ export const ReadingStreak = () => {
             </div>
           </div>
           
-          <div className="w-full bg-white/50 rounded-pill h-4 shadow-inner">
-            <div 
-              className="bg-primary-green h-4 rounded-pill transition-all duration-500 shadow-card"
+          <div className="w-full bg-white/50 rounded-full h-4 shadow-inner">
+            <div
+              className="bg-primary-green h-4 rounded-full transition-all duration-500 shadow-[0_2px_8px_rgb(0,0,0,0.2)]"
               style={{ width: `${Math.min(progressPercentage, 100)}%` }}
             />
           </div>
           
           {isGoalMet ? (
-            <div className="bg-primary-green text-text-primary px-6 py-3 rounded-pill text-center shadow-card">
-              <span className="text-lg font-black">🎉 GOAL SMASHED!</span>
+            <div className="bg-primary-green text-text-primary px-6 py-3 rounded-full text-center shadow-[0_4px_15px_rgb(0,0,0,0.2)]">
+              <span className="text-lg font-black">GOAL SMASHED!</span>
             </div>
           ) : (
             <p className="text-lg text-text-primary font-bold text-center">
-              Just {mockStreakData.dailyGoal - mockStreakData.todayPages} more pages to go! 💪
+              Just {mockStreakData.dailyGoal - mockStreakData.todayPages} more pages to go!
             </p>
           )}
         </div>
@@ -72,8 +79,8 @@ export const ReadingStreak = () => {
             <div
               key={index}
               className={`w-12 h-12 rounded-full flex items-center justify-center text-sm font-black transition-all duration-300 hover:scale-110 ${
-                completed 
-                  ? 'bg-primary-green text-text-primary shadow-card' 
+                completed
+                  ? 'bg-primary-green text-text-primary shadow-[0_4px_15px_rgb(0,0,0,0.2)]'
                   : 'bg-white/50 text-text-secondary'
               }`}
             >
@@ -82,8 +89,8 @@ export const ReadingStreak = () => {
           ))}
         </div>
 
-        <button className="w-full bg-white text-text-primary font-black py-6 px-8 rounded-pill hover:bg-primary-yellow hover:scale-105 transition-all duration-300 shadow-card text-lg">
-          LOG MORE PAGES! 📖
+        <button className="w-full bg-white text-text-primary font-black py-6 px-8 rounded-full hover:bg-primary-yellow hover:scale-105 transition-all duration-300 shadow-[0_4px_15px_rgb(0,0,0,0.3)] text-lg">
+          LOG MORE PAGES!
         </button>
       </div>
       

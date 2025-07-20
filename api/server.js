@@ -55,7 +55,7 @@ if (process.env.NODE_ENV === 'development') {
 const start = async () => {
   try {
     const port = process.env.PORT || 3001;
-    const host = process.env.HOST || '127.0.0.1';
+    const host = process.env.HOST || '0.0.0.0';
     
     await fastify.listen({ port, host });
     fastify.log.info(`Stacks API server listening on http://${host}:${port}`);

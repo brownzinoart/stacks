@@ -17,20 +17,23 @@ const HomePage = () => {
       <main className="flex-1 overflow-auto px-8 py-12">
         <div className="mx-auto max-w-7xl space-y-12">
           {/* Hero Section - Match My Mood */}
-          <div className="bg-primary-green rounded-xl-card p-12 relative overflow-hidden shadow-mega">
+          <div className="bg-primary-green rounded-3xl p-12 relative overflow-hidden shadow-[0_10px_40px_rgb(0,0,0,0.3)]">
             <div className="relative z-10">
-              <h1 className="text-mega font-black text-text-primary mb-6 leading-super-tight">
-                Match My<br />
-                <span className="text-primary-orange">Mood</span>
+              <h1 className="text-huge font-black text-text-primary leading-extra-tight mb-6">
+                <span className="text-primary-orange">MATCH MY</span><br />
+                <span className="text-mega">MOOD</span>
               </h1>
               <p className="text-xl text-text-primary mb-8 font-bold leading-tight">
                 Tell us what you&apos;re into!<br />
-                Get AI book & movie recs ✨
+                Get AI book & movie recs
               </p>
               <AIPromptInput />
             </div>
-            <div className="absolute -right-8 -bottom-8 w-48 h-48 bg-primary-orange rounded-full opacity-30" />
-            <div className="absolute top-8 right-16 w-24 h-24 bg-primary-purple rounded-full opacity-20" />
+
+            {/* Enhanced decorative elements */}
+            <div className="absolute -right-4 -bottom-4 w-24 h-24 bg-primary-yellow rounded-full opacity-40 shadow-[0_4px_15px_rgb(0,0,0,0.2)]" />
+            <div className="absolute top-4 left-4 w-16 h-16 bg-primary-purple rounded-full opacity-30 shadow-[0_4px_15px_rgb(0,0,0,0.2)]" />
+            <div className="absolute bottom-8 left-8 w-12 h-12 bg-primary-teal rounded-full opacity-50 shadow-[0_4px_15px_rgb(0,0,0,0.2)]" />
           </div>
 
           {/* Recent Searches */}

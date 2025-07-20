@@ -31,7 +31,7 @@ const mockQueueBooks = [
 
 export const MyQueue = () => {
   return (
-    <div className="bg-white rounded-xl-card p-12 shadow-mega relative overflow-hidden">
+    <div className="bg-white rounded-3xl p-12 shadow-[0_10px_40px_rgb(0,0,0,0.3)] relative overflow-hidden">
       <div className="space-y-8">
         <div className="flex items-start justify-between">
           <div>
@@ -41,7 +41,7 @@ export const MyQueue = () => {
               <span className="text-mega">QUEUE</span>
             </h1>
           </div>
-          <div className="bg-primary-orange text-white text-sm font-black px-4 py-2 rounded-pill shadow-card">
+          <div className="bg-primary-orange text-white text-sm font-black px-4 py-2 rounded-full shadow-[0_4px_15px_rgb(0,0,0,0.2)]">
             {mockQueueBooks.length} BOOKS
           </div>
         </div>
@@ -56,9 +56,11 @@ export const MyQueue = () => {
             </div>
           ) : (
             mockQueueBooks.map((book) => (
-              <div key={book.id} className="flex items-start gap-6 p-6 rounded-xl-card hover:bg-gray-50 transition-all duration-300 hover:scale-[1.02] hover:shadow-card">
-                <div className={`w-16 h-20 ${book.color} rounded-xl flex-shrink-0 flex items-center justify-center shadow-card hover:rotate-3 transition-transform duration-300`}>
+              <div key={book.id} className="flex items-start gap-6 p-6 rounded-2xl hover:bg-gray-50 transition-all duration-300 hover:scale-[1.02] hover:shadow-[0_8px_30px_rgb(0,0,0,0.2)] border-2 border-transparent hover:border-primary-green/20">
+                <div className={`w-16 h-20 ${book.color} rounded-2xl flex-shrink-0 flex items-center justify-center shadow-[0_4px_15px_rgb(0,0,0,0.2)] hover:rotate-3 transition-transform duration-300 relative`}>
                   <div className="w-8 h-8 bg-white/40 rounded-lg" />
+                  {/* Book spine detail */}
+                  <div className="absolute left-1 top-2 bottom-2 w-1 bg-white/60 rounded-full" />
                 </div>
                 
                 <div className="flex-1 min-w-0">
@@ -66,12 +68,12 @@ export const MyQueue = () => {
                   <p className="text-text-secondary text-sm font-bold mb-4">{book.author}</p>
                   
                   <div>
-                    <span className={`inline-flex items-center px-4 py-2 rounded-pill text-sm font-black shadow-card ${
-                      book.status === 'ready' 
-                        ? 'bg-primary-green text-text-primary' 
+                    <span className={`inline-flex items-center px-4 py-2 rounded-full text-sm font-black shadow-[0_4px_15px_rgb(0,0,0,0.2)] ${
+                      book.status === 'ready'
+                        ? 'bg-primary-green text-text-primary'
                         : 'bg-primary-yellow text-text-primary'
                     }`}>
-                      {book.status === 'ready' ? '✨ READY TO READ!' : '⏳ ON HOLD'}
+                      {book.status === 'ready' ? 'READY TO READ!' : 'ON HOLD'}
                     </span>
                   </div>
                 </div>
@@ -81,7 +83,7 @@ export const MyQueue = () => {
         </div>
         
         {mockQueueBooks.length > 0 && (
-          <button className="w-full bg-text-primary text-white font-black py-6 px-8 rounded-pill hover:bg-text-primary/90 hover:scale-105 transition-all duration-300 shadow-card text-lg">
+          <button className="w-full bg-text-primary text-white font-black py-6 px-8 rounded-full hover:bg-text-primary/90 hover:scale-105 transition-all duration-300 shadow-[0_4px_15px_rgb(0,0,0,0.3)] text-lg">
             VIEW ALL BOOKS →
           </button>
         )}

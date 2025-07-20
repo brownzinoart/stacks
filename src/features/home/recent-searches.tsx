@@ -24,23 +24,18 @@ export const RecentSearches = () => {
   }
 
   return (
-    <div className="bg-primary-yellow rounded-xl-card p-12 shadow-mega relative overflow-hidden">
+    <div className="bg-primary-yellow rounded-3xl p-12 shadow-[0_10px_40px_rgb(0,0,0,0.3)] relative overflow-hidden">
       <div className="space-y-8 relative z-10">
-        <div className="flex items-start justify-between">
-          <div>
-            <h2 className="text-sm font-black text-text-primary mb-2 uppercase tracking-wider">HELLO</h2>
-            <h1 className="text-huge font-black text-text-primary leading-extra-tight">
-              check out<br />
-              <span className="text-mega text-primary-purple">RECENT</span><br />
-              <span className="text-mega">SEARCHES</span>
-            </h1>
+        <div>
+          {/* Trending Badge */}
+          <div className="inline-flex items-center bg-primary-orange text-white px-3 py-1 rounded-full text-xs font-black mb-3 shadow-[0_4px_15px_rgb(0,0,0,0.2)]">
+            TRENDING
           </div>
-          <button className="w-12 h-12 rounded-full bg-text-primary text-white flex items-center justify-center hover:scale-110 transition-transform duration-300 shadow-card">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-              <circle cx="11" cy="11" r="8"/>
-              <path d="21 21l-4.35-4.35"/>
-            </svg>
-          </button>
+          <h2 className="text-sm font-black text-text-primary mb-2 uppercase tracking-wider">YOUR</h2>
+          <h1 className="text-huge font-black text-text-primary leading-extra-tight">
+            <span className="text-primary-purple">RECENT</span><br />
+            <span className="text-mega">SEARCHES</span>
+          </h1>
         </div>
         
         <div className="flex flex-wrap gap-4">
@@ -48,7 +43,7 @@ export const RecentSearches = () => {
             <button
               key={index}
               onClick={() => handleSearchClick(search)}
-              className="bg-white text-text-primary font-bold px-6 py-4 rounded-pill text-lg hover:bg-primary-green hover:scale-105 hover:shadow-card-hover transition-all duration-300 focus:outline-none focus:ring-4 focus:ring-text-primary/20"
+              className="bg-white text-text-primary font-black px-6 py-4 rounded-full text-lg hover:bg-primary-green hover:scale-105 hover:shadow-[0_8px_30px_rgb(0,0,0,0.3)] transition-all duration-300 focus:outline-none focus:ring-4 focus:ring-text-primary/20 shadow-[0_4px_15px_rgb(0,0,0,0.2)]"
             >
               {search}
             </button>
@@ -56,9 +51,11 @@ export const RecentSearches = () => {
         </div>
       </div>
       
-      {/* Decorative elements */}
+      {/* Enhanced decorative elements */}
       <div className="absolute -top-6 -right-6 w-32 h-32 bg-primary-teal rounded-full opacity-20" />
       <div className="absolute bottom-4 left-8 w-16 h-16 bg-primary-pink rounded-full opacity-30" />
+      <div className="absolute top-1/2 -left-4 w-20 h-20 bg-primary-blue rounded-full opacity-25" />
+      <div className="absolute bottom-8 right-16 w-12 h-12 bg-primary-green rounded-full opacity-40" />
     </div>
   );
 }; 

@@ -46,15 +46,16 @@ export const Navigation = () => {
             })}
           </div>
           
-          <div className="flex items-center space-x-4">
-            <button className="w-14 h-14 rounded-full bg-primary-blue flex items-center justify-center hover:scale-110 hover:bg-primary-teal transition-all duration-300 shadow-card">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="text-white">
-                <circle cx="11" cy="11" r="8"/>
-                <path d="21 21l-4.35-4.35"/>
-              </svg>
-            </button>
-            <div className="w-14 h-14 rounded-full bg-primary-orange hover:scale-110 transition-transform duration-300 shadow-card cursor-pointer" />
-          </div>
+          {/* Profile Picture */}
+          <button className="w-16 h-16 rounded-full overflow-hidden border-4 border-primary-orange shadow-card hover:scale-105 transition-transform duration-300 hover:shadow-card-hover">
+            <img 
+              src="/profile-avatar.png" 
+              alt="Profile" 
+              className="w-full h-full object-cover"
+            />
+          </button>
+          
+
         </div>
       </div>
       
