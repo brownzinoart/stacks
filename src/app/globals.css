@@ -1,6 +1,6 @@
 /**
  * Global styles for Stacks - Ultra Bold Gen Z Library Design
- * Vibrant, saturated colors with dramatic typography
+ * Vibrant, saturated colors with dramatic typography, bold outlines, and smooth microanimations
  */
 
 @import "tailwindcss";
@@ -60,6 +60,17 @@
     font-weight: 700;
     letter-spacing: -0.01em;
   }
+  
+  /* Mobile touch optimizations */
+  * {
+    -webkit-tap-highlight-color: transparent;
+  }
+  
+  button, input, textarea {
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+  }
 }
 
 @layer components {
@@ -96,4 +107,126 @@
     letter-spacing: -0.02em;
     line-height: 0.9;
   }
-} 
+  
+  /* Bold black outline styles */
+  .outline-bold {
+    border: 3px solid #000000;
+  }
+  
+  .outline-bold-thin {
+    border: 2px solid #000000;
+  }
+  
+  /* Backdrop shadow styles */
+  .shadow-backdrop {
+    box-shadow: 4px 4px 0px rgba(0, 0, 0, 0.8);
+  }
+  
+  .shadow-backdrop-lg {
+    box-shadow: 6px 6px 0px rgba(0, 0, 0, 0.8);
+  }
+  
+  .shadow-backdrop-xl {
+    box-shadow: 8px 8px 0px rgba(0, 0, 0, 0.8);
+  }
+  
+  /* Combined outline and shadow for maximum pop */
+  .pop-element {
+    border: 3px solid #000000;
+    box-shadow: 4px 4px 0px rgba(0, 0, 0, 0.8);
+  }
+  
+  .pop-element-lg {
+    border: 3px solid #000000;
+    box-shadow: 6px 6px 0px rgba(0, 0, 0, 0.8);
+  }
+  
+  .pop-element-xl {
+    border: 3px solid #000000;
+    box-shadow: 8px 8px 0px rgba(0, 0, 0, 0.8);
+  }
+  
+  /* Touch interaction states */
+  .touch-feedback {
+    transition: all 0.15s ease;
+  }
+  
+  .touch-feedback:active {
+    transform: scale(0.95);
+  }
+  
+  /* Loading states */
+  .loading-pulse {
+    animation: pulse 1.5s ease-in-out infinite;
+  }
+  
+  /* Microanimations */
+  .animate-fade-in-up {
+    animation: fadeInUp 0.6s ease-out forwards;
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  
+  .animation-delay-200 {
+    animation-delay: 0.2s;
+  }
+  
+  .animation-delay-400 {
+    animation-delay: 0.4s;
+  }
+  
+  .animation-delay-600 {
+    animation-delay: 0.6s;
+  }
+  
+  .animate-float {
+    animation: float 3s ease-in-out infinite;
+  }
+  
+  .animate-float-delayed {
+    animation: float 3s ease-in-out infinite 1s;
+  }
+  
+  .animate-float-slow {
+    animation: float 4s ease-in-out infinite 2s;
+  }
+  
+  /* Mobile-specific optimizations */
+  .mobile-touch {
+    min-height: 44px;
+    min-width: 44px;
+  }
+  
+  .mobile-safe-area {
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+}
+
+@keyframes fadeInUp {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+ 

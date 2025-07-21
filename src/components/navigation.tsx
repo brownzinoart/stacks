@@ -12,7 +12,7 @@ import { clsx } from 'clsx';
 const navigationItems = [
   { name: 'Home', href: '/home' },
   { name: 'Discover', href: '/explore' },
-  { name: 'Events', href: '/discovery' },
+  { name: 'Events', href: '/events' },
 ];
 
 export const Navigation = () => {
@@ -47,9 +47,15 @@ export const Navigation = () => {
           </div>
           
           {/* Profile Picture */}
-          <button className="w-16 h-16 rounded-full overflow-hidden border-4 border-primary-orange shadow-card hover:scale-105 transition-transform duration-300 hover:shadow-card-hover">
+          <button 
+            className="w-16 h-16 rounded-full overflow-hidden border-4 border-primary-orange shadow-card hover:scale-105 transition-transform duration-300 hover:shadow-card-hover"
+            onClick={() => {
+              // TODO: Navigate to user settings/profile page
+              window.location.href = '/settings';
+            }}
+          >
             <img 
-              src="/profile-avatar.png" 
+              src="/avatar.png" 
               alt="Profile" 
               className="w-full h-full object-cover"
             />

@@ -38,89 +38,106 @@ export const StandardSearch = () => {
   };
 
   return (
-    <div className="rounded-card bg-white p-6 shadow-card">
-      <h2 className="text-lg font-semibold text-text-primary mb-4">Search Library</h2>
-      
-      <div className="space-y-4">
-        {/* Search Type Tabs */}
-        <div className="flex space-x-1 bg-gray-100 p-1 rounded-lg">
-          <button
-            onClick={() => setSearchType('text')}
-            className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
-              searchType === 'text'
-                ? 'bg-white text-accent shadow-sm'
-                : 'text-text-secondary hover:text-text-primary'
-            }`}
-          >
-            📝 Text
-          </button>
-          <button
-            onClick={() => setSearchType('isbn')}
-            className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
-              searchType === 'isbn'
-                ? 'bg-white text-accent shadow-sm'
-                : 'text-text-secondary hover:text-text-primary'
-            }`}
-          >
-            📷 ISBN
-          </button>
-          <button
-            onClick={() => setSearchType('voice')}
-            className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
-              searchType === 'voice'
-                ? 'bg-white text-accent shadow-sm'
-                : 'text-text-secondary hover:text-text-primary'
-            }`}
-          >
-            🎤 Voice
-          </button>
+    <div className="bg-primary-yellow rounded-3xl p-8 sm:p-12 shadow-[0_10px_40px_rgb(0,0,0,0.3)] relative overflow-hidden pop-element-lg">
+      <div className="space-y-6 sm:space-y-8 relative z-10">
+        <div>
+          <h2 className="text-huge font-black text-text-primary leading-extra-tight mb-4 sm:mb-6">
+            <span className="text-primary-purple">SEARCH</span><br />
+            <span className="text-mega">LIBRARY</span>
+          </h2>
         </div>
         
-        {/* Search Input */}
-        {searchType === 'text' && (
-          <form onSubmit={handleSearch} className="flex gap-3">
-            <input
-              type="text"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder="Search by title, author, or keyword..."
-              className="flex-1 rounded-lg border border-border px-4 py-3 text-text-primary placeholder-text-secondary focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/20"
-              disabled={isSearching}
-            />
+        <div className="space-y-6">
+          {/* Search Type Tabs */}
+          <div className="flex gap-2 bg-white/80 backdrop-blur-sm p-2 rounded-2xl outline-bold-thin">
             <button
-              type="submit"
-              disabled={!query.trim() || isSearching}
-              className="rounded-lg bg-accent px-6 py-3 text-white font-medium hover:bg-accent/90 focus:outline-none focus:ring-2 focus:ring-accent/20 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              onClick={() => setSearchType('text')}
+              className={`flex-1 py-3 px-4 rounded-xl text-sm sm:text-base font-black transition-all duration-300 ${
+                searchType === 'text'
+                  ? 'bg-primary-blue text-white shadow-backdrop'
+                  : 'text-text-primary hover:bg-white/60'
+              }`}
             >
-              Search
+              📝 TEXT
             </button>
-          </form>
-        )}
-        
-        {searchType === 'isbn' && (
-          <div className="text-center space-y-4">
-            <p className="text-text-secondary">Point your camera at a book&apos;s barcode</p>
             <button
-              onClick={handleISBNScan}
-              className="bg-accent hover:bg-accent/90 text-white font-medium py-3 px-6 rounded-lg transition-colors"
+              onClick={() => setSearchType('isbn')}
+              className={`flex-1 py-3 px-4 rounded-xl text-sm sm:text-base font-black transition-all duration-300 ${
+                searchType === 'isbn'
+                  ? 'bg-primary-blue text-white shadow-backdrop'
+                  : 'text-text-primary hover:bg-white/60'
+              }`}
             >
-              📷 Start ISBN Scan
+              📷 ISBN
             </button>
-          </div>
-        )}
-        
-        {searchType === 'voice' && (
-          <div className="text-center space-y-4">
-            <p className="text-text-secondary">Tap to speak your search</p>
             <button
-              onClick={handleVoiceSearch}
-              className="bg-accent hover:bg-accent/90 text-white font-medium py-3 px-6 rounded-lg transition-colors"
+              onClick={() => setSearchType('voice')}
+              className={`flex-1 py-3 px-4 rounded-xl text-sm sm:text-base font-black transition-all duration-300 ${
+                searchType === 'voice'
+                  ? 'bg-primary-blue text-white shadow-backdrop'
+                  : 'text-text-primary hover:bg-white/60'
+              }`}
             >
-              🎤 Start Voice Search
+              🎤 VOICE
             </button>
           </div>
-        )}
+          
+          {/* Search Input */}
+          {searchType === 'text' && (
+            <form onSubmit={handleSearch} className="space-y-4">
+              <div className="flex gap-3">
+                <input
+                  type="text"
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  placeholder="Search by title, author, or keyword..."
+                  className="flex-1 rounded-2xl border-2 border-text-primary px-6 py-4 text-text-primary font-bold placeholder-text-secondary focus:border-primary-blue focus:outline-none outline-bold-thin"
+                  disabled={isSearching}
+                />
+                <button
+                  type="submit"
+                  disabled={!query.trim() || isSearching}
+                  className="bg-primary-blue text-white px-8 py-4 rounded-2xl font-black text-base hover:scale-105 transition-transform touch-feedback disabled:opacity-50 shadow-backdrop"
+                >
+                  {isSearching ? 'SEARCHING...' : 'SEARCH'}
+                </button>
+              </div>
+            </form>
+          )}
+          
+          {searchType === 'isbn' && (
+            <div className="text-center space-y-6">
+              <p className="text-text-primary font-bold text-lg">Point your camera at a book&apos;s barcode</p>
+              <button
+                onClick={handleISBNScan}
+                className="bg-primary-blue text-white font-black py-4 px-8 rounded-2xl hover:scale-105 transition-transform touch-feedback shadow-backdrop text-lg"
+              >
+                📷 START ISBN SCAN
+              </button>
+            </div>
+          )}
+          
+          {searchType === 'voice' && (
+            <div className="text-center space-y-6">
+              <p className="text-text-primary font-bold text-lg">Tap to speak your search</p>
+              <button
+                onClick={handleVoiceSearch}
+                className="bg-primary-blue text-white font-black py-4 px-8 rounded-2xl hover:scale-105 transition-transform touch-feedback shadow-backdrop text-lg"
+              >
+                🎤 START VOICE SEARCH
+              </button>
+            </div>
+          )}
+        </div>
       </div>
+      
+      {/* Decorative elements */}
+      <div className="absolute top-6 left-6 w-12 h-12 sm:w-16 sm:h-16 bg-primary-teal rounded-full opacity-25 animate-float z-0" />
+      <div className="absolute bottom-8 left-4 w-10 h-10 sm:w-14 sm:h-14 bg-primary-pink rounded-full opacity-30 animate-float-delayed z-0" />
+      <div className="absolute top-12 left-2 w-8 h-8 sm:w-12 sm:h-12 bg-primary-blue rounded-full opacity-35 animate-float-slow z-0" />
+      <div className="absolute bottom-4 right-8 w-12 h-12 sm:w-16 sm:h-16 bg-primary-green rounded-full opacity-20 animate-float z-0" />
+      <div className="absolute top-6 right-4 w-6 h-6 sm:w-8 sm:h-8 bg-primary-orange rounded-full opacity-40 animate-float-delayed z-0" />
+      <div className="absolute bottom-12 right-2 w-10 h-10 sm:w-12 sm:h-12 bg-primary-purple rounded-full opacity-30 animate-float-slow z-0" />
     </div>
   );
 }; 

@@ -42,56 +42,69 @@ export const LearningPaths = () => {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h2 className="text-xl font-semibold text-text-primary">Popular Learning Paths</h2>
-        <button className="text-accent hover:text-accent/80 text-sm font-medium">
-          View all paths
-        </button>
-      </div>
-      
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        {mockLearningPaths.map((path) => {
-          const progress = (path.completed / path.books) * 100;
-          
-          return (
-            <div key={path.id} className="rounded-card bg-white p-6 shadow-card hover:shadow-card-hover transition-shadow">
-              <div className="space-y-4">
-                <div>
-                  <h3 className="font-semibold text-text-primary mb-2">{path.title}</h3>
-                  <p className="text-sm text-text-secondary">{path.description}</p>
-                </div>
-                
-                <div className="space-y-2">
-                  <div className="flex justify-between text-sm">
-                    <span className="text-text-secondary">Progress</span>
-                    <span className="font-medium">{path.completed}/{path.books} books</span>
+    <div className="bg-primary-pink rounded-3xl p-8 sm:p-12 shadow-[0_10px_40px_rgb(0,0,0,0.3)] relative overflow-hidden pop-element-lg">
+      <div className="space-y-6 sm:space-y-8 relative z-10">
+        <div className="flex items-center justify-between">
+          <h2 className="text-huge font-black text-text-primary leading-extra-tight">
+            <span className="text-primary-yellow">POPULAR</span><br />
+            <span className="text-mega">PATHS</span>
+          </h2>
+          <button className="text-primary-blue hover:text-primary-blue/80 text-base sm:text-lg font-black">
+            VIEW ALL PATHS
+          </button>
+        </div>
+        
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          {mockLearningPaths.map((path) => {
+            const progress = (path.completed / path.books) * 100;
+            
+            return (
+              <div key={path.id} className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 outline-bold-thin hover:scale-105 transition-transform duration-300">
+                <div className="space-y-6">
+                  <div>
+                    <h3 className="font-black text-text-primary text-lg mb-3">{path.title}</h3>
+                    <p className="text-base text-text-primary font-bold">{path.description}</p>
                   </div>
                   
-                  <div className="w-full bg-gray-100 rounded-full h-2">
-                    <div 
-                      className="bg-accent h-2 rounded-full transition-all duration-300"
-                      style={{ width: `${progress}%` }}
-                    />
+                  <div className="space-y-4">
+                    <div className="flex justify-between text-base">
+                      <span className="text-text-primary font-bold">PROGRESS</span>
+                      <span className="font-black text-text-primary">{path.completed}/{path.books} books</span>
+                    </div>
+                    
+                    <div className="w-full bg-white/60 rounded-full h-3 outline-bold-thin">
+                      <div 
+                        className="bg-primary-green h-3 rounded-full transition-all duration-300 shadow-[0_2px_8px_rgb(0,0,0,0.2)]"
+                        style={{ width: `${progress}%` }}
+                      />
+                    </div>
                   </div>
+                  
+                  <div className="flex justify-between text-base text-text-primary font-bold">
+                    <span>{path.available}/{path.books} available</span>
+                    <span>{path.estimatedTime}</span>
+                  </div>
+                  
+                  <button
+                    onClick={() => handleStartPath(path.id)}
+                    className="w-full bg-primary-blue text-white font-black py-3 px-6 rounded-2xl hover:scale-105 transition-transform touch-feedback shadow-backdrop text-lg"
+                  >
+                    {path.completed > 0 ? 'CONTINUE PATH' : 'START LEARNING'}
+                  </button>
                 </div>
-                
-                <div className="flex justify-between text-sm text-text-secondary">
-                  <span>{path.available}/{path.books} available</span>
-                  <span>{path.estimatedTime}</span>
-                </div>
-                
-                <button
-                  onClick={() => handleStartPath(path.id)}
-                  className="w-full bg-accent hover:bg-accent/90 text-white font-medium py-2 px-4 rounded-lg transition-colors"
-                >
-                  {path.completed > 0 ? 'Continue Path' : 'Start Learning'}
-                </button>
               </div>
-            </div>
-          );
-        })}
+            );
+          })}
+        </div>
       </div>
+      
+      {/* Decorative elements */}
+      <div className="absolute top-6 left-6 w-12 h-12 sm:w-16 sm:h-16 bg-primary-teal rounded-full opacity-25 animate-float z-0" />
+      <div className="absolute bottom-8 left-4 w-10 h-10 sm:w-14 sm:h-14 bg-primary-yellow rounded-full opacity-30 animate-float-delayed z-0" />
+      <div className="absolute top-12 left-2 w-8 h-8 sm:w-12 sm:h-12 bg-primary-blue rounded-full opacity-35 animate-float-slow z-0" />
+      <div className="absolute bottom-4 right-8 w-12 h-12 sm:w-16 sm:h-16 bg-primary-green rounded-full opacity-20 animate-float z-0" />
+      <div className="absolute top-6 right-4 w-6 h-6 sm:w-8 sm:h-8 bg-primary-orange rounded-full opacity-40 animate-float-delayed z-0" />
+      <div className="absolute bottom-12 right-2 w-10 h-10 sm:w-12 sm:h-12 bg-primary-purple rounded-full opacity-30 animate-float-slow z-0" />
     </div>
   );
 }; 
