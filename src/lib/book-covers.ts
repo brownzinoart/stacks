@@ -96,5 +96,5 @@ export const getBookCover = (title: string, author: string): string => {
   ];
   
   const colorIndex = Math.abs(hash) % colors.length;
-  return colors[colorIndex];
+  return colors[colorIndex] || 'bg-primary-green'; // fallback to a default color if undefined
 }; 
