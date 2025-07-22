@@ -9,11 +9,13 @@ interface BookCoverProps {
   title: string;
   author: string;
   className?: string;
+  coverUrl?: string;
 }
 
-export const BookCover = ({ title, author, className = "w-16 h-20" }: BookCoverProps) => {
-  const coverUrl = getBookCover(title, author);
-  const isRealCover = coverUrl.startsWith('http');
+export const BookCover = ({ title, author, className = "w-16 h-20", coverUrl }: BookCoverProps) => {
+  let url = coverUrl;
+  if (!url) url = getBookCover(title, author);
+  const isRealCover = url && url.startsWith('http');
   
   // Generate decorative elements for placeholders
   const hash = title.split('').reduce((a, b) => {
@@ -30,7 +32,7 @@ export const BookCover = ({ title, author, className = "w-16 h-20" }: BookCoverP
         // Real book cover with enhanced styling and bold outline
         <>
           <img 
-            src={coverUrl} 
+            src={url} 
             alt={`${title} cover`}
             className="w-full h-full object-cover"
             onError={(e) => {
