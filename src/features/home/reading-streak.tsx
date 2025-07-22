@@ -7,25 +7,23 @@
 
 import { BookCover } from '@/components/book-cover';
 import { useState } from 'react';
+import dayjs from 'dayjs';
 
-const mockReadingPlan = {
+const initialReadingPlan = {
   currentBook: {
     title: "The Seven Husbands of Evelyn Hugo",
     author: "Taylor Jenkins Reid",
     totalPages: 400,
     pagesRead: 120,
-    dueDate: "2024-08-03", // 14 days from now
+    dueDate: dayjs().add(15, 'day').format('YYYY-MM-DD'), // 15 days from now
     isLibraryBook: true,
   },
-  dailyTarget: 20, // pages per day to finish on time
-  daysRemaining: 14,
   todayPagesRead: 0, // Start at 0, user logs manually
-  isOnTrack: true,
-  averagePagesPerDay: 15 // average reading speed
 };
 
 export const ReadingStreak = () => {
-  const [todayPagesRead, setTodayPagesRead] = useState(mockReadingPlan.todayPagesRead);
+  const [readingPlan, setReadingPlan] = useState(initialReadingPlan);
+  const [todayPagesRead, setTodayPagesRead] = useState(initialReadingPlan.todayPagesRead);
   const [showLogForm, setShowLogForm] = useState(false);
   const [showAddBookForm, setShowAddBookForm] = useState(false);
   const [pagesToLog, setPagesToLog] = useState('');
@@ -38,23 +36,28 @@ export const ReadingStreak = () => {
     isLibraryBook: false
   });
 
-  const progressPercentage = (mockReadingPlan.currentBook.pagesRead / mockReadingPlan.currentBook.totalPages) * 100;
-  const pagesRemaining = mockReadingPlan.currentBook.totalPages - mockReadingPlan.currentBook.pagesRead;
-  const todayProgress = (todayPagesRead / mockReadingPlan.averagePagesPerDay) * 100;
-  const isOnTrack = todayPagesRead >= mockReadingPlan.averagePagesPerDay;
+  // Calculate derived values
+  const pagesRead = readingPlan.currentBook.pagesRead + todayPagesRead;
+  const totalPages = readingPlan.currentBook.totalPages;
+  const dueDate = readingPlan.currentBook.dueDate;
+  const daysRemaining = Math.max(dayjs(dueDate).diff(dayjs(), 'day'), 1);
+  const pagesRemaining = Math.max(totalPages - pagesRead, 0);
+  const averagePagesPerDay = pagesRemaining > 0 ? Math.ceil(pagesRemaining / daysRemaining) : 0;
+
+  const progressPercentage = (pagesRead / totalPages) * 100;
+  const todayProgress = (todayPagesRead / averagePagesPerDay) * 100;
+  const isOnTrack = todayPagesRead >= averagePagesPerDay;
 
   const handleLogPages = async () => {
     if (!pagesToLog || isNaN(Number(pagesToLog))) return;
-    
     setIsLogging(true);
-    // Simulate API call
     setTimeout(() => {
       const newPages = todayPagesRead + Number(pagesToLog);
       setTodayPagesRead(newPages);
       setPagesToLog('');
       setShowLogForm(false);
       setIsLogging(false);
-    }, 1000);
+    }, 500);
   };
 
   const handleQuickLog = (pages: number) => {
@@ -93,17 +96,17 @@ export const ReadingStreak = () => {
             <div className="bg-white/20 backdrop-blur-sm rounded-2xl p-6 sm:p-8 outline-bold-thin">
               <div className="flex items-start gap-4 sm:gap-6">
                 <BookCover 
-                  title={mockReadingPlan.currentBook.title} 
-                  author={mockReadingPlan.currentBook.author} 
+                  title={readingPlan.currentBook.title} 
+                  author={readingPlan.currentBook.author} 
                   className="w-16 h-24 sm:w-20 sm:h-28"
                 />
                 
                 <div className="flex-1 min-w-0">
                   <h3 className="font-black text-text-primary text-lg sm:text-xl leading-tight mb-2">
-                    {mockReadingPlan.currentBook.title}
+                    {readingPlan.currentBook.title}
                   </h3>
                   <p className="text-text-secondary text-sm sm:text-base font-bold">
-                    {mockReadingPlan.currentBook.author}
+                    {readingPlan.currentBook.author}
                   </p>
                 </div>
               </div>
@@ -113,11 +116,11 @@ export const ReadingStreak = () => {
           {/* At-a-Glance Metrics */}
           <div className="grid grid-cols-2 gap-4 mb-6">
             <div className="bg-primary-orange text-white rounded-2xl p-4 text-center shadow-backdrop">
-              <div className="text-2xl sm:text-3xl font-black">{mockReadingPlan.daysRemaining}</div>
+              <div className="text-2xl sm:text-3xl font-black">{daysRemaining}</div>
               <div className="text-xs sm:text-sm font-bold uppercase">Days Left to Return</div>
             </div>
             <div className="bg-primary-yellow text-text-primary rounded-2xl p-4 text-center shadow-backdrop">
-              <div className="text-2xl sm:text-3xl font-black">{mockReadingPlan.averagePagesPerDay}</div>
+              <div className="text-2xl sm:text-3xl font-black">{averagePagesPerDay}</div>
               <div className="text-xs sm:text-sm font-bold uppercase">Pages per Day</div>
             </div>
           </div>
@@ -131,7 +134,7 @@ export const ReadingStreak = () => {
             <span className="text-text-primary font-bold text-base sm:text-lg">Book Progress</span>
             <div className="text-right">
               <div className="text-xl sm:text-2xl font-black text-text-primary">
-                {mockReadingPlan.currentBook.pagesRead}<span className="text-lg">/{mockReadingPlan.currentBook.totalPages}</span>
+                {pagesRead}<span className="text-lg">/{totalPages}</span>
               </div>
               <div className="text-sm font-bold text-text-primary/80">pages read</div>
             </div>
@@ -151,7 +154,7 @@ export const ReadingStreak = () => {
             <span className="text-text-primary font-bold text-base sm:text-lg">Today&apos;s Progress</span>
             <div className="text-right">
               <div className="text-xl sm:text-2xl font-black text-text-primary">
-                {todayPagesRead}<span className="text-lg">/{mockReadingPlan.averagePagesPerDay}</span>
+                {todayPagesRead}<span className="text-lg">/{averagePagesPerDay}</span>
               </div>
               <div className="text-sm font-bold text-text-primary/80">pages today</div>
             </div>
@@ -164,13 +167,13 @@ export const ReadingStreak = () => {
             />
           </div>
           
-          {todayPagesRead >= mockReadingPlan.averagePagesPerDay ? (
+          {todayPagesRead >= averagePagesPerDay ? (
             <div className="bg-primary-green text-text-primary px-4 sm:px-6 py-2 sm:py-3 rounded-full text-center shadow-backdrop">
               <span className="text-base sm:text-lg font-black">AVERAGE BEATEN!</span>
             </div>
           ) : (
             <p className="text-base sm:text-lg text-text-primary font-bold text-center">
-              Just {mockReadingPlan.averagePagesPerDay - todayPagesRead} more pages to hit average!
+              Just {averagePagesPerDay - todayPagesRead} more pages to hit average!
             </p>
           )}
         </div>

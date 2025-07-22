@@ -6,6 +6,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import axios from 'axios';
+import { useRouter } from 'next/navigation';
 
 const moodOptions = [
   { label: 'FUNNY', color: 'bg-primary-orange hover:bg-primary-pink' },
@@ -25,6 +27,53 @@ const discoveryExamples = [
   "I want to read about space",
 ];
 
+// Helper: classify request
+function classifyRequest(input: string): 'show' | 'theme' | 'learn' {
+  const learnKeywords = ['learn', 'teach', 'understand', 'study', 'explain'];
+  if (learnKeywords.some((kw) => input.toLowerCase().includes(kw))) return 'learn';
+  // crude: if "like" and a known show/movie pattern, treat as show
+  if (/like (the )?(show|movie|film|series)?/i.test(input)) return 'show';
+  // fallback: theme
+  return 'theme';
+}
+
+// Helper: fetch OMDb metadata
+async function fetchOmdbData(title: string) {
+  const apiUrl = process.env.NEXT_PUBLIC_OMDB_API || process.env.OMDB_API;
+  if (!apiUrl) return null;
+  // Try to extract just the title for OMDb
+  const cleanTitle = title.replace(/.*like (the )?(show|movie|film|series)?/i, '').trim();
+  const url = `https://www.omdbapi.com/?t=${encodeURIComponent(cleanTitle)}&apikey=95cb8a0d`;
+  try {
+    const res = await axios.get(url);
+    if (res.data && res.data.Response !== 'False') {
+      return {
+        plot: res.data.Plot,
+        genres: res.data.Genre,
+        rated: res.data.Rated,
+        title: res.data.Title,
+      };
+    }
+  } catch (e) {
+    // ignore
+  }
+  return null;
+}
+
+// Helper: build enriched prompt
+function buildPrompt(type: 'show' | 'theme' | 'learn', input: string, omdb: any) {
+  if (type === 'show' && omdb) {
+    return `I'd like to read books like ${omdb.title}, with plot: ${omdb.plot}; genres: ${omdb.genres}; tone: ${omdb.rated}. Recommend me 5 novels.`;
+  }
+  if (type === 'theme') {
+    return `I'd like to read books about ${input}—stories that explore this theme. Recommend me 5 novels.`;
+  }
+  if (type === 'learn') {
+    return `I'd like to learn about ${input}, with clear explanations, real-world examples, and engaging exercises. Recommend me 5 nonfiction books.`;
+  }
+  return input;
+}
+
 export const AIPromptInput = () => {
   const [inputValue, setInputValue] = useState('');
   const [selectedMood, setSelectedMood] = useState<string | null>(null);
@@ -32,6 +81,7 @@ export const AIPromptInput = () => {
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [currentExampleIndex, setCurrentExampleIndex] = useState(0);
   const [isExampleVisible, setIsExampleVisible] = useState(true);
+  const router = useRouter();
 
   // Rotate through examples every 3 seconds
   useEffect(() => {
@@ -53,44 +103,51 @@ export const AIPromptInput = () => {
     setIsLoading(true);
     setSearchResults([]);
     
-    // TODO: Implement AI search functionality
-    console.log('Searching for:', inputValue || selectedMood);
-    
-    // Simulate API call with mock results
-    setTimeout(() => {
-      const mockResults = [
-        {
-          id: 1,
-          title: "The Road",
-          author: "Cormac McCarthy",
-          cover: "https://covers.openlibrary.org/b/id/8576271-L.jpg",
-          reason: "Post-apocalyptic survival story like Walking Dead",
-          libraryAvailable: true,
-          libraryName: "Central Library"
-        },
-        {
-          id: 2,
-          title: "Station Eleven",
-          author: "Emily St. John Mandel",
-          cover: "https://covers.openlibrary.org/b/id/8576272-L.jpg",
-          reason: "Dystopian world rebuilding after collapse",
-          libraryAvailable: true,
-          libraryName: "Downtown Branch"
-        },
-        {
-          id: 3,
-          title: "World War Z",
-          author: "Max Brooks",
-          cover: "https://covers.openlibrary.org/b/id/8576273-L.jpg",
-          reason: "Zombie apocalypse from multiple perspectives",
-          libraryAvailable: false,
-          libraryName: null
-        }
-      ];
-      
-      setSearchResults(mockResults);
+    // 1. Classify
+    const userInput = inputValue || selectedMood || '';
+    const type = classifyRequest(userInput);
+    let omdb = null;
+    let prompt = '';
+
+    // 2. Fetch OMDb if show
+    if (type === 'show') {
+      omdb = await fetchOmdbData(userInput);
+    }
+
+    // 3. Build prompt (request JSON output)
+    prompt = buildPrompt(type, userInput, omdb) +
+      '\n\nPlease recommend 5 books in the following JSON array format: [{"title": "", "author": "", "cover": "", "why": ""}]. If you do not know the cover, leave it blank.';
+
+    // 4. Call OpenAI proxy
+    try {
+      const resp = await axios.post('/api/openai-proxy', {
+        model: 'gpt-4o',
+        messages: [{ role: 'user', content: prompt }],
+        temperature: 0.7,
+        top_p: 0.9,
+        max_tokens: 400,
+      });
+      const content = resp.data.choices?.[0]?.message?.content || '';
+      // Try to extract JSON from the response
+      let books = [];
+      try {
+        const jsonStart = content.indexOf('[');
+        const jsonEnd = content.lastIndexOf(']') + 1;
+        const jsonString = content.substring(jsonStart, jsonEnd);
+        books = JSON.parse(jsonString);
+      } catch (err) {
+        console.error('Error parsing GPT response as JSON:', err, content);
+        books = [{ title: 'Error parsing recommendations', author: '', cover: '', why: content }];
+      }
       setIsLoading(false);
-    }, 2000);
+      // Store in localStorage for retrieval on recommendations page
+      localStorage.setItem('stacks_recommendations', JSON.stringify({ books, userInput }));
+      router.push('/stacks-recommendations');
+    } catch (err) {
+      setIsLoading(false);
+      setSearchResults([{ id: 1, title: 'Error fetching recommendations', author: '', cover: '', reason: '', libraryAvailable: false, libraryName: null }]);
+      console.error('Error fetching recommendations:', err);
+    }
   };
 
   const handleMoodSelect = (mood: string) => {
