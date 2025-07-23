@@ -7,6 +7,7 @@ import { Navigation } from '@/components/navigation';
 import { StandardSearch } from '@/features/ar/standard-search';
 import { ARShelfScan } from '@/features/ar/ar-shelf-scan';
 import { BranchExplorer } from '@/features/ar/branch-explorer';
+import Link from "next/link";
 
 const DiscoveryPage = () => {
   return (
@@ -48,6 +49,9 @@ const DiscoveryPage = () => {
           <div className="animate-fade-in-up animation-delay-600">
             <BranchExplorer />
           </div>
+          <Link href="/discovery/ar-scanner">
+            <button className="ar-scanner-btn">Scan a Book Cover (AR)</button>
+          </Link>
         </div>
       </main>
     </div>

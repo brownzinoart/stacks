@@ -151,10 +151,10 @@ const StacksRecommendationsPage = () => {
   // Swipe/drag handler for flip
   const startX = useRef<number | null>(null);
   const handleTouchStart = (e: React.TouchEvent) => {
-    startX.current = e.touches[0].clientX;
+    startX.current = e.touches?.[0]?.clientX ?? null;
   };
   const handleTouchEnd = (e: React.TouchEvent) => {
-    if (startX.current !== null) {
+    if (startX.current !== null && e.changedTouches?.[0]) {
       const dx = e.changedTouches[0].clientX - startX.current;
       if (Math.abs(dx) > 60) setFlip(f => !f);
       startX.current = null;
