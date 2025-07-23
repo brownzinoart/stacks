@@ -3,7 +3,9 @@
  * Vibrant, saturated colors with dramatic typography, bold outlines, and smooth microanimations
  */
 
-@import "tailwindcss";
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
 @theme {
   /* Ultra vibrant Gen Z color palette */

@@ -1,10 +1,11 @@
 /**
  * PostCSS configuration for Stacks
- * Updated for Tailwind CSS v4
+ * Configuration for Tailwind CSS v3
  */
 
 module.exports = {
   plugins: {
-    '@tailwindcss/postcss': {},
+    tailwindcss: {},
+    autoprefixer: {},
   },
 }; 
