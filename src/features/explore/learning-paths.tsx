@@ -42,52 +42,60 @@ export const LearningPaths = () => {
   };
 
   return (
-    <div className="bg-primary-pink rounded-3xl p-8 sm:p-12 shadow-[0_10px_40px_rgb(0,0,0,0.3)] relative overflow-hidden pop-element-lg">
-      <div className="space-y-6 sm:space-y-8 relative z-10">
+    <div className="pop-element-lg relative overflow-hidden rounded-3xl bg-primary-pink p-8 shadow-[0_10px_40px_rgb(0,0,0,0.3)] sm:p-12">
+      <div className="relative z-10 space-y-6 sm:space-y-8">
         <div className="flex items-center justify-between">
-          <h2 className="text-huge font-black text-text-primary leading-extra-tight">
-            <span className="text-primary-yellow">POPULAR</span><br />
+          <h2 className="text-huge font-black leading-extra-tight text-text-primary">
+            <span className="text-primary-yellow">POPULAR</span>
+            <br />
             <span className="text-mega">PATHS</span>
           </h2>
-          <button className="text-primary-blue hover:text-primary-blue/80 text-base sm:text-lg font-black">
+          <button className="text-base font-black text-primary-blue hover:text-primary-blue/80 sm:text-lg">
             VIEW ALL PATHS
           </button>
         </div>
-        
+
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           {mockLearningPaths.map((path) => {
             const progress = (path.completed / path.books) * 100;
-            
+
             return (
-              <div key={path.id} className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 outline-bold-thin hover:scale-105 transition-transform duration-300">
+              <div
+                key={path.id}
+                className="outline-bold-thin rounded-2xl bg-white/80 p-6 backdrop-blur-sm transition-transform duration-300 hover:scale-105"
+              >
                 <div className="space-y-6">
                   <div>
-                    <h3 className="font-black text-text-primary text-lg mb-3">{path.title}</h3>
-                    <p className="text-base text-text-primary font-bold">{path.description}</p>
+                    <h3 className="mb-3 text-lg font-black text-text-primary">{path.title}</h3>
+                    <p className="text-base font-bold text-text-primary">{path.description}</p>
                   </div>
-                  
+
                   <div className="space-y-4">
                     <div className="flex justify-between text-base">
-                      <span className="text-text-primary font-bold">PROGRESS</span>
-                      <span className="font-black text-text-primary">{path.completed}/{path.books} books</span>
+                      <span className="font-bold text-text-primary">PROGRESS</span>
+                      <span className="font-black text-text-primary">
+                        {path.completed}/{path.books} books
+                      </span>
                     </div>
-                    
-                    <div className="w-full bg-white/60 rounded-full h-3 outline-bold-thin">
-                      <div 
-                        className="bg-primary-green h-3 rounded-full transition-all duration-300 shadow-[0_2px_8px_rgb(0,0,0,0.2)]"
+
+                    <div className="outline-bold-thin h-3 w-full rounded-full bg-white/60">
+                      <div
+                        className="h-3 rounded-full bg-primary-green shadow-[0_2px_8px_rgb(0,0,0,0.2)] transition-all duration-300"
                         style={{ width: `${progress}%` }}
                       />
                     </div>
                   </div>
-                  
-                  <div className="flex justify-between text-base text-text-primary font-bold">
-                    <span>{path.available}/{path.books} available</span>
+
+                  <div className="flex justify-between text-base font-bold text-text-primary">
+                    <span>
+                      {path.available}/{path.books} available
+                    </span>
                     <span>{path.estimatedTime}</span>
                   </div>
-                  
+
                   <button
                     onClick={() => handleStartPath(path.id)}
-                    className="w-full bg-primary-blue text-white font-black py-3 px-6 rounded-2xl hover:scale-105 transition-transform touch-feedback shadow-backdrop text-lg"
+                    className="touch-feedback shadow-backdrop w-full rounded-2xl bg-primary-blue px-6 py-3 text-lg font-black text-white transition-transform hover:scale-105"
                   >
                     {path.completed > 0 ? 'CONTINUE PATH' : 'START LEARNING'}
                   </button>
@@ -97,14 +105,14 @@ export const LearningPaths = () => {
           })}
         </div>
       </div>
-      
+
       {/* Decorative elements */}
-      <div className="absolute top-6 left-6 w-12 h-12 sm:w-16 sm:h-16 bg-primary-teal rounded-full opacity-25 animate-float z-0" />
-      <div className="absolute bottom-8 left-4 w-10 h-10 sm:w-14 sm:h-14 bg-primary-yellow rounded-full opacity-30 animate-float-delayed z-0" />
-      <div className="absolute top-12 left-2 w-8 h-8 sm:w-12 sm:h-12 bg-primary-blue rounded-full opacity-35 animate-float-slow z-0" />
-      <div className="absolute bottom-4 right-8 w-12 h-12 sm:w-16 sm:h-16 bg-primary-green rounded-full opacity-20 animate-float z-0" />
-      <div className="absolute top-6 right-4 w-6 h-6 sm:w-8 sm:h-8 bg-primary-orange rounded-full opacity-40 animate-float-delayed z-0" />
-      <div className="absolute bottom-12 right-2 w-10 h-10 sm:w-12 sm:h-12 bg-primary-purple rounded-full opacity-30 animate-float-slow z-0" />
+      <div className="animate-float absolute left-6 top-6 z-0 h-12 w-12 rounded-full bg-primary-teal opacity-25 sm:h-16 sm:w-16" />
+      <div className="animate-float-delayed absolute bottom-8 left-4 z-0 h-10 w-10 rounded-full bg-primary-yellow opacity-30 sm:h-14 sm:w-14" />
+      <div className="animate-float-slow absolute left-2 top-12 z-0 h-8 w-8 rounded-full bg-primary-blue opacity-35 sm:h-12 sm:w-12" />
+      <div className="animate-float absolute bottom-4 right-8 z-0 h-12 w-12 rounded-full bg-primary-green opacity-20 sm:h-16 sm:w-16" />
+      <div className="animate-float-delayed absolute right-4 top-6 z-0 h-6 w-6 rounded-full bg-primary-orange opacity-40 sm:h-8 sm:w-8" />
+      <div className="animate-float-slow absolute bottom-12 right-2 z-0 h-10 w-10 rounded-full bg-primary-purple opacity-30 sm:h-12 sm:w-12" />
     </div>
   );
-}; 
+};

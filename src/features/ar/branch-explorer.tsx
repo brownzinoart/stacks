@@ -17,11 +17,41 @@ type LibraryZone = {
 
 const mockZones: LibraryZone[] = [
   { id: 'fiction', name: 'Fiction', description: 'Novels and literature', color: 'bg-primary-blue', items: 234 },
-  { id: 'nonfiction', name: 'Non-Fiction', description: 'Biographies, history, self-help', color: 'bg-primary-green', items: 156 },
-  { id: 'reference', name: 'Reference', description: 'Encyclopedias, dictionaries', color: 'bg-primary-yellow', items: 89 },
-  { id: 'children', name: 'Children\'s Books', description: 'Books for young readers', color: 'bg-primary-pink', items: 178 },
-  { id: 'magazines', name: 'Periodicals', description: 'Magazines and newspapers', color: 'bg-primary-purple', items: 45 },
-  { id: 'computers', name: 'Computer Lab', description: 'Public computers and printers', color: 'bg-primary-teal', items: 12 },
+  {
+    id: 'nonfiction',
+    name: 'Non-Fiction',
+    description: 'Biographies, history, self-help',
+    color: 'bg-primary-green',
+    items: 156,
+  },
+  {
+    id: 'reference',
+    name: 'Reference',
+    description: 'Encyclopedias, dictionaries',
+    color: 'bg-primary-yellow',
+    items: 89,
+  },
+  {
+    id: 'children',
+    name: "Children's Books",
+    description: 'Books for young readers',
+    color: 'bg-primary-pink',
+    items: 178,
+  },
+  {
+    id: 'magazines',
+    name: 'Periodicals',
+    description: 'Magazines and newspapers',
+    color: 'bg-primary-purple',
+    items: 45,
+  },
+  {
+    id: 'computers',
+    name: 'Computer Lab',
+    description: 'Public computers and printers',
+    color: 'bg-primary-teal',
+    items: 12,
+  },
 ];
 
 export const BranchExplorer = () => {
@@ -33,26 +63,27 @@ export const BranchExplorer = () => {
     console.log('Selected zone:', zoneId);
   };
 
-  const selectedZoneData = mockZones.find(zone => zone.id === selectedZone);
+  const selectedZoneData = mockZones.find((zone) => zone.id === selectedZone);
 
   return (
-    <div className="bg-primary-teal rounded-3xl p-8 sm:p-12 shadow-[0_10px_40px_rgb(0,0,0,0.3)] relative overflow-hidden pop-element-lg">
-      <div className="space-y-6 sm:space-y-8 relative z-10">
+    <div className="pop-element-lg relative overflow-hidden rounded-3xl bg-primary-teal p-8 shadow-[0_10px_40px_rgb(0,0,0,0.3)] sm:p-12">
+      <div className="relative z-10 space-y-6 sm:space-y-8">
         <div>
-          <h2 className="text-huge font-black text-text-primary leading-extra-tight mb-4 sm:mb-6">
-            <span className="text-primary-orange">EXPLORE</span><br />
+          <h2 className="mb-4 text-huge font-black leading-extra-tight text-text-primary sm:mb-6">
+            <span className="text-primary-orange">EXPLORE</span>
+            <br />
             <span className="text-mega">LIBRARY</span>
           </h2>
         </div>
-        
+
         <div className="grid gap-6 lg:grid-cols-2">
           {/* Interactive Floor Plan */}
-          <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 outline-bold-thin">
-            <h3 className="font-black text-text-primary text-lg mb-4">FLOOR PLAN</h3>
-            
-            <div className="relative bg-white/60 rounded-2xl p-4 h-64 outline-bold-thin">
+          <div className="outline-bold-thin rounded-2xl bg-white/80 p-6 backdrop-blur-sm">
+            <h3 className="mb-4 text-lg font-black text-text-primary">FLOOR PLAN</h3>
+
+            <div className="outline-bold-thin relative h-64 rounded-2xl bg-white/60 p-4">
               {/* Simple floor plan representation */}
-              <div className="relative w-full h-full border-2 border-text-primary rounded-xl">
+              <div className="relative h-full w-full rounded-xl border-2 border-text-primary">
                 {/* Library zones as interactive areas */}
                 {mockZones.map((zone, index) => {
                   const isSelected = selectedZone === zone.id;
@@ -60,8 +91,8 @@ export const BranchExplorer = () => {
                     <button
                       key={zone.id}
                       onClick={() => handleZoneSelect(zone.id)}
-                      className={`absolute ${zone.color} opacity-70 hover:opacity-90 transition-all duration-300 rounded-lg cursor-pointer ${
-                        isSelected ? 'ring-4 ring-primary-orange ring-offset-2 shadow-backdrop' : ''
+                      className={`absolute ${zone.color} cursor-pointer rounded-lg opacity-70 transition-all duration-300 hover:opacity-90 ${
+                        isSelected ? 'shadow-backdrop ring-4 ring-primary-orange ring-offset-2' : ''
                       }`}
                       style={{
                         left: `${(index % 3) * 30 + 10}%`,
@@ -72,85 +103,85 @@ export const BranchExplorer = () => {
                     />
                   );
                 })}
-                
+
                 {/* Entrance marker */}
-                <div className="absolute bottom-2 left-1/2 transform -translate-x-1/2 bg-primary-orange text-white text-xs px-3 py-1 rounded-full font-black shadow-backdrop">
+                <div className="shadow-backdrop absolute bottom-2 left-1/2 -translate-x-1/2 transform rounded-full bg-primary-orange px-3 py-1 text-xs font-black text-white">
                   ENTRANCE
                 </div>
               </div>
             </div>
-            
-            <p className="text-base sm:text-lg text-text-primary font-bold mt-4">
+
+            <p className="mt-4 text-base font-bold text-text-primary sm:text-lg">
               Tap zones to see details and get directions
             </p>
           </div>
-          
+
           {/* Zone Information */}
-          <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 outline-bold-thin">
-            <h3 className="font-black text-text-primary text-lg mb-4">ZONE INFORMATION</h3>
-            
+          <div className="outline-bold-thin rounded-2xl bg-white/80 p-6 backdrop-blur-sm">
+            <h3 className="mb-4 text-lg font-black text-text-primary">ZONE INFORMATION</h3>
+
             {selectedZoneData ? (
               <div className="space-y-6">
                 <div className="flex items-center gap-4">
-                  <div className={`w-6 h-6 rounded-full ${selectedZoneData.color} shadow-backdrop`} />
-                  <h4 className="font-black text-text-primary text-xl">{selectedZoneData.name}</h4>
+                  <div className={`h-6 w-6 rounded-full ${selectedZoneData.color} shadow-backdrop`} />
+                  <h4 className="text-xl font-black text-text-primary">{selectedZoneData.name}</h4>
                 </div>
-                
-                <p className="text-base sm:text-lg text-text-primary font-bold">{selectedZoneData.description}</p>
-                
-                <div className="bg-white/60 p-4 rounded-2xl outline-bold-thin">
-                  <div className="flex justify-between items-center">
-                    <span className="text-base sm:text-lg text-text-primary font-bold">Available items</span>
-                    <span className="font-black text-text-primary text-xl">{selectedZoneData.items}</span>
+
+                <p className="text-base font-bold text-text-primary sm:text-lg">{selectedZoneData.description}</p>
+
+                <div className="outline-bold-thin rounded-2xl bg-white/60 p-4">
+                  <div className="flex items-center justify-between">
+                    <span className="text-base font-bold text-text-primary sm:text-lg">Available items</span>
+                    <span className="text-xl font-black text-text-primary">{selectedZoneData.items}</span>
                   </div>
                 </div>
-                
-                <button className="w-full bg-primary-orange text-white font-black py-3 px-6 rounded-2xl hover:scale-105 transition-transform touch-feedback shadow-backdrop text-lg">
+
+                <button className="touch-feedback shadow-backdrop w-full rounded-2xl bg-primary-orange px-6 py-3 text-lg font-black text-white transition-transform hover:scale-105">
                   🧭 GET DIRECTIONS
                 </button>
               </div>
             ) : (
-              <div className="text-center py-8">
-                <div className="text-6xl sm:text-8xl mb-6">🗺️</div>
-                <p className="text-base sm:text-lg text-text-primary font-bold">
+              <div className="py-8 text-center">
+                <div className="mb-6 text-6xl sm:text-8xl">🗺️</div>
+                <p className="text-base font-bold text-text-primary sm:text-lg">
                   Select a zone on the floor plan to see details
                 </p>
               </div>
             )}
           </div>
         </div>
-        
+
         {/* Zone List */}
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {mockZones.map((zone) => (
             <button
               key={zone.id}
               onClick={() => handleZoneSelect(zone.id)}
-              className={`p-6 rounded-2xl border-2 transition-all duration-300 text-left hover:scale-105 ${
+              className={`rounded-2xl border-2 p-6 text-left transition-all duration-300 hover:scale-105 ${
                 selectedZone === zone.id
-                  ? 'border-primary-orange bg-primary-orange/10 shadow-backdrop'
-                  : 'border-text-primary hover:border-primary-orange bg-white/80 backdrop-blur-sm'
+                  ? 'shadow-backdrop border-primary-orange bg-primary-orange/10'
+                  : 'border-text-primary bg-white/80 backdrop-blur-sm hover:border-primary-orange'
               }`}
             >
               <div className="flex items-center gap-4">
-                <div className={`w-4 h-4 rounded-full ${zone.color} shadow-backdrop`} />
+                <div className={`h-4 w-4 rounded-full ${zone.color} shadow-backdrop`} />
                 <div>
-                  <h4 className="font-black text-text-primary text-base">{zone.name}</h4>
-                  <p className="text-sm text-text-primary font-bold">{zone.items} items</p>
+                  <h4 className="text-base font-black text-text-primary">{zone.name}</h4>
+                  <p className="text-sm font-bold text-text-primary">{zone.items} items</p>
                 </div>
               </div>
             </button>
           ))}
         </div>
       </div>
-      
+
       {/* Decorative elements */}
-      <div className="absolute top-6 left-6 w-12 h-12 sm:w-16 sm:h-16 bg-primary-yellow rounded-full opacity-25 animate-float z-0" />
-      <div className="absolute bottom-8 left-4 w-10 h-10 sm:w-14 sm:h-14 bg-primary-pink rounded-full opacity-30 animate-float-delayed z-0" />
-      <div className="absolute top-12 left-2 w-8 h-8 sm:w-12 sm:h-12 bg-primary-blue rounded-full opacity-35 animate-float-slow z-0" />
-      <div className="absolute bottom-4 right-8 w-12 h-12 sm:w-16 sm:h-16 bg-primary-green rounded-full opacity-20 animate-float z-0" />
-      <div className="absolute top-6 right-4 w-6 h-6 sm:w-8 sm:h-8 bg-primary-orange rounded-full opacity-40 animate-float-delayed z-0" />
-      <div className="absolute bottom-12 right-2 w-10 h-10 sm:w-12 sm:h-12 bg-primary-purple rounded-full opacity-30 animate-float-slow z-0" />
+      <div className="animate-float absolute left-6 top-6 z-0 h-12 w-12 rounded-full bg-primary-yellow opacity-25 sm:h-16 sm:w-16" />
+      <div className="animate-float-delayed absolute bottom-8 left-4 z-0 h-10 w-10 rounded-full bg-primary-pink opacity-30 sm:h-14 sm:w-14" />
+      <div className="animate-float-slow absolute left-2 top-12 z-0 h-8 w-8 rounded-full bg-primary-blue opacity-35 sm:h-12 sm:w-12" />
+      <div className="animate-float absolute bottom-4 right-8 z-0 h-12 w-12 rounded-full bg-primary-green opacity-20 sm:h-16 sm:w-16" />
+      <div className="animate-float-delayed absolute right-4 top-6 z-0 h-6 w-6 rounded-full bg-primary-orange opacity-40 sm:h-8 sm:w-8" />
+      <div className="animate-float-slow absolute bottom-12 right-2 z-0 h-10 w-10 rounded-full bg-primary-purple opacity-30 sm:h-12 sm:w-12" />
     </div>
   );
-}; 
+};

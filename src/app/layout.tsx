@@ -33,4 +33,4 @@ const RootLayout = ({ children }: RootLayoutProps) => {
   );
 };
 
-export default RootLayout; 
+export default RootLayout;

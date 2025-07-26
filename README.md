@@ -13,6 +13,7 @@ A modern, AI-powered library discovery platform that transforms how users find a
 ### Installation
 
 1. **Clone and install dependencies:**
+
    ```bash
    git clone <repository-url>
    cd stacks_app
@@ -20,6 +21,7 @@ A modern, AI-powered library discovery platform that transforms how users find a
    ```
 
 2. **Set up environment variables:**
+
    ```bash
    cp .env.example .env.local
    # Edit .env.local with your actual API keys and configuration
@@ -56,6 +58,7 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 ## 🏗️ Architecture
 
 ### Frontend Structure
+
 ```
 src/
 ├── app/                    # Next.js App Router pages
@@ -72,6 +75,7 @@ src/
 ```
 
 ### Backend Structure
+
 ```
 api/
 └── server.js             # Fastify API server with health checks
@@ -80,6 +84,7 @@ api/
 ## 🎯 Features
 
 ### Current (v0.1)
+
 - ✅ **Responsive Navigation** - Tab-based navigation between main sections
 - ✅ **Home Dashboard** - AI prompt input, recent searches, reading queue, streak tracking
 - ✅ **Explore & Learn** - Topic search, learning paths, branch availability
@@ -89,6 +94,7 @@ api/
 - ✅ **API Gateway** - Fastify backend with health checks
 
 ### Planned Features
+
 - 🔄 **AI Recommendations** - GPT-4o powered mood-based book suggestions
 - 🔄 **Vector Search** - Semantic book discovery using embeddings
 - 🔄 **AR Shelf Scanning** - WebXR book identification and "borrow me" overlays
@@ -122,16 +128,19 @@ npm run start            # Start production server
 ## 🎨 Design System
 
 ### Colors
+
 - **Background Primary**: `#FBF7F4` - Warm, library-inspired base
 - **Card Yellow**: `#FFE15A` - Highlight color for important elements
 - **Accent Blue**: `#3B82F6` - Interactive elements and CTAs
 
 ### Typography
+
 - **Font**: Inter with OpenType features
 - **Scale**: Tailwind's default type scale
 - **Line Height**: Optimized for reading
 
 ### Components
+
 - **Cards**: `rounded-card` (24px) with subtle shadows
 - **Buttons**: Consistent padding, hover states, disabled states
 - **Forms**: Focus rings, proper labeling, error states
@@ -139,13 +148,17 @@ npm run start            # Start production server
 ## 🔧 Configuration
 
 ### Environment Variables
+
 See `.env.example` for all required environment variables including:
+
 - Supabase database and auth configuration
 - AI API keys (OpenAI, Anthropic, Google)
 - External service keys (WorldCat, Listen Notes, Mapbox)
 
 ### Database Schema
+
 The Supabase schema includes:
+
 - **Books & Embeddings** - Book catalog with vector search capability
 - **User Management** - Profiles, queues, reading streaks
 - **Learning Paths** - Curated book collections
@@ -154,12 +167,14 @@ The Supabase schema includes:
 ## 🧪 Testing
 
 ### Playwright E2E Tests
+
 - **Smoke Tests** - Basic page loading and navigation
 - **Accessibility** - WCAG compliance checks
 - **User Flows** - Critical path testing
 - **Cross-browser** - Chrome, Firefox, Safari, Mobile
 
 Run tests:
+
 ```bash
 npm run test                    # Headless mode
 npm run test:headed            # With browser UI
@@ -169,6 +184,7 @@ npm run test:ui                # Interactive test runner
 ## 📱 Progressive Web App
 
 Stacks is designed as a PWA with:
+
 - **Offline Support** - Cached pages and offline UI
 - **App-like Experience** - Can be installed on mobile devices
 - **Fast Loading** - Optimized for 3G networks (FMP ≤ 1.8s)
@@ -176,11 +192,13 @@ Stacks is designed as a PWA with:
 ## 🚀 Deployment
 
 ### Vercel (Recommended)
+
 1. Connect your GitHub repository to Vercel
 2. Set environment variables in Vercel dashboard
 3. Deploy automatically on push to main
 
 ### Manual Deployment
+
 ```bash
 npm run build
 npm run start
@@ -189,6 +207,7 @@ npm run start
 ## 🤝 Contributing
 
 ### Commit Convention
+
 We use [Conventional Commits](https://conventionalcommits.org/):
 
 ```bash
@@ -202,6 +221,7 @@ chore: update dependencies
 ```
 
 ### Code Quality
+
 - **TypeScript** - Strict mode enabled
 - **ESLint** - Next.js + TypeScript rules
 - **Prettier** - Consistent code formatting
@@ -214,10 +234,11 @@ This project is licensed under the MIT License.
 ## 🙋‍♂️ Support
 
 For questions or issues:
+
 1. Check the existing GitHub issues
 2. Create a new issue with detailed description
 3. Include browser/device information for bugs
 
 ---
 
-Built with ❤️ for modern library users everywhere. 
+Built with ❤️ for modern library users everywhere.

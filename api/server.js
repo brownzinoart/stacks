@@ -7,27 +7,27 @@ const fastify = require('fastify')({ logger: true });
 
 // Health check route
 fastify.get('/health', async (request, reply) => {
-  return { 
-    status: 'ok', 
+  return {
+    status: 'ok',
     timestamp: new Date().toISOString(),
     service: 'stacks-api',
-    version: '0.1.0'
+    version: '0.1.0',
   };
 });
 
 // API routes placeholder
 fastify.register(async function (fastify) {
   // TODO: Add authentication routes
-  // TODO: Add book search routes  
+  // TODO: Add book search routes
   // TODO: Add AI recommendation routes
   // TODO: Add queue management routes
   // TODO: Add reading streak routes
-  
+
   fastify.get('/api/books/search', async (request, reply) => {
     // Placeholder for book search
     return { books: [], total: 0, query: request.query.q };
   });
-  
+
   fastify.get('/api/recommendations', async (request, reply) => {
     // Placeholder for AI recommendations
     return { recommendations: [], mood: request.query.mood };
@@ -37,9 +37,9 @@ fastify.register(async function (fastify) {
 // Error handling
 fastify.setErrorHandler((error, request, reply) => {
   fastify.log.error(error);
-  reply.status(500).send({ 
+  reply.status(500).send({
     error: 'Internal Server Error',
-    message: process.env.NODE_ENV === 'development' ? error.message : 'Something went wrong'
+    message: process.env.NODE_ENV === 'development' ? error.message : 'Something went wrong',
   });
 });
 
@@ -47,7 +47,7 @@ fastify.setErrorHandler((error, request, reply) => {
 if (process.env.NODE_ENV === 'development') {
   fastify.register(require('@fastify/cors'), {
     origin: ['http://localhost:3000', 'http://127.0.0.1:3000'],
-    credentials: true
+    credentials: true,
   });
 }
 
@@ -56,7 +56,7 @@ const start = async () => {
   try {
     const port = process.env.PORT || 3001;
     const host = process.env.HOST || '0.0.0.0';
-    
+
     await fastify.listen({ port, host });
     fastify.log.info(`Stacks API server listening on http://${host}:${port}`);
   } catch (err) {
@@ -75,4 +75,4 @@ signals.forEach((signal) => {
   });
 });
 
-start(); 
+start();

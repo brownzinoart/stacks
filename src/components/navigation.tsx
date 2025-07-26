@@ -22,11 +22,14 @@ export const Navigation = () => {
     <nav className="bg-white shadow-card">
       <div className="mx-auto max-w-7xl px-8">
         <div className="flex h-24 items-center justify-between">
-          <Link href="/home" className="text-3xl font-black text-text-primary tracking-super-tight hover:scale-105 transition-transform duration-300">
+          <Link
+            href="/home"
+            className="text-3xl font-black tracking-super-tight text-text-primary transition-transform duration-300 hover:scale-105"
+          >
             STACKS
           </Link>
-          
-          <div className="hidden md:flex items-center space-x-3">
+
+          <div className="hidden items-center space-x-3 md:flex">
             {navigationItems.map((item) => {
               const isActive = pathname === item.href;
               return (
@@ -34,7 +37,7 @@ export const Navigation = () => {
                   key={item.name}
                   href={item.href as any}
                   className={clsx(
-                    'px-8 py-4 rounded-pill font-black text-lg transition-all duration-300 hover:scale-105',
+                    'rounded-pill px-8 py-4 text-lg font-black transition-all duration-300 hover:scale-105',
                     isActive
                       ? 'bg-text-primary text-white shadow-card'
                       : 'text-text-secondary hover:bg-primary-yellow hover:text-text-primary hover:shadow-card'
@@ -45,29 +48,23 @@ export const Navigation = () => {
               );
             })}
           </div>
-          
+
           {/* Profile Picture */}
-          <button 
-            className="w-16 h-16 rounded-full overflow-hidden border-4 border-primary-orange shadow-card hover:scale-105 transition-transform duration-300 hover:shadow-card-hover"
+          <button
+            className="h-16 w-16 overflow-hidden rounded-full border-4 border-primary-orange shadow-card transition-transform duration-300 hover:scale-105 hover:shadow-card-hover"
             onClick={() => {
               // TODO: Navigate to user settings/profile page
               window.location.href = '/settings';
             }}
           >
-            <img 
-              src="/avatar.png" 
-              alt="Profile" 
-              className="w-full h-full object-cover"
-            />
+            <img src="/avatar.png" alt="Profile" className="h-full w-full object-cover" />
           </button>
-          
-
         </div>
       </div>
-      
+
       {/* Mobile navigation */}
-      <div className="md:hidden border-t border-gray-200">
-        <div className="grid grid-cols-3 bg-white px-6 py-4 gap-2">
+      <div className="border-t border-gray-200 md:hidden">
+        <div className="grid grid-cols-3 gap-2 bg-white px-6 py-4">
           {navigationItems.map((item) => {
             const isActive = pathname === item.href;
             return (
@@ -75,16 +72,16 @@ export const Navigation = () => {
                 key={item.name}
                 href={item.href as any}
                 className={clsx(
-                  'flex flex-col items-center py-4 px-3 text-xs font-black transition-all duration-300 rounded-xl',
-                  isActive
-                    ? 'text-text-primary bg-primary-yellow shadow-card'
-                    : 'text-text-secondary hover:bg-gray-100'
+                  'flex flex-col items-center rounded-xl px-3 py-4 text-xs font-black transition-all duration-300',
+                  isActive ? 'bg-primary-yellow text-text-primary shadow-card' : 'text-text-secondary hover:bg-gray-100'
                 )}
               >
-                <div className={clsx(
-                  'w-8 h-8 rounded-full mb-2 transition-all duration-300',
-                  isActive ? 'bg-text-primary scale-110' : 'bg-gray-300'
-                )} />
+                <div
+                  className={clsx(
+                    'mb-2 h-8 w-8 rounded-full transition-all duration-300',
+                    isActive ? 'scale-110 bg-text-primary' : 'bg-gray-300'
+                  )}
+                />
                 <span className="uppercase">{item.name}</span>
               </Link>
             );
@@ -93,4 +90,4 @@ export const Navigation = () => {
       </div>
     </nav>
   );
-}; 
+};

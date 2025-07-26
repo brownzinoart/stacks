@@ -61,10 +61,7 @@ export interface ReadingStreak {
 }
 
 // Utility functions for vector similarity search
-export const searchBooksByEmbedding = async (
-  queryEmbedding: number[],
-  limit = 10
-) => {
+export const searchBooksByEmbedding = async (queryEmbedding: number[], limit = 10) => {
   const { data, error } = await supabase.rpc('match_books', {
     query_embedding: queryEmbedding,
     match_threshold: 0.7,
@@ -102,13 +99,9 @@ export const addToQueue = async (userId: string, bookId: string, branchId?: stri
 };
 
 // Reading streak tracking
-export const logReadingProgress = async (
-  userId: string,
-  pagesRead: number,
-  goalPages = 10
-) => {
+export const logReadingProgress = async (userId: string, pagesRead: number, goalPages = 10) => {
   const today = new Date().toISOString().split('T')[0];
-  
+
   const { data, error } = await supabase
     .from('reading_streaks')
     .upsert({
@@ -126,4 +119,4 @@ export const logReadingProgress = async (
   }
 
   return data;
-}; 
+};

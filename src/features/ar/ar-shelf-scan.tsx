@@ -16,7 +16,7 @@ export const ARShelfScan = () => {
       // TODO: Implement WebXR initialization
       console.log('Starting AR shelf scan...');
       setIsARActive(true);
-      
+
       // Simulate AR session
       setTimeout(() => {
         setIsARActive(false);
@@ -35,111 +35,115 @@ export const ARShelfScan = () => {
 
   if (!isARSupported) {
     return (
-      <div className="bg-primary-purple rounded-3xl p-8 sm:p-12 shadow-[0_10px_40px_rgb(0,0,0,0.3)] relative overflow-hidden pop-element-lg">
-        <div className="space-y-6 sm:space-y-8 relative z-10">
-          <div className="text-center space-y-6">
+      <div className="pop-element-lg relative overflow-hidden rounded-3xl bg-primary-purple p-8 shadow-[0_10px_40px_rgb(0,0,0,0.3)] sm:p-12">
+        <div className="relative z-10 space-y-6 sm:space-y-8">
+          <div className="space-y-6 text-center">
             <div className="text-6xl sm:text-8xl">📱</div>
-            <h2 className="text-huge font-black text-text-primary leading-extra-tight">
-              <span className="text-primary-yellow">AR NOT</span><br />
+            <h2 className="text-huge font-black leading-extra-tight text-text-primary">
+              <span className="text-primary-yellow">AR NOT</span>
+              <br />
               <span className="text-mega">SUPPORTED</span>
             </h2>
-            <p className="text-lg sm:text-xl text-text-primary font-bold">
-              Your device doesn&apos;t support AR features.<br />
+            <p className="text-lg font-bold text-text-primary sm:text-xl">
+              Your device doesn&apos;t support AR features.
+              <br />
               Try using a modern mobile browser.
             </p>
           </div>
         </div>
-        
+
         {/* Decorative elements */}
-        <div className="absolute top-6 left-6 w-12 h-12 sm:w-16 sm:h-16 bg-primary-teal rounded-full opacity-25 animate-float z-0" />
-        <div className="absolute bottom-8 left-4 w-10 h-10 sm:w-14 sm:h-14 bg-primary-pink rounded-full opacity-30 animate-float-delayed z-0" />
-        <div className="absolute top-12 left-2 w-8 h-8 sm:w-12 sm:h-12 bg-primary-blue rounded-full opacity-35 animate-float-slow z-0" />
-        <div className="absolute bottom-4 right-8 w-12 h-12 sm:w-16 sm:h-16 bg-primary-green rounded-full opacity-20 animate-float z-0" />
-        <div className="absolute top-6 right-4 w-6 h-6 sm:w-8 sm:h-8 bg-primary-orange rounded-full opacity-40 animate-float-delayed z-0" />
-        <div className="absolute bottom-12 right-2 w-10 h-10 sm:w-12 sm:h-12 bg-primary-yellow rounded-full opacity-30 animate-float-slow z-0" />
+        <div className="animate-float absolute left-6 top-6 z-0 h-12 w-12 rounded-full bg-primary-teal opacity-25 sm:h-16 sm:w-16" />
+        <div className="animate-float-delayed absolute bottom-8 left-4 z-0 h-10 w-10 rounded-full bg-primary-pink opacity-30 sm:h-14 sm:w-14" />
+        <div className="animate-float-slow absolute left-2 top-12 z-0 h-8 w-8 rounded-full bg-primary-blue opacity-35 sm:h-12 sm:w-12" />
+        <div className="animate-float absolute bottom-4 right-8 z-0 h-12 w-12 rounded-full bg-primary-green opacity-20 sm:h-16 sm:w-16" />
+        <div className="animate-float-delayed absolute right-4 top-6 z-0 h-6 w-6 rounded-full bg-primary-orange opacity-40 sm:h-8 sm:w-8" />
+        <div className="animate-float-slow absolute bottom-12 right-2 z-0 h-10 w-10 rounded-full bg-primary-yellow opacity-30 sm:h-12 sm:w-12" />
       </div>
     );
   }
 
   return (
-    <div className="bg-primary-purple rounded-3xl p-8 sm:p-12 shadow-[0_10px_40px_rgb(0,0,0,0.3)] relative overflow-hidden pop-element-lg">
-      <div className="space-y-6 sm:space-y-8 relative z-10">
+    <div className="pop-element-lg relative overflow-hidden rounded-3xl bg-primary-purple p-8 shadow-[0_10px_40px_rgb(0,0,0,0.3)] sm:p-12">
+      <div className="relative z-10 space-y-6 sm:space-y-8">
         <div>
-          <h2 className="text-huge font-black text-text-primary leading-extra-tight mb-4 sm:mb-6">
-            <span className="text-primary-yellow">AR SHELF</span><br />
+          <h2 className="mb-4 text-huge font-black leading-extra-tight text-text-primary sm:mb-6">
+            <span className="text-primary-yellow">AR SHELF</span>
+            <br />
             <span className="text-mega">SCANNER</span>
           </h2>
         </div>
-        
+
         {!isARActive ? (
           <div className="space-y-6">
-            <div className="text-center space-y-6">
+            <div className="space-y-6 text-center">
               <div className="text-6xl sm:text-8xl">📚</div>
-              <p className="text-lg sm:text-xl text-text-primary font-bold">
-                Point your camera at library shelves to see<br />
+              <p className="text-lg font-bold text-text-primary sm:text-xl">
+                Point your camera at library shelves to see
+                <br />
                 interactive book information
               </p>
             </div>
-            
-            <div className="bg-white/80 backdrop-blur-sm p-6 rounded-2xl outline-bold-thin">
-              <h3 className="font-black text-text-primary text-lg mb-4">HOW IT WORKS:</h3>
-              <ul className="text-base sm:text-lg text-text-primary font-bold space-y-3">
+
+            <div className="outline-bold-thin rounded-2xl bg-white/80 p-6 backdrop-blur-sm">
+              <h3 className="mb-4 text-lg font-black text-text-primary">HOW IT WORKS:</h3>
+              <ul className="space-y-3 text-base font-bold text-text-primary sm:text-lg">
                 <li className="flex items-center gap-3">
-                  <span className="text-primary-green text-xl">•</span>
+                  <span className="text-xl text-primary-green">•</span>
                   Books will highlight when available to borrow
                 </li>
                 <li className="flex items-center gap-3">
-                  <span className="text-primary-green text-xl">•</span>
+                  <span className="text-xl text-primary-green">•</span>
                   Tap highlighted books for details and instant reservation
                 </li>
                 <li className="flex items-center gap-3">
-                  <span className="text-primary-green text-xl">•</span>
+                  <span className="text-xl text-primary-green">•</span>
                   See real-time availability and recommendations
                 </li>
               </ul>
             </div>
-            
+
             <button
               onClick={startARScan}
-              className="w-full bg-primary-green text-text-primary font-black py-4 px-8 rounded-2xl hover:scale-105 transition-transform touch-feedback shadow-backdrop text-lg"
+              className="touch-feedback shadow-backdrop w-full rounded-2xl bg-primary-green px-8 py-4 text-lg font-black text-text-primary transition-transform hover:scale-105"
             >
               🔍 START AR SCAN
             </button>
           </div>
         ) : (
           <div className="space-y-6">
-            <div className="text-center space-y-6">
+            <div className="space-y-6 text-center">
               <div className="animate-pulse text-6xl sm:text-8xl">📹</div>
-              <p className="font-black text-text-primary text-xl">AR SCANNER ACTIVE</p>
-              <p className="text-lg sm:text-xl text-text-primary font-bold">
+              <p className="text-xl font-black text-text-primary">AR SCANNER ACTIVE</p>
+              <p className="text-lg font-bold text-text-primary sm:text-xl">
                 Move your camera around to scan book spines
               </p>
             </div>
-            
-            <div className="bg-primary-green/20 backdrop-blur-sm p-6 rounded-2xl outline-bold-thin">
+
+            <div className="outline-bold-thin rounded-2xl bg-primary-green/20 p-6 backdrop-blur-sm">
               <div className="flex items-center gap-4">
-                <span className="w-4 h-4 bg-primary-green rounded-full animate-pulse" />
+                <span className="h-4 w-4 animate-pulse rounded-full bg-primary-green" />
                 <span className="text-lg font-black text-text-primary">SCANNING FOR BOOKS...</span>
               </div>
             </div>
-            
+
             <button
               onClick={stopARScan}
-              className="w-full bg-primary-orange text-white font-black py-4 px-8 rounded-2xl hover:scale-105 transition-transform touch-feedback shadow-backdrop text-lg"
+              className="touch-feedback shadow-backdrop w-full rounded-2xl bg-primary-orange px-8 py-4 text-lg font-black text-white transition-transform hover:scale-105"
             >
               ⏹️ STOP AR SCAN
             </button>
           </div>
         )}
       </div>
-      
+
       {/* Decorative elements */}
-      <div className="absolute top-6 left-6 w-12 h-12 sm:w-16 sm:h-16 bg-primary-teal rounded-full opacity-25 animate-float z-0" />
-      <div className="absolute bottom-8 left-4 w-10 h-10 sm:w-14 sm:h-14 bg-primary-pink rounded-full opacity-30 animate-float-delayed z-0" />
-      <div className="absolute top-12 left-2 w-8 h-8 sm:w-12 sm:h-12 bg-primary-blue rounded-full opacity-35 animate-float-slow z-0" />
-      <div className="absolute bottom-4 right-8 w-12 h-12 sm:w-16 sm:h-16 bg-primary-green rounded-full opacity-20 animate-float z-0" />
-      <div className="absolute top-6 right-4 w-6 h-6 sm:w-8 sm:h-8 bg-primary-orange rounded-full opacity-40 animate-float-delayed z-0" />
-      <div className="absolute bottom-12 right-2 w-10 h-10 sm:w-12 sm:h-12 bg-primary-yellow rounded-full opacity-30 animate-float-slow z-0" />
+      <div className="animate-float absolute left-6 top-6 z-0 h-12 w-12 rounded-full bg-primary-teal opacity-25 sm:h-16 sm:w-16" />
+      <div className="animate-float-delayed absolute bottom-8 left-4 z-0 h-10 w-10 rounded-full bg-primary-pink opacity-30 sm:h-14 sm:w-14" />
+      <div className="animate-float-slow absolute left-2 top-12 z-0 h-8 w-8 rounded-full bg-primary-blue opacity-35 sm:h-12 sm:w-12" />
+      <div className="animate-float absolute bottom-4 right-8 z-0 h-12 w-12 rounded-full bg-primary-green opacity-20 sm:h-16 sm:w-16" />
+      <div className="animate-float-delayed absolute right-4 top-6 z-0 h-6 w-6 rounded-full bg-primary-orange opacity-40 sm:h-8 sm:w-8" />
+      <div className="animate-float-slow absolute bottom-12 right-2 z-0 h-10 w-10 rounded-full bg-primary-yellow opacity-30 sm:h-12 sm:w-12" />
     </div>
   );
-}; 
+};

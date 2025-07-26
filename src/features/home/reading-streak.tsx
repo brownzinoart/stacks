@@ -11,8 +11,8 @@ import dayjs from 'dayjs';
 
 const initialReadingPlan = {
   currentBook: {
-    title: "The Seven Husbands of Evelyn Hugo",
-    author: "Taylor Jenkins Reid",
+    title: 'The Seven Husbands of Evelyn Hugo',
+    author: 'Taylor Jenkins Reid',
     totalPages: 400,
     pagesRead: 120,
     dueDate: dayjs().add(15, 'day').format('YYYY-MM-DD'), // 15 days from now
@@ -33,7 +33,7 @@ export const ReadingStreak = () => {
     author: '',
     totalPages: '',
     dueDate: '',
-    isLibraryBook: false
+    isLibraryBook: false,
   });
 
   // Calculate derived values
@@ -65,84 +65,82 @@ export const ReadingStreak = () => {
   };
 
   return (
-    <div className="bg-primary-purple rounded-3xl p-8 sm:p-12 shadow-[0_10px_40px_rgb(0,0,0,0.3)] relative overflow-hidden pop-element-lg">
-      <div className="space-y-6 sm:space-y-8 relative z-10">
+    <div className="pop-element-lg relative overflow-hidden rounded-3xl bg-primary-purple p-8 shadow-[0_10px_40px_rgb(0,0,0,0.3)] sm:p-12">
+      <div className="relative z-10 space-y-6 sm:space-y-8">
         <div className="relative">
           {/* Status Badge */}
-          <div className={`absolute -top-2 -right-2 px-3 py-1 rounded-full text-xs font-black shadow-backdrop z-10 ${
-            isOnTrack 
-              ? 'bg-primary-green text-white' 
-              : 'bg-primary-orange text-white'
-          }`}>
+          <div
+            className={`shadow-backdrop absolute -right-2 -top-2 z-10 rounded-full px-3 py-1 text-xs font-black ${
+              isOnTrack ? 'bg-primary-green text-white' : 'bg-primary-orange text-white'
+            }`}
+          >
             {isOnTrack ? 'ON TRACK!' : 'CATCH UP!'}
           </div>
 
-          <h1 className="text-huge font-black text-text-primary leading-extra-tight mb-4 sm:mb-6">
-            <span className="text-primary-yellow">READING</span><br />
+          <h1 className="mb-4 text-huge font-black leading-extra-tight text-text-primary sm:mb-6">
+            <span className="text-primary-yellow">READING</span>
+            <br />
             <span className="text-mega">PLAN</span>
           </h1>
 
           {/* Simple Book Card with External Link */}
           <div className="mb-6">
-            <div className="text-right mb-2">
+            <div className="mb-2 text-right">
               <button
                 onClick={() => setShowAddBookForm(!showAddBookForm)}
-                className="text-primary-blue font-black text-sm hover:text-primary-blue/80 transition-colors"
+                className="text-sm font-black text-primary-blue transition-colors hover:text-primary-blue/80"
               >
                 + Start new book
               </button>
             </div>
-            
-            <div className="bg-white/20 backdrop-blur-sm rounded-2xl p-6 sm:p-8 outline-bold-thin">
+
+            <div className="outline-bold-thin rounded-2xl bg-white/20 p-6 backdrop-blur-sm sm:p-8">
               <div className="flex items-start gap-4 sm:gap-6">
-                <BookCover 
-                  title={readingPlan.currentBook.title} 
-                  author={readingPlan.currentBook.author} 
-                  className="w-16 h-24 sm:w-20 sm:h-28"
+                <BookCover
+                  title={readingPlan.currentBook.title}
+                  author={readingPlan.currentBook.author}
+                  className="h-24 w-16 sm:h-28 sm:w-20"
                 />
-                
-                <div className="flex-1 min-w-0">
-                  <h3 className="font-black text-text-primary text-lg sm:text-xl leading-tight mb-2">
+
+                <div className="min-w-0 flex-1">
+                  <h3 className="mb-2 text-lg font-black leading-tight text-text-primary sm:text-xl">
                     {readingPlan.currentBook.title}
                   </h3>
-                  <p className="text-text-secondary text-sm sm:text-base font-bold">
-                    {readingPlan.currentBook.author}
-                  </p>
+                  <p className="text-sm font-bold text-text-secondary sm:text-base">{readingPlan.currentBook.author}</p>
                 </div>
               </div>
             </div>
           </div>
 
           {/* At-a-Glance Metrics */}
-          <div className="grid grid-cols-2 gap-4 mb-6">
-            <div className="bg-primary-orange text-white rounded-2xl p-4 text-center shadow-backdrop">
-              <div className="text-2xl sm:text-3xl font-black">{daysRemaining}</div>
-              <div className="text-xs sm:text-sm font-bold uppercase">Days Left to Return</div>
+          <div className="mb-6 grid grid-cols-2 gap-4">
+            <div className="shadow-backdrop rounded-2xl bg-primary-orange p-4 text-center text-white">
+              <div className="text-2xl font-black sm:text-3xl">{daysRemaining}</div>
+              <div className="text-xs font-bold uppercase sm:text-sm">Days Left to Return</div>
             </div>
-            <div className="bg-primary-yellow text-text-primary rounded-2xl p-4 text-center shadow-backdrop">
-              <div className="text-2xl sm:text-3xl font-black">{averagePagesPerDay}</div>
-              <div className="text-xs sm:text-sm font-bold uppercase">Pages per Day</div>
+            <div className="shadow-backdrop rounded-2xl bg-primary-yellow p-4 text-center text-text-primary">
+              <div className="text-2xl font-black sm:text-3xl">{averagePagesPerDay}</div>
+              <div className="text-xs font-bold uppercase sm:text-sm">Pages per Day</div>
             </div>
           </div>
-
-
         </div>
 
         {/* Overall Progress */}
         <div className="space-y-3 sm:space-y-4">
-          <div className="flex justify-between items-end">
-            <span className="text-text-primary font-bold text-base sm:text-lg">Book Progress</span>
+          <div className="flex items-end justify-between">
+            <span className="text-base font-bold text-text-primary sm:text-lg">Book Progress</span>
             <div className="text-right">
-              <div className="text-xl sm:text-2xl font-black text-text-primary">
-                {pagesRead}<span className="text-lg">/{totalPages}</span>
+              <div className="text-xl font-black text-text-primary sm:text-2xl">
+                {pagesRead}
+                <span className="text-lg">/{totalPages}</span>
               </div>
               <div className="text-sm font-bold text-text-primary/80">pages read</div>
             </div>
           </div>
-          
-          <div className="w-full bg-white/50 rounded-full h-3 sm:h-4 shadow-inner">
+
+          <div className="h-3 w-full rounded-full bg-white/50 shadow-inner sm:h-4">
             <div
-              className="bg-primary-green h-3 sm:h-4 rounded-full transition-all duration-500 shadow-[0_2px_8px_rgb(0,0,0,0.2)]"
+              className="h-3 rounded-full bg-primary-green shadow-[0_2px_8px_rgb(0,0,0,0.2)] transition-all duration-500 sm:h-4"
               style={{ width: `${Math.min(progressPercentage, 100)}%` }}
             />
           </div>
@@ -150,51 +148,52 @@ export const ReadingStreak = () => {
 
         {/* Today's Progress */}
         <div className="space-y-3 sm:space-y-4">
-          <div className="flex justify-between items-end">
-            <span className="text-text-primary font-bold text-base sm:text-lg">Today&apos;s Progress</span>
+          <div className="flex items-end justify-between">
+            <span className="text-base font-bold text-text-primary sm:text-lg">Today&apos;s Progress</span>
             <div className="text-right">
-              <div className="text-xl sm:text-2xl font-black text-text-primary">
-                {todayPagesRead}<span className="text-lg">/{averagePagesPerDay}</span>
+              <div className="text-xl font-black text-text-primary sm:text-2xl">
+                {todayPagesRead}
+                <span className="text-lg">/{averagePagesPerDay}</span>
               </div>
               <div className="text-sm font-bold text-text-primary/80">pages today</div>
             </div>
           </div>
-          
-          <div className="w-full bg-white/50 rounded-full h-3 sm:h-4 shadow-inner">
+
+          <div className="h-3 w-full rounded-full bg-white/50 shadow-inner sm:h-4">
             <div
-              className="bg-primary-teal h-3 sm:h-4 rounded-full transition-all duration-500 shadow-[0_2px_8px_rgb(0,0,0,0.2)]"
+              className="h-3 rounded-full bg-primary-teal shadow-[0_2px_8px_rgb(0,0,0,0.2)] transition-all duration-500 sm:h-4"
               style={{ width: `${Math.min(todayProgress, 100)}%` }}
             />
           </div>
-          
+
           {todayPagesRead >= averagePagesPerDay ? (
-            <div className="bg-primary-green text-text-primary px-4 sm:px-6 py-2 sm:py-3 rounded-full text-center shadow-backdrop">
-              <span className="text-base sm:text-lg font-black">AVERAGE BEATEN!</span>
+            <div className="shadow-backdrop rounded-full bg-primary-green px-4 py-2 text-center text-text-primary sm:px-6 sm:py-3">
+              <span className="text-base font-black sm:text-lg">AVERAGE BEATEN!</span>
             </div>
           ) : (
-            <p className="text-base sm:text-lg text-text-primary font-bold text-center">
+            <p className="text-center text-base font-bold text-text-primary sm:text-lg">
               Just {averagePagesPerDay - todayPagesRead} more pages to hit average!
             </p>
           )}
         </div>
 
-                {/* Quick Log Buttons */}
+        {/* Quick Log Buttons */}
         <div className="flex gap-2">
           <button
             onClick={() => handleQuickLog(5)}
-            className="flex-1 bg-white/80 text-text-primary px-3 py-2 rounded-full text-sm font-bold hover:scale-105 transition-transform touch-feedback"
+            className="touch-feedback flex-1 rounded-full bg-white/80 px-3 py-2 text-sm font-bold text-text-primary transition-transform hover:scale-105"
           >
             +5 PAGES
           </button>
           <button
             onClick={() => handleQuickLog(10)}
-            className="flex-1 bg-white/80 text-text-primary px-3 py-2 rounded-full text-sm font-bold hover:scale-105 transition-transform touch-feedback"
+            className="touch-feedback flex-1 rounded-full bg-white/80 px-3 py-2 text-sm font-bold text-text-primary transition-transform hover:scale-105"
           >
             +10 PAGES
           </button>
           <button
             onClick={() => setShowLogForm(!showLogForm)}
-            className="flex-1 bg-white/80 text-text-primary px-3 py-2 rounded-full text-sm font-bold hover:scale-105 transition-transform touch-feedback"
+            className="touch-feedback flex-1 rounded-full bg-white/80 px-3 py-2 text-sm font-bold text-text-primary transition-transform hover:scale-105"
           >
             +CUSTOM
           </button>
@@ -202,22 +201,22 @@ export const ReadingStreak = () => {
 
         {/* Custom Log Form */}
         {showLogForm && (
-          <div className="bg-white/90 rounded-2xl p-4 sm:p-6 outline-bold-thin animate-fade-in-up mt-4">
-            <h4 className="font-black text-text-primary text-base sm:text-lg mb-3">Log Pages Read</h4>
+          <div className="outline-bold-thin animate-fade-in-up mt-4 rounded-2xl bg-white/90 p-4 sm:p-6">
+            <h4 className="mb-3 text-base font-black text-text-primary sm:text-lg">Log Pages Read</h4>
             <div className="flex gap-3">
               <input
                 type="number"
                 value={pagesToLog}
                 onChange={(e) => setPagesToLog(e.target.value)}
                 placeholder="Pages read..."
-                className="flex-1 px-4 py-2 rounded-full bg-white/80 text-text-primary font-bold text-center outline-bold-thin"
+                className="outline-bold-thin flex-1 rounded-full bg-white/80 px-4 py-2 text-center font-bold text-text-primary"
                 min="1"
                 max="100"
               />
               <button
                 onClick={handleLogPages}
                 disabled={!pagesToLog || isLogging}
-                className="bg-primary-blue text-white px-6 py-2 rounded-full font-black text-sm hover:scale-105 transition-transform touch-feedback disabled:opacity-50"
+                className="touch-feedback rounded-full bg-primary-blue px-6 py-2 text-sm font-black text-white transition-transform hover:scale-105 disabled:opacity-50"
               >
                 {isLogging ? 'LOGGING...' : 'LOG'}
               </button>
@@ -227,46 +226,46 @@ export const ReadingStreak = () => {
 
         {/* Add Book Form */}
         {showAddBookForm && (
-          <div className="bg-white/95 rounded-2xl p-6 outline-bold-thin animate-fade-in-up">
-            <h4 className="font-black text-text-primary text-xl mb-4">Start Your Reading Journey</h4>
+          <div className="outline-bold-thin animate-fade-in-up rounded-2xl bg-white/95 p-6">
+            <h4 className="mb-4 text-xl font-black text-text-primary">Start Your Reading Journey</h4>
             <div className="space-y-4">
               <input
                 type="text"
                 value={newBook.title}
-                onChange={(e) => setNewBook({...newBook, title: e.target.value})}
+                onChange={(e) => setNewBook({ ...newBook, title: e.target.value })}
                 placeholder="What book are you reading?"
-                className="w-full px-4 py-3 rounded-full bg-white text-text-primary font-bold outline-bold-thin"
+                className="outline-bold-thin w-full rounded-full bg-white px-4 py-3 font-bold text-text-primary"
               />
               <input
                 type="text"
                 value={newBook.author}
-                onChange={(e) => setNewBook({...newBook, author: e.target.value})}
+                onChange={(e) => setNewBook({ ...newBook, author: e.target.value })}
                 placeholder="Who's the author?"
-                className="w-full px-4 py-3 rounded-full bg-white text-text-primary font-bold outline-bold-thin"
+                className="outline-bold-thin w-full rounded-full bg-white px-4 py-3 font-bold text-text-primary"
               />
               <div className="grid grid-cols-2 gap-3">
                 <input
                   type="number"
                   value={newBook.totalPages}
-                  onChange={(e) => setNewBook({...newBook, totalPages: e.target.value})}
+                  onChange={(e) => setNewBook({ ...newBook, totalPages: e.target.value })}
                   placeholder="Total pages"
-                  className="px-4 py-3 rounded-full bg-white text-text-primary font-bold text-center outline-bold-thin"
+                  className="outline-bold-thin rounded-full bg-white px-4 py-3 text-center font-bold text-text-primary"
                 />
                 <input
                   type="date"
                   value={newBook.dueDate}
-                  onChange={(e) => setNewBook({...newBook, dueDate: e.target.value})}
-                  className="px-4 py-3 rounded-full bg-white text-text-primary font-bold text-center outline-bold-thin"
+                  onChange={(e) => setNewBook({ ...newBook, dueDate: e.target.value })}
+                  className="outline-bold-thin rounded-full bg-white px-4 py-3 text-center font-bold text-text-primary"
                 />
               </div>
-              <div className="flex items-center gap-3 bg-white px-4 py-3 rounded-full">
+              <div className="flex items-center gap-3 rounded-full bg-white px-4 py-3">
                 <input
                   type="checkbox"
                   checked={newBook.isLibraryBook}
-                  onChange={(e) => setNewBook({...newBook, isLibraryBook: e.target.checked})}
-                  className="w-5 h-5 accent-primary-blue"
+                  onChange={(e) => setNewBook({ ...newBook, isLibraryBook: e.target.checked })}
+                  className="h-5 w-5 accent-primary-blue"
                 />
-                <label className="text-text-primary font-bold">This is a library book with a due date</label>
+                <label className="font-bold text-text-primary">This is a library book with a due date</label>
               </div>
               <div className="flex gap-3 pt-2">
                 <button
@@ -274,15 +273,15 @@ export const ReadingStreak = () => {
                     // TODO: Implement add book functionality
                     console.log('Adding book:', newBook);
                     setShowAddBookForm(false);
-                    setNewBook({title: '', author: '', totalPages: '', dueDate: '', isLibraryBook: false});
+                    setNewBook({ title: '', author: '', totalPages: '', dueDate: '', isLibraryBook: false });
                   }}
-                  className="flex-1 bg-primary-green text-white px-6 py-3 rounded-full font-black text-lg hover:scale-105 transition-transform touch-feedback"
+                  className="touch-feedback flex-1 rounded-full bg-primary-green px-6 py-3 text-lg font-black text-white transition-transform hover:scale-105"
                 >
                   START READING
                 </button>
                 <button
                   onClick={() => setShowAddBookForm(false)}
-                  className="px-6 py-3 rounded-full font-black text-lg border-2 border-text-primary text-text-primary hover:scale-105 transition-transform touch-feedback"
+                  className="touch-feedback rounded-full border-2 border-text-primary px-6 py-3 text-lg font-black text-text-primary transition-transform hover:scale-105"
                 >
                   CANCEL
                 </button>
@@ -291,14 +290,14 @@ export const ReadingStreak = () => {
           </div>
         )}
       </div>
-      
+
       {/* Decorative elements */}
-      <div className="absolute top-4 left-6 w-14 h-14 sm:w-18 sm:h-18 bg-primary-teal rounded-full opacity-25 animate-float z-0" />
-      <div className="absolute bottom-6 right-6 w-10 h-10 sm:w-14 sm:h-14 bg-primary-pink rounded-full opacity-30 animate-float-delayed z-0" />
-      <div className="absolute top-8 right-4 w-8 h-8 sm:w-12 sm:h-12 bg-primary-orange rounded-full opacity-35 animate-float-slow z-0" />
-      <div className="absolute bottom-8 left-4 w-12 h-12 sm:w-16 sm:h-16 bg-primary-blue rounded-full opacity-20 animate-float z-0" />
-      <div className="absolute top-2 right-2 w-6 h-6 sm:w-8 sm:h-8 bg-primary-green rounded-full opacity-40 animate-float-delayed z-0" />
-      <div className="absolute bottom-4 left-2 w-10 h-10 sm:w-12 sm:h-12 bg-primary-purple rounded-full opacity-30 animate-float-slow z-0" />
+      <div className="sm:w-18 sm:h-18 animate-float absolute left-6 top-4 z-0 h-14 w-14 rounded-full bg-primary-teal opacity-25" />
+      <div className="animate-float-delayed absolute bottom-6 right-6 z-0 h-10 w-10 rounded-full bg-primary-pink opacity-30 sm:h-14 sm:w-14" />
+      <div className="animate-float-slow absolute right-4 top-8 z-0 h-8 w-8 rounded-full bg-primary-orange opacity-35 sm:h-12 sm:w-12" />
+      <div className="animate-float absolute bottom-8 left-4 z-0 h-12 w-12 rounded-full bg-primary-blue opacity-20 sm:h-16 sm:w-16" />
+      <div className="animate-float-delayed absolute right-2 top-2 z-0 h-6 w-6 rounded-full bg-primary-green opacity-40 sm:h-8 sm:w-8" />
+      <div className="animate-float-slow absolute bottom-4 left-2 z-0 h-10 w-10 rounded-full bg-primary-purple opacity-30 sm:h-12 sm:w-12" />
     </div>
   );
-}; 
+};

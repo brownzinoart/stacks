@@ -1,9 +1,16 @@
-"use client";
+'use client';
 
 import { useRouter } from 'next/navigation';
 import { useEffect, useState, useRef } from 'react';
 import { BookCover } from '@/components/book-cover';
+import { BookFlipbookCustom3D } from '@/components/book-flipbook-custom-3d';
+import { BookDetailsModal } from '@/components/book-details-modal';
+import { Navigation } from '@/components/navigation';
+import { SimilarityBadge } from '@/components/similarity-badge';
+import { LibraryAvailability } from '@/components/library-availability';
 import axios from 'axios';
+import { hapticFeedback, isMobile } from '@/lib/mobile-utils';
+import { readingHistory, type SimilarityScore } from '@/lib/reading-history';
 
 const getQueue = () => {
   try {
@@ -18,79 +25,62 @@ const setQueue = (queue: any[]) => {
 
 const isRealCoverUrl = (url: string) => url && url.startsWith('http');
 
-const fetchOpenLibraryBackCover = async (title: string, author: string) => {
-  try {
-    const url = `https://openlibrary.org/search.json?title=${encodeURIComponent(title)}&author=${encodeURIComponent(author)}&limit=1`;
-    const res = await axios.get(url);
-    const doc = res.data.docs && res.data.docs[0];
-    if (!doc) return null;
-    let backCover = null;
-    if (doc.cover_edition_key) {
-      backCover = `https://covers.openlibrary.org/b/olid/${doc.cover_edition_key}-L.jpg?default=false&back=true`;
-    }
-    return { backCover };
-  } catch {
-    return null;
-  }
-};
-
-// Barcode SVG for back cover
-const Barcode = () => (
-  <svg width="80" height="32" viewBox="0 0 80 32" fill="none" xmlns="http://www.w3.org/2000/svg" className="mt-4">
-    <rect x="0" y="0" width="80" height="32" rx="4" fill="#fff" />
-    <rect x="6" y="6" width="2" height="20" fill="#222" />
-    <rect x="10" y="6" width="1" height="20" fill="#222" />
-    <rect x="13" y="6" width="3" height="20" fill="#222" />
-    <rect x="18" y="6" width="2" height="20" fill="#222" />
-    <rect x="22" y="6" width="1" height="20" fill="#222" />
-    <rect x="25" y="6" width="2" height="20" fill="#222" />
-    <rect x="29" y="6" width="1" height="20" fill="#222" />
-    <rect x="32" y="6" width="3" height="20" fill="#222" />
-    <rect x="37" y="6" width="2" height="20" fill="#222" />
-    <rect x="41" y="6" width="1" height="20" fill="#222" />
-    <rect x="44" y="6" width="2" height="20" fill="#222" />
-    <rect x="48" y="6" width="1" height="20" fill="#222" />
-    <rect x="51" y="6" width="3" height="20" fill="#222" />
-    <rect x="56" y="6" width="2" height="20" fill="#222" />
-    <rect x="60" y="6" width="1" height="20" fill="#222" />
-    <rect x="63" y="6" width="2" height="20" fill="#222" />
-    <rect x="67" y="6" width="1" height="20" fill="#222" />
-    <rect x="70" y="6" width="3" height="20" fill="#222" />
-    <rect x="75" y="6" width="2" height="20" fill="#222" />
-  </svg>
-);
+// Book data fetching moved to BookDetails3D component
 
 const StacksRecommendationsPage = () => {
   const router = useRouter();
   const [books, setBooks] = useState<any[]>([]);
+  const [categories, setCategories] = useState<any[]>([]);
+  const [activeCategory, setActiveCategory] = useState('all');
   const [userInput, setUserInput] = useState('');
   const [searchValue, setSearchValue] = useState('');
-  const [added, setAdded] = useState<{[key: number]: boolean}>({});
-  const [borrowed, setBorrowed] = useState<{[key: number]: boolean}>({});
-  const [showModal, setShowModal] = useState(false);
-  const [modalBook, setModalBook] = useState<any>(null);
-  const [coverUrls, setCoverUrls] = useState<{[key: number]: string}>({});
-  const [flip, setFlip] = useState(false);
-  const [backCover, setBackCover] = useState<string | null>(null);
-  const cardRef = useRef<HTMLDivElement>(null);
+  const [added, setAdded] = useState<{ [key: number]: boolean }>({});
+  const [borrowed, setBorrowed] = useState<{ [key: number]: boolean }>({});
+  const [showFlipbook, setShowFlipbook] = useState(false);
+  const [flipbookBook, setFlipbookBook] = useState<any>(null);
+  const [showBookDetails, setShowBookDetails] = useState(false);
+  const [detailsBook, setDetailsBook] = useState<any>(null);
+  const [coverUrls, setCoverUrls] = useState<{ [key: number]: string }>({});
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [pullDistance, setPullDistance] = useState(0);
+  const [similarityScores, setSimilarityScores] = useState<{ [key: number]: SimilarityScore }>({});
+  const startY = useRef<number | null>(null);
 
-  // Load books and userInput from localStorage on mount
+  // Load recommendations from localStorage on mount
   useEffect(() => {
     const data = localStorage.getItem('stacks_recommendations');
     if (data) {
       try {
         const parsed = JSON.parse(data);
-        setBooks(parsed.books || []);
         setUserInput(parsed.userInput || '');
         setSearchValue(parsed.userInput || '');
-      } catch {}
+
+        // Handle new categorized format
+        if (parsed.categories) {
+          setCategories(parsed.categories);
+          // Flatten all books for display with category info
+          const allBooks = parsed.categories.flatMap((cat: any, catIdx: number) =>
+            cat.books.map((book: any, bookIdx: number) => ({
+              ...book,
+              category: cat.name,
+              globalIdx: catIdx * 10 + bookIdx, // Unique index across categories
+            }))
+          );
+          setBooks(allBooks);
+        } else {
+          // Fallback for old format
+          setBooks(parsed.books || []);
+        }
+      } catch {
+        console.error('Failed to parse recommendations data');
+      }
     }
   }, []);
 
   // Update 'added' state when books change
   useEffect(() => {
     const queue = getQueue();
-    const addedState: {[key: number]: boolean} = {};
+    const addedState: { [key: number]: boolean } = {};
     books.forEach((book, idx) => {
       if (queue.find((b: any) => b.title === book.title && b.author === book.author)) {
         addedState[idx] = true;
@@ -99,76 +89,144 @@ const StacksRecommendationsPage = () => {
     setAdded(addedState);
   }, [books]);
 
-  // Fetch OpenLibrary covers for books missing real covers
+  // Calculate similarity scores for all books
+  useEffect(() => {
+    const scores: { [key: number]: SimilarityScore } = {};
+    books.forEach((book, idx) => {
+      const similarity = readingHistory.calculateSimilarity({
+        title: book.title,
+        author: book.author,
+        genres: book.genres,
+        topics: book.topics
+      });
+      scores[idx] = similarity;
+    });
+    setSimilarityScores(scores);
+  }, [books]);
+
+  // Books should already have covers from pre-fetch, but we'll still check for any missing ones
   useEffect(() => {
     const fetchCovers = async () => {
-      const updates: {[key: number]: string} = {};
-      await Promise.all(books.map(async (book, idx) => {
-        if (book.cover && book.cover.startsWith('http')) return;
-        if (!book.title || !book.author) return;
-        try {
-          const url = `https://openlibrary.org/search.json?title=${encodeURIComponent(book.title)}&author=${encodeURIComponent(book.author)}&limit=1`;
-          const res = await axios.get(url);
-          const doc = res.data.docs && res.data.docs[0];
-          if (doc && doc.cover_i) {
-            updates[idx] = `https://covers.openlibrary.org/b/id/${doc.cover_i}-L.jpg`;
-          }
-        } catch {}
-      }));
+      const updates: { [key: number]: string } = {};
+      const booksNeedingCovers: Array<{ book: any; idx: number }> = [];
+      
+      // Find books that don't have covers
+      books.forEach((book, idx) => {
+        if (!book.cover || !book.cover.startsWith('http')) {
+          booksNeedingCovers.push({ book, idx });
+        }
+      });
+      
+      if (booksNeedingCovers.length === 0) return;
+      
+      // Use our enhanced cover service for remaining books
+      const { bookCoverService } = await import('@/lib/book-cover-service');
+      const coverResults = await bookCoverService.getBatchCovers(
+        booksNeedingCovers.map(item => item.book)
+      );
+      
+      booksNeedingCovers.forEach((item, resultIdx) => {
+        const coverResult = coverResults.get(resultIdx);
+        if (coverResult && coverResult.url && !coverResult.url.startsWith('gradient:')) {
+          updates[item.idx] = coverResult.url;
+        }
+      });
+      
       if (Object.keys(updates).length > 0) {
-        setCoverUrls(prev => ({ ...prev, ...updates }));
+        setCoverUrls((prev) => ({ ...prev, ...updates }));
       }
     };
+    
     if (books.length > 0) fetchCovers();
   }, [books]);
 
-  const handleAddToQueue = (book: any, idx: number) => {
+  const handleAddToQueue = async (book: any, idx: number) => {
     const queue = getQueue();
     if (!queue.find((b: any) => b.title === book.title && b.author === book.author)) {
       queue.push(book);
       setQueue(queue);
       setAdded((prev) => ({ ...prev, [idx]: true }));
+      // Add haptic feedback on mobile
+      if (isMobile()) {
+        await hapticFeedback('medium');
+      }
     }
   };
 
-  const handleBorrow = (idx: number) => {
+  const handleBorrow = async (book: any, idx: number) => {
     setBorrowed((prev) => ({ ...prev, [idx]: true }));
+    
+    // Add to reading history
+    readingHistory.addToHistory({
+      title: book.title,
+      author: book.author,
+      genres: book.genres,
+      topics: book.topics
+    });
+    
+    // Recalculate similarity scores after adding to history
+    const updatedScores: { [key: number]: SimilarityScore } = {};
+    books.forEach((b, i) => {
+      const similarity = readingHistory.calculateSimilarity({
+        title: b.title,
+        author: b.author,
+        genres: b.genres,
+        topics: b.topics
+      });
+      updatedScores[i] = similarity;
+    });
+    setSimilarityScores(updatedScores);
+    
     setTimeout(() => setBorrowed((prev) => ({ ...prev, [idx]: false })), 1500);
-  };
-
-  const handleLearnMore = async (book: any) => {
-    setModalBook(book);
-    setShowModal(true);
-    setFlip(false);
-    setBackCover(null);
-    // Try to fetch back cover only
-    const data = await fetchOpenLibraryBackCover(book.title, book.author);
-    if (data) {
-      setBackCover(data.backCover);
+    // Add haptic feedback on mobile
+    if (isMobile()) {
+      await hapticFeedback('medium');
     }
   };
 
-  // Swipe/drag handler for flip
-  const startX = useRef<number | null>(null);
+  const handleBookDetails = async (book: any, idx: number) => {
+    setDetailsBook(book);
+    setShowBookDetails(true);
+    // Add haptic feedback on mobile
+    if (isMobile()) {
+      await hapticFeedback('light');
+    }
+  };
+
+  const handleBookCoverClick = async (book: any, idx: number) => {
+    setFlipbookBook(book);
+    setShowFlipbook(true);
+    // Add haptic feedback on mobile
+    if (isMobile()) {
+      await hapticFeedback('medium');
+    }
+  };
+
+  // Touch handlers for pull-to-refresh
   const handleTouchStart = (e: React.TouchEvent) => {
-    startX.current = e.touches[0].clientX;
-  };
-  const handleTouchEnd = (e: React.TouchEvent) => {
-    if (startX.current !== null) {
-      const dx = e.changedTouches[0].clientX - startX.current;
-      if (Math.abs(dx) > 60) setFlip(f => !f);
-      startX.current = null;
+    if (window.scrollY === 0 && e.touches[0]) {
+      startY.current = e.touches[0].clientY;
     }
   };
-  const handleMouseDown = (e: React.MouseEvent) => {
-    startX.current = e.clientX;
-  };
-  const handleMouseUp = (e: React.MouseEvent) => {
-    if (startX.current !== null) {
-      const dx = e.clientX - startX.current;
-      if (Math.abs(dx) > 60) setFlip(f => !f);
-      startX.current = null;
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (startY.current === null || !e.touches[0]) return;
+    const currentY = e.touches[0].clientY;
+    const distance = currentY - startY.current;
+    if (distance > 0 && distance < 150) {
+      setPullDistance(distance);
     }
+  };
+
+  const handleTouchEnd = () => {
+    if (pullDistance > 80) {
+      setIsRefreshing(true);
+      setPullDistance(0);
+      window.location.reload();
+    } else {
+      setPullDistance(0);
+    }
+    startY.current = null;
   };
 
   const handleSearch = (e: React.FormEvent) => {
@@ -179,159 +237,405 @@ const StacksRecommendationsPage = () => {
   };
 
   return (
-    <div className="relative min-h-screen bg-bg-light flex flex-col items-center py-12 px-4">
-      {/* Decorative elements */}
-      <div className="absolute top-4 left-6 w-14 h-14 sm:w-18 sm:h-18 bg-primary-teal rounded-full opacity-25 animate-float z-0" />
-      <div className="absolute bottom-6 right-6 w-10 h-10 sm:w-14 sm:h-14 bg-primary-pink rounded-full opacity-30 animate-float-delayed z-0" />
-      <div className="absolute top-8 right-4 w-8 h-8 sm:w-12 sm:h-12 bg-primary-orange rounded-full opacity-35 animate-float-slow z-0" />
-      <div className="absolute bottom-8 left-4 w-12 h-12 sm:w-16 sm:h-16 bg-primary-blue rounded-full opacity-20 animate-float z-0" />
-      <div className="absolute top-2 right-2 w-6 h-6 sm:w-8 h-8 bg-primary-green rounded-full opacity-40 animate-float-delayed z-0" />
-      <div className="absolute bottom-4 left-2 w-10 h-10 sm:w-12 sm:h-12 bg-primary-purple rounded-full opacity-30 animate-float-slow z-0" />
-
-      <div className="relative z-10 w-full max-w-2xl mx-auto">
-        <h1 className="text-huge font-black text-text-primary leading-extra-tight mb-6">
-          <span className="text-primary-yellow">STACKS</span><br />
-          <span className="text-mega">RECOMMENDATIONS</span>
-        </h1>
-        {/* Search box for refinement */}
-        <form onSubmit={handleSearch} className="mb-8 flex gap-4 items-center">
-          <input
-            type="text"
-            value={searchValue}
-            onChange={e => setSearchValue(e.target.value)}
-            className="flex-1 px-6 py-4 rounded-full bg-white outline-bold-thin text-text-primary font-bold text-lg shadow-backdrop"
-            placeholder="Refine your search..."
-          />
-          <button type="submit" className="bg-primary-blue text-white px-6 py-4 rounded-full font-black text-lg hover:scale-105 transition-transform touch-feedback">
-            Search
+    <div className="min-h-screen bg-bg-light">
+      <Navigation />
+      
+      {/* Breadcrumb Navigation */}
+      <div className="mx-auto max-w-7xl px-4 py-4">
+        <div className="flex items-center gap-2 text-sm text-text-secondary">
+          <button 
+            onClick={() => router.push('/home')}
+            className="hover:text-primary-blue transition-colors"
+          >
+            Home
           </button>
-        </form>
-        <div className="space-y-6">
-          {books.map((book, idx) => (
-            <div key={idx} className="bg-white/90 rounded-3xl p-6 shadow-[0_10px_40px_rgb(0,0,0,0.15)] flex gap-8 items-start outline-bold-thin hover:scale-[1.01] transition-all duration-300 relative">
-              {/* Prominent Book Cover: use real cover if available */}
-              <div className="flex-shrink-0">
-                <BookCover title={book.title} author={book.author} coverUrl={book.cover && book.cover.startsWith('http') ? book.cover : coverUrls[idx]} className="w-32 h-44 sm:w-40 sm:h-56 shadow-[0_8px_30px_rgb(0,0,0,0.25)] border-4 border-primary-blue outline-bold-lg" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <h2 className="text-xl sm:text-2xl font-black text-text-primary mb-1">{book.title}</h2>
-                <p className="text-text-secondary text-base sm:text-lg font-bold mb-2">{book.author}</p>
-                <p className="text-text-primary/80 text-base mb-3">{book.why}</p>
-                <div className="flex gap-3 flex-wrap">
-                  <button
-                    className={`bg-primary-green text-white px-4 py-2 rounded-full font-bold text-sm hover:scale-105 transition-transform ${added[idx] ? 'bg-primary-blue' : ''}`}
-                    onClick={() => handleAddToQueue(book, idx)}
-                    disabled={added[idx]}
-                  >
-                    {added[idx] ? 'Added!' : 'Add to Queue'}
-                  </button>
-                  <button
-                    className={`bg-primary-yellow text-text-primary px-4 py-2 rounded-full font-bold text-sm hover:scale-105 transition-transform ${borrowed[idx] ? 'bg-primary-green' : ''}`}
-                    onClick={() => handleBorrow(idx)}
-                    disabled={borrowed[idx]}
-                  >
-                    {borrowed[idx] ? 'Borrowed!' : 'Borrow Book'}
-                  </button>
-                  <button
-                    className="bg-primary-blue text-white px-4 py-2 rounded-full font-bold text-sm hover:scale-105 transition-transform"
-                    onClick={() => handleLearnMore(book)}
-                  >
-                    Learn More
-                  </button>
-                </div>
-              </div>
-            </div>
-          ))}
+          <span>›</span>
+          <span className="text-text-primary font-semibold">Recommendations</span>
+          {userInput && (
+            <>
+              <span>›</span>
+              <span className="text-text-primary truncate max-w-[200px]">{userInput}</span>
+            </>
+          )}
         </div>
       </div>
 
-      {/* Modal for Learn More */}
-      {showModal && modalBook && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(4px)' }}>
-          <div className="relative w-[420px] sm:w-[540px] h-[640px] sm:h-[800px] flex items-center justify-center animate-float-book">
-            <button className="absolute top-4 right-4 z-20 text-2xl font-black text-primary-blue hover:scale-110" onClick={() => setShowModal(false)}>&times;</button>
-            <div
-              ref={cardRef}
-              className={`relative w-full h-full perspective-1200`}
-              onTouchStart={handleTouchStart}
-              onTouchEnd={handleTouchEnd}
-              onMouseDown={handleMouseDown}
-              onMouseUp={handleMouseUp}
-              style={{ cursor: 'grab' }}
+      <div
+        className="relative flex flex-col items-center px-4 pb-12"
+        onTouchStart={isMobile() ? handleTouchStart : undefined}
+        onTouchMove={isMobile() ? handleTouchMove : undefined}
+        onTouchEnd={isMobile() ? handleTouchEnd : undefined}
+      >
+      {/* Pull to refresh indicator */}
+      {pullDistance > 0 && (
+        <div
+          className="fixed left-0 right-0 top-0 z-50 flex items-center justify-center transition-all"
+          style={{
+            height: `${Math.min(pullDistance, 100)}px`,
+            opacity: Math.min(pullDistance / 100, 1),
+          }}
+        >
+          <div
+            className={`h-8 w-8 animate-spin rounded-full border-b-2 border-primary-blue ${pullDistance > 80 ? 'border-primary-green' : ''}`}
+          ></div>
+        </div>
+      )}
+      {/* Decorative elements */}
+      <div className="sm:w-18 sm:h-18 animate-float absolute left-6 top-4 z-0 h-14 w-14 rounded-full bg-primary-teal opacity-25" />
+      <div className="animate-float-delayed absolute bottom-6 right-6 z-0 h-10 w-10 rounded-full bg-primary-pink opacity-30 sm:h-14 sm:w-14" />
+      <div className="animate-float-slow absolute right-4 top-8 z-0 h-8 w-8 rounded-full bg-primary-orange opacity-35 sm:h-12 sm:w-12" />
+      <div className="animate-float absolute bottom-8 left-4 z-0 h-12 w-12 rounded-full bg-primary-blue opacity-20 sm:h-16 sm:w-16" />
+      <div className="animate-float-delayed absolute right-2 top-2 z-0 h-6 h-8 w-6 rounded-full bg-primary-green opacity-40 sm:w-8" />
+      <div className="animate-float-slow absolute bottom-4 left-2 z-0 h-10 w-10 rounded-full bg-primary-purple opacity-30 sm:h-12 sm:w-12" />
+
+      <div className="relative z-10 mx-auto w-full max-w-2xl">
+        <h1 className="mb-6 text-4xl font-black leading-extra-tight text-text-primary sm:text-huge">
+          <span className="text-primary-yellow">STACKS</span>
+          <br />
+          <span className="text-3xl sm:text-mega">RECOMMENDATIONS</span>
+        </h1>
+        {/* Enhanced reprompt section */}
+        <div
+          className={`${isMobile() ? 'sticky top-0 z-40 -mx-4 mb-4 bg-bg-light/95 px-4 py-4 shadow-lg backdrop-blur-lg' : 'mb-8'}`}
+        >
+          {userInput && (
+            <div className="mb-3">
+              <p className="mb-1 text-sm font-semibold text-text-secondary">Your original prompt:</p>
+              <div className="inline-block rounded-full bg-white/50 px-4 py-2">
+                <span className="font-bold text-text-primary">{userInput}</span>
+              </div>
+            </div>
+          )}
+          <form onSubmit={handleSearch} className="flex items-center gap-2 sm:gap-4">
+            <div className="flex-1">
+              <input
+                type="text"
+                value={searchValue}
+                onChange={(e) => setSearchValue(e.target.value)}
+                className="outline-bold-thin shadow-backdrop w-full rounded-full bg-white px-4 py-3 text-base font-bold text-text-primary sm:px-6 sm:py-4 sm:text-lg"
+                placeholder="Edit your prompt or try something new..."
+              />
+            </div>
+            <button
+              type="submit"
+              className="touch-none rounded-full bg-primary-blue px-5 py-3 text-base font-black text-white transition-transform hover:scale-105 active:scale-95 sm:px-6 sm:py-4 sm:text-lg"
+              onClick={() => isMobile() && hapticFeedback('medium')}
             >
-              <div
-                className={`absolute w-full h-full transition-transform duration-[1200ms] [transform-style:preserve-3d] ${flip ? 'rotate-y-180' : ''}`}
-                style={{ willChange: 'transform' }}
+              Update
+            </button>
+          </form>
+          <p className="mt-2 px-2 text-xs text-text-secondary">
+            💡 Tip: Try different angles like &quot;books with similar plot twists&quot; or &quot;same emotional
+            journey&quot;
+          </p>
+        </div>
+
+        {/* Category filter pills */}
+        {categories.length > 0 && (
+          <div className="mb-6">
+            <div className="scrollbar-hide flex gap-2 overflow-x-auto pb-2">
+              <button
+                onClick={() => setActiveCategory('all')}
+                className={`touch-none whitespace-nowrap rounded-full px-4 py-2 font-bold transition-all ${
+                  activeCategory === 'all'
+                    ? 'scale-105 bg-primary-blue text-white'
+                    : 'bg-white hover:scale-105 active:scale-95'
+                }`}
               >
-                {/* Spine and page edge */}
-                <div className="absolute left-0 top-0 w-8 h-full bg-gradient-to-b from-primary-blue via-primary-purple to-primary-blue rounded-l-2xl shadow-lg z-10" style={{ zIndex: 2, filter: 'blur(0.5px)', opacity: 0.85 }} />
-                <div className="absolute right-0 top-0 w-3 h-full bg-gradient-to-b from-white/80 via-white/60 to-white/90 rounded-r-2xl z-10 opacity-80" style={{ zIndex: 2 }} />
-                {/* Front: Real book cover */}
-                <div className="absolute w-full h-full [backface-visibility:hidden] flex flex-col items-center justify-center bg-gradient-to-br from-white via-primary-blue/5 to-white rounded-3xl shadow-2xl" style={{ boxShadow: '0 16px 64px 0 rgba(0,0,0,0.45)' }}>
-                  {(() => {
-                    let coverUrl = undefined;
-                    if (modalBook.cover && modalBook.cover.startsWith('http')) {
-                      coverUrl = modalBook.cover;
-                    } else if (books && modalBook) {
-                      const idx = books.findIndex(b => b.title === modalBook.title && b.author === modalBook.author);
-                      if (idx >= 0 && coverUrls && coverUrls[idx]) {
-                        coverUrl = coverUrls[idx];
-                      }
-                    }
+                All Categories
+              </button>
+              {categories.map((cat: any) => (
+                <button
+                  key={cat.name}
+                  onClick={() => {
+                    setActiveCategory(cat.name);
+                    if (isMobile()) hapticFeedback('light');
+                  }}
+                  className={`touch-none whitespace-nowrap rounded-full px-4 py-2 font-bold transition-all ${
+                    activeCategory === cat.name
+                      ? 'scale-105 bg-primary-blue text-white'
+                      : 'bg-white hover:scale-105 active:scale-95'
+                  }`}
+                >
+                  {cat.name}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Category sections display */}
+        {categories.length > 0 && activeCategory === 'all' ? (
+          // Show all categories as sections
+          <div className="space-y-12">
+            {categories.map((category: any, catIdx: number) => (
+              <div key={catIdx} className="space-y-6">
+                <div className="mb-4 border-l-4 border-primary-blue pl-4">
+                  <h2 className="mb-2 text-2xl font-black text-text-primary sm:text-3xl">{category.name}</h2>
+                  <p className="text-base text-text-secondary">{category.description}</p>
+                </div>
+                <div className="space-y-6">
+                  {category.books.map((book: any, bookIdx: number) => {
+                    const globalIdx = catIdx * 10 + bookIdx;
                     return (
-                      <div className="w-64 h-96 sm:w-80 sm:h-[28rem] mx-auto mb-6 shadow-[0_16px_64px_rgb(0,0,0,0.45)] border-8 border-primary-blue outline-bold-lg rounded-2xl overflow-hidden flex items-stretch justify-stretch">
-                        <BookCover
-                          title={modalBook.title}
-                          author={modalBook.author}
-                          coverUrl={coverUrl}
-                          className="w-full h-full object-cover rounded-2xl"
-                        />
+                      <div
+                        key={globalIdx}
+                        className="outline-bold-thin relative flex flex-col items-center gap-4 rounded-3xl bg-white/90 p-4 shadow-[0_10px_40px_rgb(0,0,0,0.15)] transition-all duration-300 hover:scale-[1.01] sm:flex-row sm:items-start sm:gap-8 sm:p-6"
+                      >
+                        {/* Clickable Book Cover */}
+                        <div className="flex-shrink-0">
+                          <div 
+                            className="cursor-pointer transition-transform hover:scale-105 active:scale-95"
+                            onClick={() => handleBookCoverClick(book, globalIdx)}
+                          >
+                            <BookCover
+                              title={book.title}
+                              author={book.author}
+                              coverUrl={book.cover && book.cover.startsWith('http') ? book.cover : coverUrls[globalIdx]}
+                              className="outline-bold-lg h-56 w-40 border-4 border-primary-blue shadow-[0_8px_30px_rgb(0,0,0,0.25)] sm:h-56 sm:w-40"
+                            />
+                          </div>
+                        </div>
+                        <div className="min-w-0 flex-1 text-center sm:text-left">
+                          <div className="mb-2 flex flex-col items-center gap-2 sm:flex-row sm:items-start">
+                            <h2 className="text-xl font-black text-text-primary sm:text-2xl">{book.title}</h2>
+                            {(() => {
+                              const score = similarityScores[globalIdx];
+                              return score && score.score > 0 ? <SimilarityBadge score={score} /> : null;
+                            })()}
+                          </div>
+                          <p className="mb-2 text-base font-bold text-text-secondary sm:text-lg">{book.author}</p>
+                          <p className="mb-3 text-sm text-text-primary/80 sm:text-base">
+                            {book.whyYoullLikeIt || book.why}
+                          </p>
+                          <div className="flex flex-wrap justify-center gap-2 sm:justify-start sm:gap-3">
+                            <button
+                              className={`touch-none rounded-full bg-primary-green px-5 py-3 text-sm font-bold text-white transition-transform hover:scale-105 active:scale-95 sm:px-4 sm:py-2 ${added[globalIdx] ? 'bg-primary-blue' : ''}`}
+                              onClick={() => handleAddToQueue(book, globalIdx)}
+                              disabled={added[globalIdx]}
+                            >
+                              {added[globalIdx] ? 'Added!' : 'Add to Queue'}
+                            </button>
+                            <button
+                              className={`touch-none rounded-full bg-primary-yellow px-5 py-3 text-sm font-bold text-text-primary transition-transform hover:scale-105 active:scale-95 sm:px-4 sm:py-2 ${borrowed[globalIdx] ? 'bg-primary-green' : ''}`}
+                              onClick={() => handleBorrow(book, globalIdx)}
+                              disabled={borrowed[globalIdx]}
+                            >
+                              {borrowed[globalIdx] ? 'Borrowed!' : 'Borrow Book'}
+                            </button>
+                            <button
+                              className="touch-none rounded-full bg-primary-blue px-5 py-3 text-sm font-bold text-white transition-transform hover:scale-105 active:scale-95 sm:px-4 sm:py-2"
+                              onClick={() => handleBookDetails(book, globalIdx)}
+                            >
+                              Book Details
+                            </button>
+                          </div>
+                        </div>
                       </div>
                     );
-                  })()}
-                  <h2 className="text-3xl font-black text-text-primary mb-1 text-center drop-shadow-lg">{modalBook.title}</h2>
-                  <p className="text-text-secondary text-lg font-bold mb-2 text-center drop-shadow">{modalBook.author}</p>
-                  <button className="mt-6 bg-primary-orange text-white px-8 py-3 rounded-full font-black text-lg hover:scale-105 transition-transform shadow-lg" onClick={() => setFlip(true)}>Flip to Back</button>
+                  })}
                 </div>
-                {/* Back: Real back cover or summary/why/excerpt */}
-                <div className="absolute w-full h-full [backface-visibility:hidden] rotate-y-180 flex flex-col items-center justify-center bg-gradient-to-br from-primary-blue/90 via-primary-purple/90 to-primary-blue/95 rounded-3xl shadow-2xl p-8" style={{ boxShadow: '0 16px 64px 0 rgba(0,0,0,0.45)' }}>
-                  {backCover ? (
-                    <div className="w-64 h-96 sm:w-80 sm:h-[28rem] mx-auto mb-6 shadow-[0_16px_64px_rgb(0,0,0,0.45)] border-8 border-primary-blue outline-bold-lg rounded-2xl overflow-hidden flex items-stretch justify-stretch">
-                      <img src={backCover} alt="Back cover" className="w-full h-full object-cover rounded-2xl" />
+              </div>
+            ))}
+          </div>
+        ) : null}
+
+        {/* Current category info when filtered */}
+        {categories.length > 0 && activeCategory !== 'all' && (
+          <div className="mb-6 border-l-4 border-primary-blue pl-4">
+            <h2 className="mb-2 text-2xl font-black text-text-primary sm:text-3xl">{activeCategory}</h2>
+            <p className="text-base text-text-secondary">
+              {categories.find((cat: any) => cat.name === activeCategory)?.description}
+            </p>
+          </div>
+        )}
+
+        {/* Books display for filtered view or no categories */}
+        {(categories.length === 0 || activeCategory !== 'all') && (
+          <div className="space-y-6">
+            {books.length === 0 ? (
+              <div className="rounded-3xl bg-white/90 p-8 text-center">
+                <h3 className="mb-4 text-2xl font-black text-text-primary">No recommendations yet!</h3>
+                <p className="mb-6 text-text-secondary">Try searching for something you&apos;re interested in.</p>
+                <button
+                  onClick={() => router.push('/home')}
+                  className="rounded-full bg-primary-blue px-6 py-3 font-bold text-white transition-transform hover:scale-105"
+                >
+                  Go Back
+                </button>
+              </div>
+            ) : (
+              books
+                .filter((book) => activeCategory === 'all' || book.category === activeCategory)
+                .map((book, idx) => (
+                  <div
+                    key={idx}
+                    className="outline-bold-thin relative flex flex-col items-center gap-4 rounded-3xl bg-white/90 p-4 shadow-[0_10px_40px_rgb(0,0,0,0.15)] transition-all duration-300 hover:scale-[1.01] sm:flex-row sm:items-start sm:gap-8 sm:p-6"
+                  >
+                    {/* Clickable Book Cover */}
+                    <div className="flex-shrink-0">
+                      <div 
+                        className="cursor-pointer transition-transform hover:scale-105 active:scale-95"
+                        onClick={() => handleBookCoverClick(book, book.globalIdx || idx)}
+                      >
+                        <BookCover
+                          title={book.title}
+                          author={book.author}
+                          coverUrl={
+                            book.cover && book.cover.startsWith('http') ? book.cover : coverUrls[book.globalIdx || idx]
+                          }
+                          className="outline-bold-lg h-56 w-40 border-4 border-primary-blue shadow-[0_8px_30px_rgb(0,0,0,0.25)] sm:h-56 sm:w-40"
+                        />
+                      </div>
                     </div>
-                  ) : (
-                    <div className="w-64 h-96 sm:w-80 sm:h-[28rem] mx-auto mb-6 flex flex-col items-center justify-center bg-primary-blue/10 rounded-2xl border-8 border-primary-blue outline-bold-lg relative">
-                      <span className="text-white font-black text-xl mb-4 text-center drop-shadow-lg">No Back Cover</span>
-                      <Barcode />
+                    <div className="min-w-0 flex-1 text-center sm:text-left">
+                      <div className="mb-2 flex flex-col items-center gap-2 sm:flex-row sm:items-start">
+                        <h2 className="text-xl font-black text-text-primary sm:text-2xl">{book.title}</h2>
+                        {(() => {
+                          const score = similarityScores[book.globalIdx || idx];
+                          return score && score.score > 0 ? <SimilarityBadge score={score} /> : null;
+                        })()}
+                      </div>
+                      <p className="mb-2 text-base font-bold text-text-secondary sm:text-lg">{book.author}</p>
+                      <p className="mb-3 text-sm text-text-primary/80 sm:text-base">
+                        {book.whyYoullLikeIt || book.why}
+                      </p>
+                      <div className="flex flex-wrap justify-center gap-2 sm:justify-start sm:gap-3">
+                        <button
+                          className={`touch-none rounded-full bg-primary-green px-5 py-3 text-sm font-bold text-white transition-transform hover:scale-105 active:scale-95 sm:px-4 sm:py-2 ${added[book.globalIdx || idx] ? 'bg-primary-blue' : ''}`}
+                          onClick={() => handleAddToQueue(book, book.globalIdx || idx)}
+                          disabled={added[book.globalIdx || idx]}
+                        >
+                          {added[book.globalIdx || idx] ? 'Added!' : 'Add to Queue'}
+                        </button>
+                        <button
+                          className={`touch-none rounded-full bg-primary-yellow px-5 py-3 text-sm font-bold text-text-primary transition-transform hover:scale-105 active:scale-95 sm:px-4 sm:py-2 ${borrowed[book.globalIdx || idx] ? 'bg-primary-green' : ''}`}
+                          onClick={() => handleBorrow(book, book.globalIdx || idx)}
+                          disabled={borrowed[book.globalIdx || idx]}
+                        >
+                          {borrowed[book.globalIdx || idx] ? 'Borrowed!' : 'Borrow Book'}
+                        </button>
+                        <button
+                          className="touch-none rounded-full bg-primary-blue px-5 py-3 text-sm font-bold text-white transition-transform hover:scale-105 active:scale-95 sm:px-4 sm:py-2"
+                          onClick={() => handleBookDetails(book, book.globalIdx || idx)}
+                        >
+                          Book Details
+                        </button>
+                      </div>
                     </div>
-                  )}
-                  <h2 className="text-2xl font-black text-white mb-2 text-center drop-shadow-lg">About this book</h2>
-                  <p className="text-white/90 text-lg mb-8 text-center drop-shadow">{modalBook.why}</p>
-                  <button className="mt-6 bg-primary-blue text-white px-8 py-3 rounded-full font-black text-lg hover:scale-105 transition-transform shadow-lg" onClick={() => setFlip(false)}>Flip to Front</button>
+                  </div>
+                ))
+            )}
+          </div>
+        )}
+
+        {/* Demo Showcase Card - Shows all features */}
+        {books.length > 0 && (
+          <div className="mt-12 space-y-6">
+            <div className="border-l-4 border-primary-pink pl-4">
+              <h2 className="mb-2 text-2xl font-black text-text-primary sm:text-3xl">✨ Feature Showcase</h2>
+              <p className="text-base text-text-secondary">Example card showing all available features</p>
+            </div>
+            
+            <div className="outline-bold-thin relative overflow-hidden rounded-3xl bg-gradient-to-r from-purple-50 via-pink-50 to-blue-50 p-1">
+              <div className="outline-bold-thin relative flex flex-col gap-4 rounded-3xl bg-white/95 p-4 shadow-[0_10px_40px_rgb(0,0,0,0.15)] sm:gap-8 sm:p-6">
+                {/* Demo indicator */}
+                <div className="absolute right-4 top-4 z-10 rounded-full bg-primary-pink px-3 py-1 text-xs font-black text-white">
+                  DEMO
+                </div>
+                
+                <div className="flex flex-col items-center gap-4 sm:flex-row sm:items-start">
+                  {/* Book Cover */}
+                  <div className="flex-shrink-0">
+                    <BookCover
+                      title="The Midnight Library"
+                      author="Matt Haig"
+                      coverUrl="https://covers.openlibrary.org/b/id/10471875-L.jpg"
+                      className="outline-bold-lg h-56 w-40 border-4 border-primary-blue shadow-[0_8px_30px_rgb(0,0,0,0.25)] sm:h-56 sm:w-40"
+                    />
+                  </div>
+                  
+                  <div className="min-w-0 flex-1 space-y-4 text-center sm:text-left">
+                    {/* Title, Author, and Similarity */}
+                    <div>
+                      <div className="mb-2 flex flex-col items-center gap-2 sm:flex-row sm:items-start">
+                        <h2 className="text-xl font-black text-text-primary sm:text-2xl">The Midnight Library</h2>
+                        <SimilarityBadge score={{ score: 95, reasons: ['You\'ve read 3 other books by Matt Haig', 'Similar to books you\'ve enjoyed', 'Matches your reading preferences'] }} />
+                      </div>
+                      <p className="mb-1 text-base font-bold text-text-secondary sm:text-lg">Matt Haig</p>
+                      
+                      {/* Metadata badges */}
+                      <div className="mb-3 flex flex-wrap items-center justify-center gap-2 sm:justify-start">
+                        <span className="rounded-full bg-primary-yellow px-3 py-1 text-xs font-bold text-text-primary">Fiction</span>
+                        <span className="rounded-full bg-primary-orange px-3 py-1 text-xs font-bold text-white">Philosophical</span>
+                        <span className="rounded-full bg-primary-purple px-3 py-1 text-xs font-bold text-white">Bestseller</span>
+                        <span className="rounded-full bg-primary-green px-3 py-1 text-xs font-bold text-white">Staff Pick</span>
+                        <span className="flex items-center gap-1 rounded-full bg-gray-200 px-3 py-1 text-xs font-bold text-text-primary">
+                          ⭐ 4.5 · 288 pages · 5hr read
+                        </span>
+                      </div>
+                    </div>
+                    
+                    {/* Why recommendation */}
+                    <p className="text-sm text-text-primary/80 sm:text-base">
+                      A dazzling novel about all the choices that go into a life well lived. Between life and death there is a library, and within that library, the shelves go on forever. Every book provides a chance to try another life you could have lived.
+                    </p>
+                    
+                    {/* Publication info */}
+                    <p className="text-xs text-text-secondary">2020 · Penguin Random House · ISBN: 9780525559474</p>
+                    
+                    {/* Action buttons */}
+                    <div className="flex flex-wrap justify-center gap-2 sm:justify-start sm:gap-3">
+                      <button className="touch-none rounded-full bg-primary-green px-5 py-3 text-sm font-bold text-white transition-transform hover:scale-105 active:scale-95 sm:px-4 sm:py-2">
+                        Add to Queue
+                      </button>
+                      <button className="touch-none rounded-full bg-primary-yellow px-5 py-3 text-sm font-bold text-text-primary transition-transform hover:scale-105 active:scale-95 sm:px-4 sm:py-2">
+                        Borrow Book
+                      </button>
+                      <button className="touch-none rounded-full bg-primary-blue px-5 py-3 text-sm font-bold text-white transition-transform hover:scale-105 active:scale-95 sm:px-4 sm:py-2">
+                        Learn More
+                      </button>
+                      <button className="touch-none rounded-full border-2 border-primary-purple bg-white px-5 py-3 text-sm font-bold text-primary-purple transition-transform hover:scale-105 hover:bg-primary-purple hover:text-white active:scale-95 sm:px-4 sm:py-2">
+                        Share
+                      </button>
+                    </div>
+                    
+                    {/* Library Availability */}
+                    <div className="mt-4 rounded-lg bg-gray-50 p-3">
+                      <h4 className="mb-2 text-sm font-bold text-text-primary">Library Availability</h4>
+                      <div className="space-y-1 text-xs">
+                        <div className="flex items-center justify-between">
+                          <span className="text-text-secondary">Brooklyn Public Library</span>
+                          <span className="font-bold text-primary-green">3 copies available</span>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-text-secondary">Queens Library</span>
+                          <span className="font-bold text-primary-orange">2 holds</span>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-text-secondary">NYPL - Grand Central</span>
+                          <span className="font-bold text-primary-green">Available now</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
-        </div>
+        )}
+      </div>
+
+      {/* Modals */}
+      {showFlipbook && flipbookBook && (
+        <BookFlipbookCustom3D book={flipbookBook} onClose={() => setShowFlipbook(false)} />
       )}
-      {/* Add floating animation */}
-      <style jsx global>{`
-        .animate-float-book {
-          animation: floatBook 4.5s cubic-bezier(.4,1.6,.6,1) infinite alternate;
-        }
-        @keyframes floatBook {
-          0% { transform: translateY(0) rotateZ(-1deg) scale(1.01); }
-          100% { transform: translateY(-8px) rotateZ(1deg) scale(1.03); }
-        }
-        .perspective-1200 {
-          perspective: 1200px;
-        }
-        .rotate-y-180 {
-          transform: rotateY(180deg);
-        }
-      `}</style>
+      {showBookDetails && detailsBook && (
+        <BookDetailsModal book={detailsBook} onClose={() => setShowBookDetails(false)} />
+      )}
+      </div>
     </div>
   );
 };
 
-export default StacksRecommendationsPage; 
+export default StacksRecommendationsPage;

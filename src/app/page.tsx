@@ -9,4 +9,4 @@ const RootPage = () => {
   redirect('/home');
 };
 
-export default RootPage; 
+export default RootPage;

@@ -4,6 +4,7 @@
  */
 
 import { getBookCover } from '@/lib/book-covers';
+import { useState, useEffect } from 'react';
 
 interface BookCoverProps {
   title: string;
@@ -12,29 +13,31 @@ interface BookCoverProps {
   coverUrl?: string;
 }
 
-export const BookCover = ({ title, author, className = "w-16 h-20", coverUrl }: BookCoverProps) => {
+export const BookCover = ({ title, author, className = 'w-16 h-20', coverUrl }: BookCoverProps) => {
   let url = coverUrl;
   if (!url) url = getBookCover(title, author);
   const isRealCover = url && url.startsWith('http');
-  
+
   // Generate decorative elements for placeholders
   const hash = title.split('').reduce((a, b) => {
-    a = ((a << 5) - a) + b.charCodeAt(0);
+    a = (a << 5) - a + b.charCodeAt(0);
     return a & a;
   }, 0);
-  
+
   const hasDecoration = hash % 3 === 0;
   const decorationType = hash % 4;
 
   return (
-    <div className={`${className} rounded-2xl flex-shrink-0 shadow-backdrop-lg hover:rotate-3 transition-all duration-300 relative overflow-hidden outline-bold`}>
+    <div
+      className={`${className} shadow-backdrop-lg outline-bold relative flex-shrink-0 overflow-hidden rounded-2xl transition-all duration-300 hover:rotate-3`}
+    >
       {isRealCover ? (
         // Real book cover with enhanced styling and bold outline
         <>
-          <img 
-            src={url} 
+          <img
+            src={url}
             alt={`${title} cover`}
-            className="w-full h-full object-cover"
+            className="h-full w-full object-cover"
             onError={(e) => {
               // Fallback to placeholder if image fails to load
               const target = e.target as HTMLImageElement;
@@ -48,36 +51,32 @@ export const BookCover = ({ title, author, className = "w-16 h-20", coverUrl }: 
         </>
       ) : (
         // Branded placeholder with enhanced styling and bold outline
-        <div className={`w-full h-full ${coverUrl} flex items-center justify-center relative`}>
+        <div className={`h-full w-full ${coverUrl} relative flex items-center justify-center`}>
           {/* Decorative elements */}
           {hasDecoration && (
             <>
               {decorationType === 0 && (
                 <>
-                  <div className="absolute top-2 right-2 w-3 h-3 bg-white/40 rounded-full" />
-                  <div className="absolute bottom-2 left-2 w-2 h-2 bg-white/50 rounded-full" />
+                  <div className="absolute right-2 top-2 h-3 w-3 rounded-full bg-white/40" />
+                  <div className="absolute bottom-2 left-2 h-2 w-2 rounded-full bg-white/50" />
                 </>
               )}
-              {decorationType === 1 && (
-                <div className="absolute top-1 bottom-1 left-1 w-1 bg-white/60 rounded-full" />
-              )}
-              {decorationType === 2 && (
-                <div className="absolute top-2 left-2 right-2 h-1 bg-white/40 rounded-full" />
-              )}
+              {decorationType === 1 && <div className="absolute bottom-1 left-1 top-1 w-1 rounded-full bg-white/60" />}
+              {decorationType === 2 && <div className="absolute left-2 right-2 top-2 h-1 rounded-full bg-white/40" />}
               {decorationType === 3 && (
                 <>
-                  <div className="absolute top-3 left-3 w-2 h-2 bg-white/50 rounded-full" />
-                  <div className="absolute bottom-3 right-3 w-2 h-2 bg-white/50 rounded-full" />
+                  <div className="absolute left-3 top-3 h-2 w-2 rounded-full bg-white/50" />
+                  <div className="absolute bottom-3 right-3 h-2 w-2 rounded-full bg-white/50" />
                 </>
               )}
             </>
           )}
-          
+
           {/* Book icon */}
-          <div className="w-8 h-8 bg-white/50 rounded-lg relative">
-            <div className="absolute left-1 top-2 bottom-2 w-1 bg-white/80 rounded-full" />
+          <div className="relative h-8 w-8 rounded-lg bg-white/50">
+            <div className="absolute bottom-2 left-1 top-2 w-1 rounded-full bg-white/80" />
           </div>
-          
+
           {/* Enhanced gradient overlay */}
           <div className="absolute inset-0 bg-gradient-to-br from-transparent via-transparent to-black/20" />
           <div className="absolute inset-0 bg-gradient-to-t from-black/10 to-transparent" />
@@ -85,4 +84,4 @@ export const BookCover = ({ title, author, className = "w-16 h-20", coverUrl }: 
       )}
     </div>
   );
-}; 
+};
