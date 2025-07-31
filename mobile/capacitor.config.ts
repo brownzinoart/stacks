@@ -8,7 +8,7 @@ const config: CapacitorConfig = {
     androidScheme: 'https',
     iosScheme: 'https',
     // For development testing - uncomment and update IP address
-    // url: 'http://YOUR_LOCAL_IP:3000',
+    // url: 'http://10.0.0.10:3002',
     // cleartext: true
   },
   ios: {

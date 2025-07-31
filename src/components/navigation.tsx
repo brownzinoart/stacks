@@ -19,8 +19,8 @@ export const Navigation = () => {
   const pathname = usePathname();
 
   return (
-    <nav className="bg-white shadow-card">
-      <div className="mx-auto max-w-7xl px-8">
+    <nav className="hidden">
+      <div className="hidden mx-auto max-w-7xl px-8 md:block">
         <div className="flex h-24 items-center justify-between">
           <Link
             href="/home"
@@ -62,9 +62,9 @@ export const Navigation = () => {
         </div>
       </div>
 
-      {/* Mobile navigation */}
-      <div className="border-t border-gray-200 md:hidden">
-        <div className="grid grid-cols-3 gap-2 bg-white px-6 py-4">
+      {/* Mobile navigation - hidden for native iOS tabs */}
+      <div className="hidden fixed bottom-0 left-0 right-0 border-t border-gray-200 bg-white">
+        <div className="grid grid-cols-3 gap-2 px-6 py-4">
           {navigationItems.map((item) => {
             const isActive = pathname === item.href;
             return (

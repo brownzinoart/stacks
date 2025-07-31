@@ -47,17 +47,14 @@ export function BookDetailsModal({ book, onClose }: BookDetailsModalProps) {
   };
 
   return (
-    <div 
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
-      onClick={handleBackdropClick}
-    >
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={handleBackdropClick}>
       <div className="animate-fade-in-up max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-3xl bg-white shadow-mega">
         {/* Header */}
         <div className="sticky top-0 z-10 flex items-center justify-between border-b border-gray-200 bg-white/95 p-6 backdrop-blur-sm">
           <h2 className="text-2xl font-black text-text-primary">Book Details</h2>
           <button
             onClick={onClose}
-            className="touch-none flex h-10 w-10 items-center justify-center rounded-full bg-gray-100 text-2xl text-text-secondary transition-all hover:bg-gray-200 hover:scale-110 active:scale-95"
+            className="flex h-10 w-10 touch-none items-center justify-center rounded-full bg-gray-100 text-2xl text-text-secondary transition-all hover:scale-110 hover:bg-gray-200 active:scale-95"
           >
             ×
           </button>
@@ -88,9 +85,7 @@ export function BookDetailsModal({ book, onClose }: BookDetailsModalProps) {
               {(book.whyYoullLikeIt || book.why) && (
                 <div>
                   <h3 className="mb-3 text-lg font-black text-primary-blue">Why You&apos;ll Love This</h3>
-                  <p className="text-base leading-relaxed text-text-primary">
-                    {book.whyYoullLikeIt || book.why}
-                  </p>
+                  <p className="text-base leading-relaxed text-text-primary">{book.whyYoullLikeIt || book.why}</p>
                 </div>
               )}
 
@@ -98,9 +93,7 @@ export function BookDetailsModal({ book, onClose }: BookDetailsModalProps) {
               {book.summary && (
                 <div>
                   <h3 className="mb-3 text-lg font-black text-primary-green">Summary</h3>
-                  <p className="text-base leading-relaxed text-text-primary">
-                    {book.summary}
-                  </p>
+                  <p className="text-base leading-relaxed text-text-primary">{book.summary}</p>
                 </div>
               )}
 

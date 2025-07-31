@@ -15,7 +15,7 @@ interface SimilarityBadgeProps {
 
 export const SimilarityBadge = ({ score, className = '' }: SimilarityBadgeProps) => {
   const [showTooltip, setShowTooltip] = useState(false);
-  
+
   if (!score || score.score === 0) {
     return null;
   }
@@ -45,14 +45,16 @@ export const SimilarityBadge = ({ score, className = '' }: SimilarityBadgeProps)
       >
         {score.score}% Match
       </button>
-      
+
       {showTooltip && score.reasons.length > 0 && (
         <div className="absolute bottom-full left-1/2 z-50 mb-2 -translate-x-1/2 transform">
           <div className="rounded-lg bg-text-primary p-3 text-sm text-white shadow-lg">
             <div className="mb-1 font-bold">{getLabel(score.score)}</div>
             <ul className="space-y-1">
               {score.reasons.map((reason, idx) => (
-                <li key={idx} className="text-xs opacity-90">• {reason}</li>
+                <li key={idx} className="text-xs opacity-90">
+                  • {reason}
+                </li>
               ))}
             </ul>
             <div className="absolute -bottom-2 left-1/2 h-0 w-0 -translate-x-1/2 transform border-l-[6px] border-r-[6px] border-t-[6px] border-l-transparent border-r-transparent border-t-text-primary"></div>

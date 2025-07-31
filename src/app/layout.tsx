@@ -14,7 +14,7 @@ export const metadata: Metadata = {
   description: 'AI-powered book discovery and library experience',
   manifest: '/manifest.json',
   themeColor: '#FBF7F4',
-  viewport: 'width=device-width, initial-scale=1, maximum-scale=1',
+  viewport: 'width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover',
 };
 
 interface RootLayoutProps {

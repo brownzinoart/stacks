@@ -29,8 +29,32 @@ const discoveryExamples = [
 ];
 
 // Multi-stage intelligent recommendation system
-async function getSmartRecommendations(userInput: string) {
+async function getSmartRecommendations(userInput: string, forceRefresh: boolean = false) {
   console.log('Starting smart recommendations for:', userInput);
+
+  // Check cache first - create hash of input for consistent caching
+  const inputHash = btoa(userInput.toLowerCase().trim()).replace(/[^a-zA-Z0-9]/g, '');
+  const cacheKey = `stacks_cache_${inputHash}`;
+  const cachedData = localStorage.getItem(cacheKey);
+  
+  if (cachedData && !forceRefresh) {
+    try {
+      const parsed = JSON.parse(cachedData);
+      const cacheAge = Date.now() - new Date(parsed.timestamp).getTime();
+      const CACHE_DURATION = 24 * 60 * 60 * 1000; // 24 hours
+      
+      if (cacheAge < CACHE_DURATION) {
+        console.log('Using cached recommendations for:', userInput);
+        return parsed.recommendations;
+      } else {
+        console.log('Cache expired, fetching fresh recommendations');
+        localStorage.removeItem(cacheKey);
+      }
+    } catch (e) {
+      console.log('Invalid cache data, removing');
+      localStorage.removeItem(cacheKey);
+    }
+  }
 
   // Stage 1: Analyze user intent with clearer JSON instructions
   const analysisPrompt = `Analyze this book request: "${userInput}"
@@ -152,7 +176,7 @@ async function getSmartRecommendations(userInput: string) {
         },
         { role: 'user', content: recommendPrompt },
       ],
-      temperature: 0.7,
+      temperature: 0.1,
       max_tokens: 1500,
     });
 
@@ -164,7 +188,7 @@ async function getSmartRecommendations(userInput: string) {
       if (jsonMatch) {
         const recommendations = JSON.parse(jsonMatch[0]);
         console.log('Parsed recommendations:', recommendations);
-        
+
         // Pre-fetch covers for all books
         const allBooks: any[] = [];
         recommendations.categories?.forEach((category: any) => {
@@ -172,16 +196,16 @@ async function getSmartRecommendations(userInput: string) {
             allBooks.push({
               ...book,
               categoryIdx: recommendations.categories.indexOf(category),
-              bookIdx: idx
+              bookIdx: idx,
             });
           });
         });
 
         console.log('Pre-fetching covers for', allBooks.length, 'books...');
-        
+
         // Fetch covers in parallel
         const coverResults = await bookCoverService.getBatchCovers(allBooks);
-        
+
         // Update recommendations with cover URLs
         let bookIndex = 0;
         recommendations.categories?.forEach((category: any) => {
@@ -195,8 +219,16 @@ async function getSmartRecommendations(userInput: string) {
             bookIndex++;
           });
         });
-        
+
         console.log('Cover pre-fetch complete');
+        
+        // Cache the successful recommendations
+        localStorage.setItem(cacheKey, JSON.stringify({
+          recommendations,
+          timestamp: new Date().toISOString()
+        }));
+        console.log('Cached recommendations for future use');
+        
         return recommendations;
       } else {
         throw new Error('No JSON found in recommendation response');
@@ -261,7 +293,7 @@ export const AIPromptInput = () => {
     return () => clearInterval(interval);
   }, []);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent, forceRefresh: boolean = false) => {
     e.preventDefault();
     if (!inputValue && !selectedMood) return;
 
@@ -272,7 +304,7 @@ export const AIPromptInput = () => {
 
     try {
       // Use the new smart recommendation system
-      const recommendations = await getSmartRecommendations(userInput);
+      const recommendations = await getSmartRecommendations(userInput, forceRefresh);
 
       setIsLoading(false);
 
@@ -410,6 +442,26 @@ export const AIPromptInput = () => {
                 </>
               )}
             </button>
+            
+            {/* Refresh button - only show if we have input */}
+            {(inputValue || selectedMood) && (
+              <button
+                type="button"
+                onClick={(e) => handleSubmit(e, true)}
+                disabled={isLoading}
+                className="pop-element touch-feedback mobile-touch flex items-center justify-center rounded-full bg-primary-orange px-4 py-4 text-base font-black text-white transition-all duration-300 hover:scale-110 hover:bg-primary-orange/90 focus:outline-none focus:ring-4 focus:ring-white/50 disabled:cursor-not-allowed disabled:opacity-50 sm:px-6 sm:py-6 sm:text-lg"
+                title="Get fresh recommendations"
+              >
+                {isLoading ? (
+                  <div className="loading-pulse">...</div>
+                ) : (
+                  <>
+                    <span className="sm:hidden">🔄</span>
+                    <span className="hidden sm:inline">🔄</span>
+                  </>
+                )}
+              </button>
+            )}
           </div>
 
           {/* Loading state feedback */}

@@ -97,7 +97,7 @@ const StacksRecommendationsPage = () => {
         title: book.title,
         author: book.author,
         genres: book.genres,
-        topics: book.topics
+        topics: book.topics,
       });
       scores[idx] = similarity;
     });
@@ -109,34 +109,32 @@ const StacksRecommendationsPage = () => {
     const fetchCovers = async () => {
       const updates: { [key: number]: string } = {};
       const booksNeedingCovers: Array<{ book: any; idx: number }> = [];
-      
+
       // Find books that don't have covers
       books.forEach((book, idx) => {
         if (!book.cover || !book.cover.startsWith('http')) {
           booksNeedingCovers.push({ book, idx });
         }
       });
-      
+
       if (booksNeedingCovers.length === 0) return;
-      
+
       // Use our enhanced cover service for remaining books
       const { bookCoverService } = await import('@/lib/book-cover-service');
-      const coverResults = await bookCoverService.getBatchCovers(
-        booksNeedingCovers.map(item => item.book)
-      );
-      
+      const coverResults = await bookCoverService.getBatchCovers(booksNeedingCovers.map((item) => item.book));
+
       booksNeedingCovers.forEach((item, resultIdx) => {
         const coverResult = coverResults.get(resultIdx);
         if (coverResult && coverResult.url && !coverResult.url.startsWith('gradient:')) {
           updates[item.idx] = coverResult.url;
         }
       });
-      
+
       if (Object.keys(updates).length > 0) {
         setCoverUrls((prev) => ({ ...prev, ...updates }));
       }
     };
-    
+
     if (books.length > 0) fetchCovers();
   }, [books]);
 
@@ -155,15 +153,15 @@ const StacksRecommendationsPage = () => {
 
   const handleBorrow = async (book: any, idx: number) => {
     setBorrowed((prev) => ({ ...prev, [idx]: true }));
-    
+
     // Add to reading history
     readingHistory.addToHistory({
       title: book.title,
       author: book.author,
       genres: book.genres,
-      topics: book.topics
+      topics: book.topics,
     });
-    
+
     // Recalculate similarity scores after adding to history
     const updatedScores: { [key: number]: SimilarityScore } = {};
     books.forEach((b, i) => {
@@ -171,12 +169,12 @@ const StacksRecommendationsPage = () => {
         title: b.title,
         author: b.author,
         genres: b.genres,
-        topics: b.topics
+        topics: b.topics,
       });
       updatedScores[i] = similarity;
     });
     setSimilarityScores(updatedScores);
-    
+
     setTimeout(() => setBorrowed((prev) => ({ ...prev, [idx]: false })), 1500);
     // Add haptic feedback on mobile
     if (isMobile()) {
@@ -239,22 +237,19 @@ const StacksRecommendationsPage = () => {
   return (
     <div className="min-h-screen bg-bg-light">
       <Navigation />
-      
+
       {/* Breadcrumb Navigation */}
       <div className="mx-auto max-w-7xl px-4 py-4">
         <div className="flex items-center gap-2 text-sm text-text-secondary">
-          <button 
-            onClick={() => router.push('/home')}
-            className="hover:text-primary-blue transition-colors"
-          >
+          <button onClick={() => router.push('/home')} className="transition-colors hover:text-primary-blue">
             Home
           </button>
           <span>›</span>
-          <span className="text-text-primary font-semibold">Recommendations</span>
+          <span className="font-semibold text-text-primary">Recommendations</span>
           {userInput && (
             <>
               <span>›</span>
-              <span className="text-text-primary truncate max-w-[200px]">{userInput}</span>
+              <span className="max-w-[200px] truncate text-text-primary">{userInput}</span>
             </>
           )}
         </div>
@@ -266,355 +261,379 @@ const StacksRecommendationsPage = () => {
         onTouchMove={isMobile() ? handleTouchMove : undefined}
         onTouchEnd={isMobile() ? handleTouchEnd : undefined}
       >
-      {/* Pull to refresh indicator */}
-      {pullDistance > 0 && (
-        <div
-          className="fixed left-0 right-0 top-0 z-50 flex items-center justify-center transition-all"
-          style={{
-            height: `${Math.min(pullDistance, 100)}px`,
-            opacity: Math.min(pullDistance / 100, 1),
-          }}
-        >
+        {/* Pull to refresh indicator */}
+        {pullDistance > 0 && (
           <div
-            className={`h-8 w-8 animate-spin rounded-full border-b-2 border-primary-blue ${pullDistance > 80 ? 'border-primary-green' : ''}`}
-          ></div>
-        </div>
-      )}
-      {/* Decorative elements */}
-      <div className="sm:w-18 sm:h-18 animate-float absolute left-6 top-4 z-0 h-14 w-14 rounded-full bg-primary-teal opacity-25" />
-      <div className="animate-float-delayed absolute bottom-6 right-6 z-0 h-10 w-10 rounded-full bg-primary-pink opacity-30 sm:h-14 sm:w-14" />
-      <div className="animate-float-slow absolute right-4 top-8 z-0 h-8 w-8 rounded-full bg-primary-orange opacity-35 sm:h-12 sm:w-12" />
-      <div className="animate-float absolute bottom-8 left-4 z-0 h-12 w-12 rounded-full bg-primary-blue opacity-20 sm:h-16 sm:w-16" />
-      <div className="animate-float-delayed absolute right-2 top-2 z-0 h-6 h-8 w-6 rounded-full bg-primary-green opacity-40 sm:w-8" />
-      <div className="animate-float-slow absolute bottom-4 left-2 z-0 h-10 w-10 rounded-full bg-primary-purple opacity-30 sm:h-12 sm:w-12" />
+            className="fixed left-0 right-0 top-0 z-50 flex items-center justify-center transition-all"
+            style={{
+              height: `${Math.min(pullDistance, 100)}px`,
+              opacity: Math.min(pullDistance / 100, 1),
+            }}
+          >
+            <div
+              className={`h-8 w-8 animate-spin rounded-full border-b-2 border-primary-blue ${pullDistance > 80 ? 'border-primary-green' : ''}`}
+            ></div>
+          </div>
+        )}
+        {/* Decorative elements */}
+        <div className="sm:w-18 sm:h-18 animate-float absolute left-6 top-4 z-0 h-14 w-14 rounded-full bg-primary-teal opacity-25" />
+        <div className="animate-float-delayed absolute bottom-6 right-6 z-0 h-10 w-10 rounded-full bg-primary-pink opacity-30 sm:h-14 sm:w-14" />
+        <div className="animate-float-slow absolute right-4 top-8 z-0 h-8 w-8 rounded-full bg-primary-orange opacity-35 sm:h-12 sm:w-12" />
+        <div className="animate-float absolute bottom-8 left-4 z-0 h-12 w-12 rounded-full bg-primary-blue opacity-20 sm:h-16 sm:w-16" />
+        <div className="animate-float-delayed absolute right-2 top-2 z-0 h-6 h-8 w-6 rounded-full bg-primary-green opacity-40 sm:w-8" />
+        <div className="animate-float-slow absolute bottom-4 left-2 z-0 h-10 w-10 rounded-full bg-primary-purple opacity-30 sm:h-12 sm:w-12" />
 
-      <div className="relative z-10 mx-auto w-full max-w-2xl">
-        <h1 className="mb-6 text-4xl font-black leading-extra-tight text-text-primary sm:text-huge">
-          <span className="text-primary-yellow">STACKS</span>
-          <br />
-          <span className="text-3xl sm:text-mega">RECOMMENDATIONS</span>
-        </h1>
-        {/* Enhanced reprompt section */}
-        <div
-          className={`${isMobile() ? 'sticky top-0 z-40 -mx-4 mb-4 bg-bg-light/95 px-4 py-4 shadow-lg backdrop-blur-lg' : 'mb-8'}`}
-        >
-          {userInput && (
-            <div className="mb-3">
-              <p className="mb-1 text-sm font-semibold text-text-secondary">Your original prompt:</p>
-              <div className="inline-block rounded-full bg-white/50 px-4 py-2">
-                <span className="font-bold text-text-primary">{userInput}</span>
+        <div className="relative z-10 mx-auto w-full max-w-2xl">
+          <h1 className="mb-6 text-4xl font-black leading-extra-tight text-text-primary sm:text-huge">
+            <span className="text-primary-yellow">STACKS</span>
+            <br />
+            <span className="text-3xl sm:text-mega">RECOMMENDATIONS</span>
+          </h1>
+          {/* Enhanced reprompt section */}
+          <div
+            className={`${isMobile() ? 'sticky top-0 z-40 -mx-4 mb-4 bg-bg-light/95 px-4 py-4 shadow-lg backdrop-blur-lg' : 'mb-8'}`}
+          >
+            {userInput && (
+              <div className="mb-3">
+                <p className="mb-1 text-sm font-semibold text-text-secondary">Your original prompt:</p>
+                <div className="inline-block rounded-full bg-white/50 px-4 py-2">
+                  <span className="font-bold text-text-primary">{userInput}</span>
+                </div>
               </div>
-            </div>
-          )}
-          <form onSubmit={handleSearch} className="flex items-center gap-2 sm:gap-4">
-            <div className="flex-1">
-              <input
-                type="text"
-                value={searchValue}
-                onChange={(e) => setSearchValue(e.target.value)}
-                className="outline-bold-thin shadow-backdrop w-full rounded-full bg-white px-4 py-3 text-base font-bold text-text-primary sm:px-6 sm:py-4 sm:text-lg"
-                placeholder="Edit your prompt or try something new..."
-              />
-            </div>
-            <button
-              type="submit"
-              className="touch-none rounded-full bg-primary-blue px-5 py-3 text-base font-black text-white transition-transform hover:scale-105 active:scale-95 sm:px-6 sm:py-4 sm:text-lg"
-              onClick={() => isMobile() && hapticFeedback('medium')}
-            >
-              Update
-            </button>
-          </form>
-          <p className="mt-2 px-2 text-xs text-text-secondary">
-            💡 Tip: Try different angles like &quot;books with similar plot twists&quot; or &quot;same emotional
-            journey&quot;
-          </p>
-        </div>
-
-        {/* Category filter pills */}
-        {categories.length > 0 && (
-          <div className="mb-6">
-            <div className="scrollbar-hide flex gap-2 overflow-x-auto pb-2">
+            )}
+            <form onSubmit={handleSearch} className="flex items-center gap-2 sm:gap-4">
+              <div className="flex-1">
+                <input
+                  type="text"
+                  value={searchValue}
+                  onChange={(e) => setSearchValue(e.target.value)}
+                  className="outline-bold-thin shadow-backdrop w-full rounded-full bg-white px-4 py-3 text-base font-bold text-text-primary sm:px-6 sm:py-4 sm:text-lg"
+                  placeholder="Edit your prompt or try something new..."
+                />
+              </div>
               <button
-                onClick={() => setActiveCategory('all')}
-                className={`touch-none whitespace-nowrap rounded-full px-4 py-2 font-bold transition-all ${
-                  activeCategory === 'all'
-                    ? 'scale-105 bg-primary-blue text-white'
-                    : 'bg-white hover:scale-105 active:scale-95'
-                }`}
+                type="submit"
+                className="touch-none rounded-full bg-primary-blue px-5 py-3 text-base font-black text-white transition-transform hover:scale-105 active:scale-95 sm:px-6 sm:py-4 sm:text-lg"
+                onClick={() => isMobile() && hapticFeedback('medium')}
               >
-                All Categories
+                Update
               </button>
-              {categories.map((cat: any) => (
+            </form>
+            <p className="mt-2 px-2 text-xs text-text-secondary">
+              💡 Tip: Try different angles like &quot;books with similar plot twists&quot; or &quot;same emotional
+              journey&quot;
+            </p>
+          </div>
+
+          {/* Category filter pills */}
+          {categories.length > 0 && (
+            <div className="mb-6">
+              <div className="scrollbar-hide flex gap-2 overflow-x-auto pb-2">
                 <button
-                  key={cat.name}
-                  onClick={() => {
-                    setActiveCategory(cat.name);
-                    if (isMobile()) hapticFeedback('light');
-                  }}
+                  onClick={() => setActiveCategory('all')}
                   className={`touch-none whitespace-nowrap rounded-full px-4 py-2 font-bold transition-all ${
-                    activeCategory === cat.name
+                    activeCategory === 'all'
                       ? 'scale-105 bg-primary-blue text-white'
                       : 'bg-white hover:scale-105 active:scale-95'
                   }`}
                 >
-                  {cat.name}
+                  All Categories
                 </button>
+                {categories.map((cat: any) => (
+                  <button
+                    key={cat.name}
+                    onClick={() => {
+                      setActiveCategory(cat.name);
+                      if (isMobile()) hapticFeedback('light');
+                    }}
+                    className={`touch-none whitespace-nowrap rounded-full px-4 py-2 font-bold transition-all ${
+                      activeCategory === cat.name
+                        ? 'scale-105 bg-primary-blue text-white'
+                        : 'bg-white hover:scale-105 active:scale-95'
+                    }`}
+                  >
+                    {cat.name}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Category sections display */}
+          {categories.length > 0 && activeCategory === 'all' ? (
+            // Show all categories as sections
+            <div className="space-y-12">
+              {categories.map((category: any, catIdx: number) => (
+                <div key={catIdx} className="space-y-6">
+                  <div className="mb-4 border-l-4 border-primary-blue pl-4">
+                    <h2 className="mb-2 text-2xl font-black text-text-primary sm:text-3xl">{category.name}</h2>
+                    <p className="text-base text-text-secondary">{category.description}</p>
+                  </div>
+                  <div className="space-y-6">
+                    {category.books.map((book: any, bookIdx: number) => {
+                      const globalIdx = catIdx * 10 + bookIdx;
+                      return (
+                        <div
+                          key={globalIdx}
+                          className="outline-bold-thin relative flex flex-col items-center gap-4 rounded-3xl bg-white/90 p-4 shadow-[0_10px_40px_rgb(0,0,0,0.15)] transition-all duration-300 hover:scale-[1.01] sm:flex-row sm:items-start sm:gap-8 sm:p-6"
+                        >
+                          {/* Clickable Book Cover */}
+                          <div className="flex-shrink-0">
+                            <div
+                              className="cursor-pointer transition-transform hover:scale-105 active:scale-95"
+                              onClick={() => handleBookCoverClick(book, globalIdx)}
+                            >
+                              <BookCover
+                                title={book.title}
+                                author={book.author}
+                                coverUrl={
+                                  book.cover && book.cover.startsWith('http') ? book.cover : coverUrls[globalIdx]
+                                }
+                                className="outline-bold-lg h-56 w-40 border-4 border-primary-blue shadow-[0_8px_30px_rgb(0,0,0,0.25)] sm:h-56 sm:w-40"
+                              />
+                            </div>
+                          </div>
+                          <div className="min-w-0 flex-1 text-center sm:text-left">
+                            <div className="mb-2 flex flex-col items-center gap-2 sm:flex-row sm:items-start">
+                              <h2 className="text-xl font-black text-text-primary sm:text-2xl">{book.title}</h2>
+                              {(() => {
+                                const score = similarityScores[globalIdx];
+                                return score && score.score > 0 ? <SimilarityBadge score={score} /> : null;
+                              })()}
+                            </div>
+                            <p className="mb-2 text-base font-bold text-text-secondary sm:text-lg">{book.author}</p>
+                            <p className="mb-3 text-sm text-text-primary/80 sm:text-base">
+                              {book.whyYoullLikeIt || book.why}
+                            </p>
+                            <div className="flex flex-wrap justify-center gap-2 sm:justify-start sm:gap-3">
+                              <button
+                                className={`touch-none rounded-full bg-primary-green px-5 py-3 text-sm font-bold text-white transition-transform hover:scale-105 active:scale-95 sm:px-4 sm:py-2 ${added[globalIdx] ? 'bg-primary-blue' : ''}`}
+                                onClick={() => handleAddToQueue(book, globalIdx)}
+                                disabled={added[globalIdx]}
+                              >
+                                {added[globalIdx] ? 'Added!' : 'Add to Queue'}
+                              </button>
+                              <button
+                                className={`touch-none rounded-full bg-primary-yellow px-5 py-3 text-sm font-bold text-text-primary transition-transform hover:scale-105 active:scale-95 sm:px-4 sm:py-2 ${borrowed[globalIdx] ? 'bg-primary-green' : ''}`}
+                                onClick={() => handleBorrow(book, globalIdx)}
+                                disabled={borrowed[globalIdx]}
+                              >
+                                {borrowed[globalIdx] ? 'Borrowed!' : 'Borrow Book'}
+                              </button>
+                              <button
+                                className="touch-none rounded-full bg-primary-blue px-5 py-3 text-sm font-bold text-white transition-transform hover:scale-105 active:scale-95 sm:px-4 sm:py-2"
+                                onClick={() => handleBookDetails(book, globalIdx)}
+                              >
+                                Book Details
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
               ))}
             </div>
-          </div>
-        )}
+          ) : null}
 
-        {/* Category sections display */}
-        {categories.length > 0 && activeCategory === 'all' ? (
-          // Show all categories as sections
-          <div className="space-y-12">
-            {categories.map((category: any, catIdx: number) => (
-              <div key={catIdx} className="space-y-6">
-                <div className="mb-4 border-l-4 border-primary-blue pl-4">
-                  <h2 className="mb-2 text-2xl font-black text-text-primary sm:text-3xl">{category.name}</h2>
-                  <p className="text-base text-text-secondary">{category.description}</p>
-                </div>
-                <div className="space-y-6">
-                  {category.books.map((book: any, bookIdx: number) => {
-                    const globalIdx = catIdx * 10 + bookIdx;
-                    return (
-                      <div
-                        key={globalIdx}
-                        className="outline-bold-thin relative flex flex-col items-center gap-4 rounded-3xl bg-white/90 p-4 shadow-[0_10px_40px_rgb(0,0,0,0.15)] transition-all duration-300 hover:scale-[1.01] sm:flex-row sm:items-start sm:gap-8 sm:p-6"
-                      >
-                        {/* Clickable Book Cover */}
-                        <div className="flex-shrink-0">
-                          <div 
-                            className="cursor-pointer transition-transform hover:scale-105 active:scale-95"
-                            onClick={() => handleBookCoverClick(book, globalIdx)}
-                          >
-                            <BookCover
-                              title={book.title}
-                              author={book.author}
-                              coverUrl={book.cover && book.cover.startsWith('http') ? book.cover : coverUrls[globalIdx]}
-                              className="outline-bold-lg h-56 w-40 border-4 border-primary-blue shadow-[0_8px_30px_rgb(0,0,0,0.25)] sm:h-56 sm:w-40"
-                            />
-                          </div>
-                        </div>
-                        <div className="min-w-0 flex-1 text-center sm:text-left">
-                          <div className="mb-2 flex flex-col items-center gap-2 sm:flex-row sm:items-start">
-                            <h2 className="text-xl font-black text-text-primary sm:text-2xl">{book.title}</h2>
-                            {(() => {
-                              const score = similarityScores[globalIdx];
-                              return score && score.score > 0 ? <SimilarityBadge score={score} /> : null;
-                            })()}
-                          </div>
-                          <p className="mb-2 text-base font-bold text-text-secondary sm:text-lg">{book.author}</p>
-                          <p className="mb-3 text-sm text-text-primary/80 sm:text-base">
-                            {book.whyYoullLikeIt || book.why}
-                          </p>
-                          <div className="flex flex-wrap justify-center gap-2 sm:justify-start sm:gap-3">
-                            <button
-                              className={`touch-none rounded-full bg-primary-green px-5 py-3 text-sm font-bold text-white transition-transform hover:scale-105 active:scale-95 sm:px-4 sm:py-2 ${added[globalIdx] ? 'bg-primary-blue' : ''}`}
-                              onClick={() => handleAddToQueue(book, globalIdx)}
-                              disabled={added[globalIdx]}
-                            >
-                              {added[globalIdx] ? 'Added!' : 'Add to Queue'}
-                            </button>
-                            <button
-                              className={`touch-none rounded-full bg-primary-yellow px-5 py-3 text-sm font-bold text-text-primary transition-transform hover:scale-105 active:scale-95 sm:px-4 sm:py-2 ${borrowed[globalIdx] ? 'bg-primary-green' : ''}`}
-                              onClick={() => handleBorrow(book, globalIdx)}
-                              disabled={borrowed[globalIdx]}
-                            >
-                              {borrowed[globalIdx] ? 'Borrowed!' : 'Borrow Book'}
-                            </button>
-                            <button
-                              className="touch-none rounded-full bg-primary-blue px-5 py-3 text-sm font-bold text-white transition-transform hover:scale-105 active:scale-95 sm:px-4 sm:py-2"
-                              onClick={() => handleBookDetails(book, globalIdx)}
-                            >
-                              Book Details
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            ))}
-          </div>
-        ) : null}
+          {/* Current category info when filtered */}
+          {categories.length > 0 && activeCategory !== 'all' && (
+            <div className="mb-6 border-l-4 border-primary-blue pl-4">
+              <h2 className="mb-2 text-2xl font-black text-text-primary sm:text-3xl">{activeCategory}</h2>
+              <p className="text-base text-text-secondary">
+                {categories.find((cat: any) => cat.name === activeCategory)?.description}
+              </p>
+            </div>
+          )}
 
-        {/* Current category info when filtered */}
-        {categories.length > 0 && activeCategory !== 'all' && (
-          <div className="mb-6 border-l-4 border-primary-blue pl-4">
-            <h2 className="mb-2 text-2xl font-black text-text-primary sm:text-3xl">{activeCategory}</h2>
-            <p className="text-base text-text-secondary">
-              {categories.find((cat: any) => cat.name === activeCategory)?.description}
-            </p>
-          </div>
-        )}
-
-        {/* Books display for filtered view or no categories */}
-        {(categories.length === 0 || activeCategory !== 'all') && (
-          <div className="space-y-6">
-            {books.length === 0 ? (
-              <div className="rounded-3xl bg-white/90 p-8 text-center">
-                <h3 className="mb-4 text-2xl font-black text-text-primary">No recommendations yet!</h3>
-                <p className="mb-6 text-text-secondary">Try searching for something you&apos;re interested in.</p>
-                <button
-                  onClick={() => router.push('/home')}
-                  className="rounded-full bg-primary-blue px-6 py-3 font-bold text-white transition-transform hover:scale-105"
-                >
-                  Go Back
-                </button>
-              </div>
-            ) : (
-              books
-                .filter((book) => activeCategory === 'all' || book.category === activeCategory)
-                .map((book, idx) => (
-                  <div
-                    key={idx}
-                    className="outline-bold-thin relative flex flex-col items-center gap-4 rounded-3xl bg-white/90 p-4 shadow-[0_10px_40px_rgb(0,0,0,0.15)] transition-all duration-300 hover:scale-[1.01] sm:flex-row sm:items-start sm:gap-8 sm:p-6"
+          {/* Books display for filtered view or no categories */}
+          {(categories.length === 0 || activeCategory !== 'all') && (
+            <div className="space-y-6">
+              {books.length === 0 ? (
+                <div className="rounded-3xl bg-white/90 p-8 text-center">
+                  <h3 className="mb-4 text-2xl font-black text-text-primary">No recommendations yet!</h3>
+                  <p className="mb-6 text-text-secondary">Try searching for something you&apos;re interested in.</p>
+                  <button
+                    onClick={() => router.push('/home')}
+                    className="rounded-full bg-primary-blue px-6 py-3 font-bold text-white transition-transform hover:scale-105"
                   >
-                    {/* Clickable Book Cover */}
-                    <div className="flex-shrink-0">
-                      <div 
-                        className="cursor-pointer transition-transform hover:scale-105 active:scale-95"
-                        onClick={() => handleBookCoverClick(book, book.globalIdx || idx)}
-                      >
-                        <BookCover
-                          title={book.title}
-                          author={book.author}
-                          coverUrl={
-                            book.cover && book.cover.startsWith('http') ? book.cover : coverUrls[book.globalIdx || idx]
-                          }
-                          className="outline-bold-lg h-56 w-40 border-4 border-primary-blue shadow-[0_8px_30px_rgb(0,0,0,0.25)] sm:h-56 sm:w-40"
-                        />
-                      </div>
-                    </div>
-                    <div className="min-w-0 flex-1 text-center sm:text-left">
-                      <div className="mb-2 flex flex-col items-center gap-2 sm:flex-row sm:items-start">
-                        <h2 className="text-xl font-black text-text-primary sm:text-2xl">{book.title}</h2>
-                        {(() => {
-                          const score = similarityScores[book.globalIdx || idx];
-                          return score && score.score > 0 ? <SimilarityBadge score={score} /> : null;
-                        })()}
-                      </div>
-                      <p className="mb-2 text-base font-bold text-text-secondary sm:text-lg">{book.author}</p>
-                      <p className="mb-3 text-sm text-text-primary/80 sm:text-base">
-                        {book.whyYoullLikeIt || book.why}
-                      </p>
-                      <div className="flex flex-wrap justify-center gap-2 sm:justify-start sm:gap-3">
-                        <button
-                          className={`touch-none rounded-full bg-primary-green px-5 py-3 text-sm font-bold text-white transition-transform hover:scale-105 active:scale-95 sm:px-4 sm:py-2 ${added[book.globalIdx || idx] ? 'bg-primary-blue' : ''}`}
-                          onClick={() => handleAddToQueue(book, book.globalIdx || idx)}
-                          disabled={added[book.globalIdx || idx]}
-                        >
-                          {added[book.globalIdx || idx] ? 'Added!' : 'Add to Queue'}
-                        </button>
-                        <button
-                          className={`touch-none rounded-full bg-primary-yellow px-5 py-3 text-sm font-bold text-text-primary transition-transform hover:scale-105 active:scale-95 sm:px-4 sm:py-2 ${borrowed[book.globalIdx || idx] ? 'bg-primary-green' : ''}`}
-                          onClick={() => handleBorrow(book, book.globalIdx || idx)}
-                          disabled={borrowed[book.globalIdx || idx]}
-                        >
-                          {borrowed[book.globalIdx || idx] ? 'Borrowed!' : 'Borrow Book'}
-                        </button>
-                        <button
-                          className="touch-none rounded-full bg-primary-blue px-5 py-3 text-sm font-bold text-white transition-transform hover:scale-105 active:scale-95 sm:px-4 sm:py-2"
-                          onClick={() => handleBookDetails(book, book.globalIdx || idx)}
-                        >
-                          Book Details
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                ))
-            )}
-          </div>
-        )}
-
-        {/* Demo Showcase Card - Shows all features */}
-        {books.length > 0 && (
-          <div className="mt-12 space-y-6">
-            <div className="border-l-4 border-primary-pink pl-4">
-              <h2 className="mb-2 text-2xl font-black text-text-primary sm:text-3xl">✨ Feature Showcase</h2>
-              <p className="text-base text-text-secondary">Example card showing all available features</p>
-            </div>
-            
-            <div className="outline-bold-thin relative overflow-hidden rounded-3xl bg-gradient-to-r from-purple-50 via-pink-50 to-blue-50 p-1">
-              <div className="outline-bold-thin relative flex flex-col gap-4 rounded-3xl bg-white/95 p-4 shadow-[0_10px_40px_rgb(0,0,0,0.15)] sm:gap-8 sm:p-6">
-                {/* Demo indicator */}
-                <div className="absolute right-4 top-4 z-10 rounded-full bg-primary-pink px-3 py-1 text-xs font-black text-white">
-                  DEMO
+                    Go Back
+                  </button>
                 </div>
-                
-                <div className="flex flex-col items-center gap-4 sm:flex-row sm:items-start">
-                  {/* Book Cover */}
-                  <div className="flex-shrink-0">
-                    <BookCover
-                      title="The Midnight Library"
-                      author="Matt Haig"
-                      coverUrl="https://covers.openlibrary.org/b/id/10471875-L.jpg"
-                      className="outline-bold-lg h-56 w-40 border-4 border-primary-blue shadow-[0_8px_30px_rgb(0,0,0,0.25)] sm:h-56 sm:w-40"
-                    />
+              ) : (
+                books
+                  .filter((book) => activeCategory === 'all' || book.category === activeCategory)
+                  .map((book, idx) => (
+                    <div
+                      key={idx}
+                      className="outline-bold-thin relative flex flex-col items-center gap-4 rounded-3xl bg-white/90 p-4 shadow-[0_10px_40px_rgb(0,0,0,0.15)] transition-all duration-300 hover:scale-[1.01] sm:flex-row sm:items-start sm:gap-8 sm:p-6"
+                    >
+                      {/* Clickable Book Cover */}
+                      <div className="flex-shrink-0">
+                        <div
+                          className="cursor-pointer transition-transform hover:scale-105 active:scale-95"
+                          onClick={() => handleBookCoverClick(book, book.globalIdx || idx)}
+                        >
+                          <BookCover
+                            title={book.title}
+                            author={book.author}
+                            coverUrl={
+                              book.cover && book.cover.startsWith('http')
+                                ? book.cover
+                                : coverUrls[book.globalIdx || idx]
+                            }
+                            className="outline-bold-lg h-56 w-40 border-4 border-primary-blue shadow-[0_8px_30px_rgb(0,0,0,0.25)] sm:h-56 sm:w-40"
+                          />
+                        </div>
+                      </div>
+                      <div className="min-w-0 flex-1 text-center sm:text-left">
+                        <div className="mb-2 flex flex-col items-center gap-2 sm:flex-row sm:items-start">
+                          <h2 className="text-xl font-black text-text-primary sm:text-2xl">{book.title}</h2>
+                          {(() => {
+                            const score = similarityScores[book.globalIdx || idx];
+                            return score && score.score > 0 ? <SimilarityBadge score={score} /> : null;
+                          })()}
+                        </div>
+                        <p className="mb-2 text-base font-bold text-text-secondary sm:text-lg">{book.author}</p>
+                        <p className="mb-3 text-sm text-text-primary/80 sm:text-base">
+                          {book.whyYoullLikeIt || book.why}
+                        </p>
+                        <div className="flex flex-wrap justify-center gap-2 sm:justify-start sm:gap-3">
+                          <button
+                            className={`touch-none rounded-full bg-primary-green px-5 py-3 text-sm font-bold text-white transition-transform hover:scale-105 active:scale-95 sm:px-4 sm:py-2 ${added[book.globalIdx || idx] ? 'bg-primary-blue' : ''}`}
+                            onClick={() => handleAddToQueue(book, book.globalIdx || idx)}
+                            disabled={added[book.globalIdx || idx]}
+                          >
+                            {added[book.globalIdx || idx] ? 'Added!' : 'Add to Queue'}
+                          </button>
+                          <button
+                            className={`touch-none rounded-full bg-primary-yellow px-5 py-3 text-sm font-bold text-text-primary transition-transform hover:scale-105 active:scale-95 sm:px-4 sm:py-2 ${borrowed[book.globalIdx || idx] ? 'bg-primary-green' : ''}`}
+                            onClick={() => handleBorrow(book, book.globalIdx || idx)}
+                            disabled={borrowed[book.globalIdx || idx]}
+                          >
+                            {borrowed[book.globalIdx || idx] ? 'Borrowed!' : 'Borrow Book'}
+                          </button>
+                          <button
+                            className="touch-none rounded-full bg-primary-blue px-5 py-3 text-sm font-bold text-white transition-transform hover:scale-105 active:scale-95 sm:px-4 sm:py-2"
+                            onClick={() => handleBookDetails(book, book.globalIdx || idx)}
+                          >
+                            Book Details
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ))
+              )}
+            </div>
+          )}
+
+          {/* Demo Showcase Card - Shows all features */}
+          {books.length > 0 && (
+            <div className="mt-12 space-y-6">
+              <div className="border-l-4 border-primary-pink pl-4">
+                <h2 className="mb-2 text-2xl font-black text-text-primary sm:text-3xl">✨ Feature Showcase</h2>
+                <p className="text-base text-text-secondary">Example card showing all available features</p>
+              </div>
+
+              <div className="outline-bold-thin relative overflow-hidden rounded-3xl bg-gradient-to-r from-purple-50 via-pink-50 to-blue-50 p-1">
+                <div className="outline-bold-thin relative flex flex-col gap-4 rounded-3xl bg-white/95 p-4 shadow-[0_10px_40px_rgb(0,0,0,0.15)] sm:gap-8 sm:p-6">
+                  {/* Demo indicator */}
+                  <div className="absolute right-4 top-4 z-10 rounded-full bg-primary-pink px-3 py-1 text-xs font-black text-white">
+                    DEMO
                   </div>
-                  
-                  <div className="min-w-0 flex-1 space-y-4 text-center sm:text-left">
-                    {/* Title, Author, and Similarity */}
-                    <div>
-                      <div className="mb-2 flex flex-col items-center gap-2 sm:flex-row sm:items-start">
-                        <h2 className="text-xl font-black text-text-primary sm:text-2xl">The Midnight Library</h2>
-                        <SimilarityBadge score={{ score: 95, reasons: ['You\'ve read 3 other books by Matt Haig', 'Similar to books you\'ve enjoyed', 'Matches your reading preferences'] }} />
-                      </div>
-                      <p className="mb-1 text-base font-bold text-text-secondary sm:text-lg">Matt Haig</p>
-                      
-                      {/* Metadata badges */}
-                      <div className="mb-3 flex flex-wrap items-center justify-center gap-2 sm:justify-start">
-                        <span className="rounded-full bg-primary-yellow px-3 py-1 text-xs font-bold text-text-primary">Fiction</span>
-                        <span className="rounded-full bg-primary-orange px-3 py-1 text-xs font-bold text-white">Philosophical</span>
-                        <span className="rounded-full bg-primary-purple px-3 py-1 text-xs font-bold text-white">Bestseller</span>
-                        <span className="rounded-full bg-primary-green px-3 py-1 text-xs font-bold text-white">Staff Pick</span>
-                        <span className="flex items-center gap-1 rounded-full bg-gray-200 px-3 py-1 text-xs font-bold text-text-primary">
-                          ⭐ 4.5 · 288 pages · 5hr read
-                        </span>
-                      </div>
+
+                  <div className="flex flex-col items-center gap-4 sm:flex-row sm:items-start">
+                    {/* Book Cover */}
+                    <div className="flex-shrink-0">
+                      <BookCover
+                        title="The Midnight Library"
+                        author="Matt Haig"
+                        coverUrl="https://covers.openlibrary.org/b/id/10471875-L.jpg"
+                        className="outline-bold-lg h-56 w-40 border-4 border-primary-blue shadow-[0_8px_30px_rgb(0,0,0,0.25)] sm:h-56 sm:w-40"
+                      />
                     </div>
-                    
-                    {/* Why recommendation */}
-                    <p className="text-sm text-text-primary/80 sm:text-base">
-                      A dazzling novel about all the choices that go into a life well lived. Between life and death there is a library, and within that library, the shelves go on forever. Every book provides a chance to try another life you could have lived.
-                    </p>
-                    
-                    {/* Publication info */}
-                    <p className="text-xs text-text-secondary">2020 · Penguin Random House · ISBN: 9780525559474</p>
-                    
-                    {/* Action buttons */}
-                    <div className="flex flex-wrap justify-center gap-2 sm:justify-start sm:gap-3">
-                      <button className="touch-none rounded-full bg-primary-green px-5 py-3 text-sm font-bold text-white transition-transform hover:scale-105 active:scale-95 sm:px-4 sm:py-2">
-                        Add to Queue
-                      </button>
-                      <button className="touch-none rounded-full bg-primary-yellow px-5 py-3 text-sm font-bold text-text-primary transition-transform hover:scale-105 active:scale-95 sm:px-4 sm:py-2">
-                        Borrow Book
-                      </button>
-                      <button className="touch-none rounded-full bg-primary-blue px-5 py-3 text-sm font-bold text-white transition-transform hover:scale-105 active:scale-95 sm:px-4 sm:py-2">
-                        Learn More
-                      </button>
-                      <button className="touch-none rounded-full border-2 border-primary-purple bg-white px-5 py-3 text-sm font-bold text-primary-purple transition-transform hover:scale-105 hover:bg-primary-purple hover:text-white active:scale-95 sm:px-4 sm:py-2">
-                        Share
-                      </button>
-                    </div>
-                    
-                    {/* Library Availability */}
-                    <div className="mt-4 rounded-lg bg-gray-50 p-3">
-                      <h4 className="mb-2 text-sm font-bold text-text-primary">Library Availability</h4>
-                      <div className="space-y-1 text-xs">
-                        <div className="flex items-center justify-between">
-                          <span className="text-text-secondary">Brooklyn Public Library</span>
-                          <span className="font-bold text-primary-green">3 copies available</span>
+
+                    <div className="min-w-0 flex-1 space-y-4 text-center sm:text-left">
+                      {/* Title, Author, and Similarity */}
+                      <div>
+                        <div className="mb-2 flex flex-col items-center gap-2 sm:flex-row sm:items-start">
+                          <h2 className="text-xl font-black text-text-primary sm:text-2xl">The Midnight Library</h2>
+                          <SimilarityBadge
+                            score={{
+                              score: 95,
+                              reasons: [
+                                "You've read 3 other books by Matt Haig",
+                                "Similar to books you've enjoyed",
+                                'Matches your reading preferences',
+                              ],
+                            }}
+                          />
                         </div>
-                        <div className="flex items-center justify-between">
-                          <span className="text-text-secondary">Queens Library</span>
-                          <span className="font-bold text-primary-orange">2 holds</span>
+                        <p className="mb-1 text-base font-bold text-text-secondary sm:text-lg">Matt Haig</p>
+
+                        {/* Metadata badges */}
+                        <div className="mb-3 flex flex-wrap items-center justify-center gap-2 sm:justify-start">
+                          <span className="rounded-full bg-primary-yellow px-3 py-1 text-xs font-bold text-text-primary">
+                            Fiction
+                          </span>
+                          <span className="rounded-full bg-primary-orange px-3 py-1 text-xs font-bold text-white">
+                            Philosophical
+                          </span>
+                          <span className="rounded-full bg-primary-purple px-3 py-1 text-xs font-bold text-white">
+                            Bestseller
+                          </span>
+                          <span className="rounded-full bg-primary-green px-3 py-1 text-xs font-bold text-white">
+                            Staff Pick
+                          </span>
+                          <span className="flex items-center gap-1 rounded-full bg-gray-200 px-3 py-1 text-xs font-bold text-text-primary">
+                            ⭐ 4.5 · 288 pages · 5hr read
+                          </span>
                         </div>
-                        <div className="flex items-center justify-between">
-                          <span className="text-text-secondary">NYPL - Grand Central</span>
-                          <span className="font-bold text-primary-green">Available now</span>
+                      </div>
+
+                      {/* Why recommendation */}
+                      <p className="text-sm text-text-primary/80 sm:text-base">
+                        A dazzling novel about all the choices that go into a life well lived. Between life and death
+                        there is a library, and within that library, the shelves go on forever. Every book provides a
+                        chance to try another life you could have lived.
+                      </p>
+
+                      {/* Publication info */}
+                      <p className="text-xs text-text-secondary">2020 · Penguin Random House · ISBN: 9780525559474</p>
+
+                      {/* Action buttons */}
+                      <div className="flex flex-wrap justify-center gap-2 sm:justify-start sm:gap-3">
+                        <button className="touch-none rounded-full bg-primary-green px-5 py-3 text-sm font-bold text-white transition-transform hover:scale-105 active:scale-95 sm:px-4 sm:py-2">
+                          Add to Queue
+                        </button>
+                        <button className="touch-none rounded-full bg-primary-yellow px-5 py-3 text-sm font-bold text-text-primary transition-transform hover:scale-105 active:scale-95 sm:px-4 sm:py-2">
+                          Borrow Book
+                        </button>
+                        <button className="touch-none rounded-full bg-primary-blue px-5 py-3 text-sm font-bold text-white transition-transform hover:scale-105 active:scale-95 sm:px-4 sm:py-2">
+                          Learn More
+                        </button>
+                        <button className="touch-none rounded-full border-2 border-primary-purple bg-white px-5 py-3 text-sm font-bold text-primary-purple transition-transform hover:scale-105 hover:bg-primary-purple hover:text-white active:scale-95 sm:px-4 sm:py-2">
+                          Share
+                        </button>
+                      </div>
+
+                      {/* Library Availability */}
+                      <div className="mt-4 rounded-lg bg-gray-50 p-3">
+                        <h4 className="mb-2 text-sm font-bold text-text-primary">Library Availability</h4>
+                        <div className="space-y-1 text-xs">
+                          <div className="flex items-center justify-between">
+                            <span className="text-text-secondary">Brooklyn Public Library</span>
+                            <span className="font-bold text-primary-green">3 copies available</span>
+                          </div>
+                          <div className="flex items-center justify-between">
+                            <span className="text-text-secondary">Queens Library</span>
+                            <span className="font-bold text-primary-orange">2 holds</span>
+                          </div>
+                          <div className="flex items-center justify-between">
+                            <span className="text-text-secondary">NYPL - Grand Central</span>
+                            <span className="font-bold text-primary-green">Available now</span>
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -622,17 +641,16 @@ const StacksRecommendationsPage = () => {
                 </div>
               </div>
             </div>
-          </div>
-        )}
-      </div>
+          )}
+        </div>
 
-      {/* Modals */}
-      {showFlipbook && flipbookBook && (
-        <BookFlipbookCustom3D book={flipbookBook} onClose={() => setShowFlipbook(false)} />
-      )}
-      {showBookDetails && detailsBook && (
-        <BookDetailsModal book={detailsBook} onClose={() => setShowBookDetails(false)} />
-      )}
+        {/* Modals */}
+        {showFlipbook && flipbookBook && (
+          <BookFlipbookCustom3D book={flipbookBook} onClose={() => setShowFlipbook(false)} />
+        )}
+        {showBookDetails && detailsBook && (
+          <BookDetailsModal book={detailsBook} onClose={() => setShowBookDetails(false)} />
+        )}
       </div>
     </div>
   );

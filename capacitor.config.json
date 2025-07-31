@@ -1,0 +1,31 @@
+{
+  "appId": "com.stacks.library",
+  "appName": "Stacks",
+  "webDir": "out",
+  "server": {
+    "androidScheme": "https",
+    "iosScheme": "https"
+  },
+  "ios": {
+    "preferredContentMode": "mobile",
+    "backgroundColor": "#FBF7F4",
+    "scrollEnabled": false,
+    "limitsNavigationsToAppBoundDomains": true
+  },
+  "android": {
+    "backgroundColor": "#FBF7F4",
+    "allowMixedContent": false,
+    "captureInput": true,
+    "webContentsDebuggingEnabled": true
+  },
+  "plugins": {
+    "StatusBar": {
+      "style": "light",
+      "backgroundColor": "#FBF7F4"
+    },
+    "Keyboard": {
+      "resize": "body",
+      "resizeOnFullScreen": true
+    }
+  }
+}

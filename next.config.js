@@ -6,7 +6,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   // Comment out for development testing
-  // output: 'export',
+  output: 'export',
   images: {
     // Keep unoptimized for both dev and export
     unoptimized: true,

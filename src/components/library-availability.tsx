@@ -25,7 +25,7 @@ export const LibraryAvailability = ({ isbn, onLibrarySelect }: LibraryAvailabili
 
   const checkBookAvailability = async () => {
     if (!isbn) return;
-    
+
     setIsLoading(true);
     try {
       const availability = await libraryService.checkAvailability(isbn);
@@ -55,7 +55,6 @@ export const LibraryAvailability = ({ isbn, onLibrarySelect }: LibraryAvailabili
       setIsLoading(false);
     }
   };
-
 
   const handleLibrarySelect = (libraryName: string) => {
     setSelectedLibrary(libraryName);

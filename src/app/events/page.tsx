@@ -5,7 +5,7 @@
 
 'use client';
 
-import { Navigation } from '@/components/navigation';
+import { MobileLayout } from '@/components/mobile-layout';
 
 const mockEvents = [
   {
@@ -299,10 +299,8 @@ const EventsPage = () => {
   const regularEvents = mockEvents.filter((event) => !event.isFeatured);
 
   return (
-    <div className="flex h-full flex-col bg-bg-light">
-      <Navigation />
-
-      <main className="flex-1 overflow-auto px-4 py-8 sm:px-8 sm:py-12">
+    <MobileLayout>
+      <div className="px-4 py-8 sm:px-8 sm:py-12">
         <div className="mx-auto max-w-7xl space-y-8 sm:space-y-12">
           {/* Hero Section - Clean and Focused */}
           <div className="animate-fade-in-up pop-element-lg relative overflow-hidden rounded-3xl bg-primary-purple p-8 shadow-[0_10px_40px_rgb(0,0,0,0.3)] sm:p-12">
@@ -344,8 +342,8 @@ const EventsPage = () => {
           {/* All Events */}
           <AllEvents events={regularEvents} />
         </div>
-      </main>
-    </div>
+      </div>
+    </MobileLayout>
   );
 };
 

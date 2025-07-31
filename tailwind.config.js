@@ -44,6 +44,7 @@ module.exports = {
       },
       spacing: {
         card: '32px',
+        'safe-area-inset-top': 'env(safe-area-inset-top)',
       },
       fontWeight: {
         'extra-bold': '800',
@@ -64,6 +65,13 @@ module.exports = {
         'super-tight': '0.85',
         'extra-tight': '0.9',
         tight: '0.95',
+      },
+      // Safe area utilities for iOS
+      padding: {
+        'safe-area-inset-top': 'env(safe-area-inset-top)',
+        'safe-area-inset-right': 'env(safe-area-inset-right)',
+        'safe-area-inset-bottom': 'env(safe-area-inset-bottom)',
+        'safe-area-inset-left': 'env(safe-area-inset-left)',
       },
     },
   },

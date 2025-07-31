@@ -139,10 +139,10 @@ export function BookFlipbookCustom3D({ book, onClose }: BookFlipbookCustom3DProp
               <div className="page-face front">
                 <div className="page-content p-0">
                   {content?.coverUrl ? (
-                    <img 
-                      src={content.coverUrl} 
-                      alt={book.title} 
-                      className="h-full w-full object-cover rounded-lg"
+                    <img
+                      src={content.coverUrl}
+                      alt={book.title}
+                      className="h-full w-full rounded-lg object-cover"
                       style={{ objectFit: 'cover' }}
                     />
                   ) : (
@@ -182,32 +182,26 @@ export function BookFlipbookCustom3D({ book, onClose }: BookFlipbookCustom3DProp
               <div className="page-face back">
                 <div className="page-content">
                   <h2>Book Details</h2>
-                  
+
                   {/* Why You'll Like It */}
                   {(book.whyYoullLikeIt || book.why) && (
                     <div className="mb-4">
                       <h3 className="mb-2 text-base font-semibold text-primary-blue">Why You&apos;ll Like It</h3>
-                      <p className="text-justify text-sm">
-                        {book.whyYoullLikeIt || book.why}
-                      </p>
+                      <p className="text-justify text-sm">{book.whyYoullLikeIt || book.why}</p>
                     </div>
                   )}
-                  
+
                   {/* Summary */}
                   {(book.summary || content?.description) && (
                     <div className="mb-4">
                       <h3 className="mb-2 text-base font-semibold text-primary-blue">Summary</h3>
-                      <p className="text-justify text-sm">
-                        {book.summary || content?.description}
-                      </p>
+                      <p className="text-justify text-sm">{book.summary || content?.description}</p>
                     </div>
                   )}
-                  
+
                   {/* Publication Details */}
                   <div className="mt-4 space-y-1 text-xs text-gray-600">
-                    {(book.year || content?.publishYear) && (
-                      <p>Published: {book.year || content?.publishYear}</p>
-                    )}
+                    {(book.year || content?.publishYear) && <p>Published: {book.year || content?.publishYear}</p>}
                     {book.publisher && <p>Publisher: {book.publisher}</p>}
                     {(book.pageCount || (content && content.pageCount > 0)) && (
                       <p>Pages: {book.pageCount || content?.pageCount}</p>
@@ -298,10 +292,10 @@ export function BookFlipbookCustom3D({ book, onClose }: BookFlipbookCustom3DProp
                   <h2>Stacks</h2>
                   <p className="mb-4 text-sm">AI-Powered Book Discovery</p>
                   {content?.backCoverUrl ? (
-                    <img 
-                      src={content.backCoverUrl} 
-                      alt="Back cover" 
-                      className="h-full w-full object-cover rounded-lg"
+                    <img
+                      src={content.backCoverUrl}
+                      alt="Back cover"
+                      className="h-full w-full rounded-lg object-cover"
                       style={{ objectFit: 'cover' }}
                     />
                   ) : (
