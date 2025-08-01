@@ -24,7 +24,7 @@ interface RootLayoutProps {
 const RootLayout = ({ children }: RootLayoutProps) => {
   return (
     <html lang="en" className="h-full" suppressHydrationWarning={true}>
-      <body className={`${inter.className} h-full bg-bg-light antialiased`}>
+      <body className={`${inter.className} h-full bg-bg-light antialiased`} suppressHydrationWarning={true}>
         <div id="root" className="flex h-full flex-col">
           {children}
         </div>

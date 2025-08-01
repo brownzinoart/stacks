@@ -19,7 +19,7 @@ const mockBorrowedBooks = [
   {
     id: 2,
     title: 'Lessons in Chemistry',
-    author: 'Bonnie Garmus', 
+    author: 'Bonnie Garmus',
     dueDate: '2025-08-18',
     daysLeft: 15,
     renewable: true,
@@ -67,27 +67,25 @@ export const BorrowedBooks = () => {
               onClick={() => handleBookClick(book)}
             >
               <div className="flex-shrink-0">
-                <BookCover title={book.title} author={book.author} className="w-12 h-16" />
+                <BookCover title={book.title} author={book.author} className="h-16 w-12" />
               </div>
 
               <div className="flex-1 space-y-2">
                 <div>
-                  <h3 className="text-base font-black text-text-primary sm:text-lg">
-                    {book.title}
-                  </h3>
-                  <p className="text-sm font-bold text-text-secondary">
-                    {book.author}
-                  </p>
+                  <h3 className="text-base font-black text-text-primary sm:text-lg">{book.title}</h3>
+                  <p className="text-sm font-bold text-text-secondary">{book.author}</p>
                 </div>
 
                 <div className="flex items-center gap-3">
-                  <div className={`rounded-full px-3 py-1 text-xs font-black ${
-                    book.daysLeft <= 3 
-                      ? 'bg-primary-orange/20 text-primary-orange' 
-                      : book.daysLeft <= 7
-                      ? 'bg-primary-yellow/20 text-primary-yellow'
-                      : 'bg-primary-green/20 text-primary-green'
-                  }`}>
+                  <div
+                    className={`rounded-full px-3 py-1 text-xs font-black ${
+                      book.daysLeft <= 3
+                        ? 'bg-primary-orange/20 text-primary-orange'
+                        : book.daysLeft <= 7
+                          ? 'bg-primary-yellow/20 text-primary-yellow'
+                          : 'bg-primary-green/20 text-primary-green'
+                    }`}
+                  >
                     {book.daysLeft} DAYS LEFT
                   </div>
 
@@ -97,7 +95,7 @@ export const BorrowedBooks = () => {
                         e.stopPropagation();
                         handleRenewBook(book);
                       }}
-                      className="touch-feedback rounded-full bg-primary-blue px-3 py-1 text-xs font-black text-white shadow-backdrop transition-all duration-200 hover:scale-105"
+                      className="touch-feedback shadow-backdrop rounded-full bg-primary-blue px-3 py-1 text-xs font-black text-white transition-all duration-200 hover:scale-105"
                     >
                       RENEW
                     </button>
@@ -105,7 +103,8 @@ export const BorrowedBooks = () => {
                 </div>
 
                 <div className="text-xs font-bold text-text-secondary">
-                  Due: {new Date(book.dueDate).toLocaleDateString('en-US', {
+                  Due:{' '}
+                  {new Date(book.dueDate).toLocaleDateString('en-US', {
                     month: 'short',
                     day: 'numeric',
                   })}

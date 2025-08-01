@@ -3,8 +3,7 @@
   "appName": "Stacks",
   "webDir": "out",
   "server": {
-    "androidScheme": "https",
-    "iosScheme": "https"
+    "androidScheme": "https"
   },
   "ios": {
     "preferredContentMode": "mobile",
@@ -22,10 +21,6 @@
     "StatusBar": {
       "style": "light",
       "backgroundColor": "#FBF7F4"
-    },
-    "Keyboard": {
-      "resize": "body",
-      "resizeOnFullScreen": true
     }
   }
 }

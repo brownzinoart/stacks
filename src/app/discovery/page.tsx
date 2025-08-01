@@ -1,81 +1,162 @@
 /**
- * Stacks page - Personal reading hub and main dashboard
- * Features: Mood-based recommendations, queue, reading streak, borrowed books
+ * Learning page - Educational paths and topic mastery
+ * Mobile-optimized with curated learning experiences
  */
 
 import { MobileLayout } from '@/components/mobile-layout';
-import { AIPromptInput } from '@/features/home/ai-prompt-input';
-import { NewReleases } from '@/features/home/recent-searches';
-import { MyQueue } from '@/features/home/my-queue';
-import { ReadingStreak } from '@/features/home/reading-streak';
-import { BorrowedBooks } from '@/features/stacks/borrowed-books';
+import { PopularPathsInArea } from '@/features/explore/branch-availability';
 
 const DiscoveryPage = () => {
   return (
     <MobileLayout>
       <div className="px-4 py-8 sm:px-8 sm:py-12">
         <div className="mx-auto max-w-7xl space-y-8 sm:space-y-12">
-          {/* Hero Section - What's Next */}
-          <div
-            className="animate-fade-in-up pop-element-lg relative rounded-3xl bg-primary-green p-8 shadow-[0_10px_40px_rgb(0,0,0,0.3)] sm:p-12"
-            style={{ overflow: 'visible' }}
-          >
-            {/* Character with Book - Single image showing both character and book */}
-            <div className="pointer-events-none absolute inset-0 z-0">
-              <div
-                className="absolute inset-0"
-                style={{
-                  backgroundImage: `url('/maincharacter.png')`,
-                  backgroundSize: 'auto 180%',
-                  backgroundRepeat: 'no-repeat',
-                  backgroundPosition: '75% 45%',
-                  opacity: 0.65,
-                  filter: 'drop-shadow(0 20px 40px rgba(0,0,0,0.25)) brightness(1.08) contrast(1.15) saturate(0.95)',
-                  mixBlendMode: 'multiply',
-                }}
-              />
-            </div>
-
+          {/* Hero Section with Search */}
+          <div className="animate-fade-in-up pop-element-lg relative overflow-hidden rounded-3xl bg-primary-green p-8 shadow-[0_10px_40px_rgb(0,0,0,0.3)] sm:p-12">
             <div className="relative z-10">
               <h1 className="mb-4 text-huge font-black leading-extra-tight text-text-primary sm:mb-6">
-                <span className="text-primary-orange">WHAT&apos;S</span>
+                <span className="text-primary-orange">LEARN</span>
                 <br />
-                <span className="text-mega">NEXT?</span>
+                <span className="text-mega">& GROW</span>
               </h1>
               <p className="mb-6 text-lg font-bold leading-tight text-text-primary sm:mb-8 sm:text-xl">
-                Tell us what you&apos;re into!
+                Master any topic with curated
                 <br />
-                Get instant recommendations for your next read!
+                book collections designed for deep learning!
               </p>
-              <AIPromptInput />
+
+              {/* Search Form */}
+              <div className="outline-bold-thin rounded-2xl bg-white/80 p-6 backdrop-blur-sm">
+                <form className="space-y-4">
+                  <div className="flex gap-3">
+                    <input
+                      type="text"
+                      placeholder="Enter a topic (e.g., Machine Learning, Spanish History, Photography)"
+                      className="outline-bold-thin flex-1 rounded-2xl border-2 border-text-primary px-6 py-4 font-bold text-text-primary placeholder-text-secondary focus:border-primary-blue focus:outline-none"
+                    />
+                    <button
+                      type="submit"
+                      className="touch-feedback shadow-backdrop rounded-2xl bg-primary-blue px-8 py-4 text-base font-black text-white transition-transform hover:scale-105"
+                    >
+                      SEARCH
+                    </button>
+                  </div>
+
+                  <div className="text-base font-bold text-text-primary sm:text-lg">
+                    We&apos;ll find 5-10 books to create a comprehensive learning path for your topic
+                  </div>
+                </form>
+              </div>
             </div>
 
-            {/* Enhanced decorative elements */}
-            <div className="animate-float absolute left-6 top-6 z-0 h-16 w-16 rounded-full bg-primary-yellow opacity-30 shadow-[0_4px_15px_rgb(0,0,0,0.2)] sm:h-20 sm:w-20" />
-            <div className="animate-float-delayed absolute right-12 top-2 z-0 h-12 w-12 rounded-full bg-primary-purple opacity-25 shadow-[0_4px_15px_rgb(0,0,0,0.2)] sm:h-16 sm:w-16" />
-            <div className="animate-float-slow absolute bottom-6 right-6 z-0 h-8 w-8 rounded-full bg-primary-teal opacity-40 shadow-[0_4px_15px_rgb(0,0,0,0.2)] sm:h-12 sm:w-12" />
-            <div className="animate-float absolute bottom-12 left-4 z-0 h-10 w-10 rounded-full bg-primary-pink opacity-35 shadow-[0_4px_15px_rgb(0,0,0,0.2)] sm:h-14 sm:w-14" />
-            <div className="animate-float-delayed absolute right-4 top-12 z-0 h-6 w-6 rounded-full bg-primary-blue opacity-45 shadow-[0_4px_15px_rgb(0,0,0,0.2)] sm:h-8 sm:w-8" />
+            {/* Decorative elements */}
+            <div className="sm:w-18 sm:h-18 animate-float absolute left-6 top-4 z-0 h-14 w-14 rounded-full bg-primary-teal opacity-25 shadow-[0_4px_15px_rgb(0,0,0,0.2)]" />
+            <div className="animate-float-delayed absolute bottom-8 left-4 z-0 h-10 w-10 rounded-full bg-primary-pink opacity-30 shadow-[0_4px_15px_rgb(0,0,0,0.2)] sm:h-14 sm:w-14" />
+            <div className="animate-float-slow absolute left-2 top-12 z-0 h-8 w-8 rounded-full bg-primary-blue opacity-35 shadow-[0_4px_15px_rgb(0,0,0,0.2)] sm:h-12 sm:w-12" />
+            <div className="animate-float absolute bottom-4 right-8 z-0 h-12 w-12 rounded-full bg-primary-yellow opacity-20 shadow-[0_4px_15px_rgb(0,0,0,0.2)] sm:h-16 sm:w-16" />
+            <div className="animate-float-delayed absolute right-4 top-6 z-0 h-6 w-6 rounded-full bg-primary-purple opacity-40 shadow-[0_4px_15px_rgb(0,0,0,0.2)] sm:h-8 sm:w-8" />
+            <div className="animate-float-slow absolute bottom-12 right-2 z-0 h-10 w-10 rounded-full bg-primary-orange opacity-30 shadow-[0_4px_15px_rgb(0,0,0,0.2)] sm:h-12 sm:w-12" />
           </div>
 
-          {/* New Releases */}
+          {/* Sample Learning Path - Ancient Egypt */}
           <div className="animate-fade-in-up animation-delay-200">
-            <NewReleases />
+            <div className="pop-element-lg relative overflow-hidden rounded-3xl bg-primary-purple p-8 shadow-[0_10px_40px_rgb(0,0,0,0.3)] sm:p-12">
+              <div className="relative z-10 space-y-6 sm:space-y-8">
+                <div>
+                  <h2 className="mb-4 text-huge font-black leading-extra-tight text-text-primary sm:mb-6">
+                    <span className="text-primary-yellow">SAMPLE</span>
+                    <br />
+                    <span className="text-mega">LEARNING PATH</span>
+                  </h2>
+                  <p className="mb-6 text-lg font-bold text-text-primary sm:text-xl">
+                    See how learning paths work with this Ancient Egypt example
+                  </p>
+                </div>
+
+                <div className="outline-bold-thin rounded-2xl bg-white/80 p-6 backdrop-blur-sm">
+                  <div className="space-y-6">
+                    <div>
+                      <h3 className="mb-3 text-xl font-black text-text-primary">
+                        Ancient Egypt: From Pharaohs to Pyramids
+                      </h3>
+                      <p className="text-base font-bold text-text-primary">
+                        A comprehensive journey through Egyptian history, culture, and archaeology
+                      </p>
+                    </div>
+
+                    <div className="space-y-4">
+                      <div className="flex justify-between text-base">
+                        <span className="font-bold text-text-primary">PROGRESS</span>
+                        <span className="font-black text-text-primary">2/6 books completed</span>
+                      </div>
+
+                      <div className="outline-bold-thin h-3 w-full rounded-full bg-white/60">
+                        <div
+                          className="h-3 rounded-full bg-primary-green shadow-[0_2px_8px_rgb(0,0,0,0.2)] transition-all duration-300"
+                          style={{ width: '33%' }}
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid gap-4">
+                      <div className="flex items-center gap-4 rounded-2xl bg-primary-green/20 p-4">
+                        <div className="h-3 w-3 rounded-full bg-primary-green"></div>
+                        <div>
+                          <h4 className="font-black text-text-primary">The Complete Pyramids</h4>
+                          <p className="text-sm font-bold text-text-primary">Mark Lehner • Completed</p>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-4 rounded-2xl bg-primary-green/20 p-4">
+                        <div className="h-3 w-3 rounded-full bg-primary-green"></div>
+                        <div>
+                          <h4 className="font-black text-text-primary">Egyptian Mythology</h4>
+                          <p className="text-sm font-bold text-text-primary">Geraldine Pinch • Completed</p>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-4 rounded-2xl bg-white/60 p-4">
+                        <div className="h-3 w-3 rounded-full bg-primary-yellow"></div>
+                        <div>
+                          <h4 className="font-black text-text-primary">The Oxford History of Ancient Egypt</h4>
+                          <p className="text-sm font-bold text-text-primary">Ian Shaw • In Progress</p>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-4 rounded-2xl bg-white/40 p-4 opacity-60">
+                        <div className="h-3 w-3 rounded-full bg-gray-400"></div>
+                        <div>
+                          <h4 className="font-black text-text-primary">Tutankhamun: The Untold Story</h4>
+                          <p className="text-sm font-bold text-text-primary">Thomas Hoving • Up Next</p>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex justify-between text-base font-bold text-text-primary">
+                      <span>4/6 available</span>
+                      <span>6-8 weeks</span>
+                    </div>
+
+                    <button className="touch-feedback shadow-backdrop w-full rounded-2xl bg-primary-blue px-6 py-3 text-lg font-black text-white transition-transform hover:scale-105">
+                      CONTINUE PATH
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* Decorative elements */}
+              <div className="animate-float absolute left-6 top-6 z-0 h-12 w-12 rounded-full bg-primary-teal opacity-25 sm:h-16 sm:w-16" />
+              <div className="animate-float-delayed absolute bottom-8 left-4 z-0 h-10 w-10 rounded-full bg-primary-yellow opacity-30 sm:h-14 sm:w-14" />
+              <div className="animate-float-slow absolute left-2 top-12 z-0 h-8 w-8 rounded-full bg-primary-blue opacity-35 sm:h-12 sm:w-12" />
+              <div className="animate-float absolute bottom-4 right-8 z-0 h-12 w-12 rounded-full bg-primary-green opacity-20 sm:h-16 sm:w-16" />
+              <div className="animate-float-delayed absolute right-4 top-6 z-0 h-6 w-6 rounded-full bg-primary-orange opacity-40 sm:h-8 sm:w-8" />
+              <div className="animate-float-slow absolute bottom-12 right-2 z-0 h-10 w-10 rounded-full bg-primary-pink opacity-30 sm:h-12 sm:w-12" />
+            </div>
           </div>
 
-          {/* Borrowed Books */}
-          <div className="animate-fade-in-up animation-delay-300">
-            <BorrowedBooks />
-          </div>
-
-          {/* Bottom Grid - Queue and Reading Streak */}
-          <div className="grid gap-8 sm:gap-12 lg:grid-cols-2">
-            <div className="animate-fade-in-up animation-delay-400">
-              <MyQueue />
-            </div>
-            <div className="animate-fade-in-up animation-delay-600">
-              <ReadingStreak />
-            </div>
+          {/* Popular Paths in Your Area */}
+          <div className="animate-fade-in-up animation-delay-400">
+            <PopularPathsInArea />
           </div>
         </div>
       </div>

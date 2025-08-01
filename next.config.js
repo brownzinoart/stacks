@@ -5,7 +5,7 @@
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // Comment out for development testing
+  // Enable for Capacitor/mobile deployment
   output: 'export',
   images: {
     // Keep unoptimized for both dev and export

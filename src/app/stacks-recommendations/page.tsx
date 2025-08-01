@@ -5,7 +5,7 @@ import { useEffect, useState, useRef } from 'react';
 import { BookCover } from '@/components/book-cover';
 import { BookFlipbookCustom3D } from '@/components/book-flipbook-custom-3d';
 import { BookDetailsModal } from '@/components/book-details-modal';
-import { Navigation } from '@/components/navigation';
+import { MobileLayout } from '@/components/mobile-layout';
 import { SimilarityBadge } from '@/components/similarity-badge';
 import { LibraryAvailability } from '@/components/library-availability';
 import axios from 'axios';
@@ -14,13 +14,18 @@ import { readingHistory, type SimilarityScore } from '@/lib/reading-history';
 
 const getQueue = () => {
   try {
-    return JSON.parse(localStorage.getItem('stacks_queue') || '[]');
+    if (typeof window !== 'undefined') {
+      return JSON.parse(localStorage.getItem('stacks_queue') || '[]');
+    }
+    return [];
   } catch {
     return [];
   }
 };
 const setQueue = (queue: any[]) => {
-  localStorage.setItem('stacks_queue', JSON.stringify(queue));
+  if (typeof window !== 'undefined') {
+    localStorage.setItem('stacks_queue', JSON.stringify(queue));
+  }
 };
 
 const isRealCoverUrl = (url: string) => url && url.startsWith('http');
@@ -44,7 +49,13 @@ const StacksRecommendationsPage = () => {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [pullDistance, setPullDistance] = useState(0);
   const [similarityScores, setSimilarityScores] = useState<{ [key: number]: SimilarityScore }>({});
+  const [isMobileDevice, setIsMobileDevice] = useState(false);
   const startY = useRef<number | null>(null);
+
+  // Check if mobile on mount
+  useEffect(() => {
+    setIsMobileDevice(isMobile());
+  }, []);
 
   // Load recommendations from localStorage on mount
   useEffect(() => {
@@ -145,7 +156,7 @@ const StacksRecommendationsPage = () => {
       setQueue(queue);
       setAdded((prev) => ({ ...prev, [idx]: true }));
       // Add haptic feedback on mobile
-      if (isMobile()) {
+      if (isMobileDevice) {
         await hapticFeedback('medium');
       }
     }
@@ -186,7 +197,7 @@ const StacksRecommendationsPage = () => {
     setDetailsBook(book);
     setShowBookDetails(true);
     // Add haptic feedback on mobile
-    if (isMobile()) {
+    if (isMobileDevice) {
       await hapticFeedback('light');
     }
   };
@@ -235,9 +246,7 @@ const StacksRecommendationsPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-bg-light">
-      <Navigation />
-
+    <MobileLayout>
       {/* Breadcrumb Navigation */}
       <div className="mx-auto max-w-7xl px-4 py-4">
         <div className="flex items-center gap-2 text-sm text-text-secondary">
@@ -257,9 +266,9 @@ const StacksRecommendationsPage = () => {
 
       <div
         className="relative flex flex-col items-center px-4 pb-12"
-        onTouchStart={isMobile() ? handleTouchStart : undefined}
-        onTouchMove={isMobile() ? handleTouchMove : undefined}
-        onTouchEnd={isMobile() ? handleTouchEnd : undefined}
+        onTouchStart={isMobileDevice ? handleTouchStart : undefined}
+        onTouchMove={isMobileDevice ? handleTouchMove : undefined}
+        onTouchEnd={isMobileDevice ? handleTouchEnd : undefined}
       >
         {/* Pull to refresh indicator */}
         {pullDistance > 0 && (
@@ -291,7 +300,7 @@ const StacksRecommendationsPage = () => {
           </h1>
           {/* Enhanced reprompt section */}
           <div
-            className={`${isMobile() ? 'sticky top-0 z-40 -mx-4 mb-4 bg-bg-light/95 px-4 py-4 shadow-lg backdrop-blur-lg' : 'mb-8'}`}
+            className={`${isMobileDevice ? 'sticky top-0 z-40 -mx-4 mb-4 bg-bg-light/95 px-4 py-4 shadow-lg backdrop-blur-lg' : 'mb-8'}`}
           >
             {userInput && (
               <div className="mb-3">
@@ -314,7 +323,7 @@ const StacksRecommendationsPage = () => {
               <button
                 type="submit"
                 className="touch-none rounded-full bg-primary-blue px-5 py-3 text-base font-black text-white transition-transform hover:scale-105 active:scale-95 sm:px-6 sm:py-4 sm:text-lg"
-                onClick={() => isMobile() && hapticFeedback('medium')}
+                onClick={() => isMobileDevice && hapticFeedback('medium')}
               >
                 Update
               </button>
@@ -344,7 +353,7 @@ const StacksRecommendationsPage = () => {
                     key={cat.name}
                     onClick={() => {
                       setActiveCategory(cat.name);
-                      if (isMobile()) hapticFeedback('light');
+                      if (isMobileDevice) hapticFeedback('light');
                     }}
                     className={`touch-none whitespace-nowrap rounded-full px-4 py-2 font-bold transition-all ${
                       activeCategory === cat.name
@@ -652,7 +661,7 @@ const StacksRecommendationsPage = () => {
           <BookDetailsModal book={detailsBook} onClose={() => setShowBookDetails(false)} />
         )}
       </div>
-    </div>
+    </MobileLayout>
   );
 };
 

@@ -35,24 +35,24 @@ async function getSmartRecommendations(userInput: string, forceRefresh: boolean 
   // Check cache first - create hash of input for consistent caching
   const inputHash = btoa(userInput.toLowerCase().trim()).replace(/[^a-zA-Z0-9]/g, '');
   const cacheKey = `stacks_cache_${inputHash}`;
-  const cachedData = localStorage.getItem(cacheKey);
-  
+  const cachedData = typeof window !== 'undefined' ? localStorage.getItem(cacheKey) : null;
+
   if (cachedData && !forceRefresh) {
     try {
       const parsed = JSON.parse(cachedData);
       const cacheAge = Date.now() - new Date(parsed.timestamp).getTime();
       const CACHE_DURATION = 24 * 60 * 60 * 1000; // 24 hours
-      
+
       if (cacheAge < CACHE_DURATION) {
         console.log('Using cached recommendations for:', userInput);
         return parsed.recommendations;
       } else {
         console.log('Cache expired, fetching fresh recommendations');
-        localStorage.removeItem(cacheKey);
+        if (typeof window !== 'undefined') localStorage.removeItem(cacheKey);
       }
     } catch (e) {
       console.log('Invalid cache data, removing');
-      localStorage.removeItem(cacheKey);
+      if (typeof window !== 'undefined') localStorage.removeItem(cacheKey);
     }
   }
 
@@ -221,14 +221,19 @@ async function getSmartRecommendations(userInput: string, forceRefresh: boolean 
         });
 
         console.log('Cover pre-fetch complete');
-        
+
         // Cache the successful recommendations
-        localStorage.setItem(cacheKey, JSON.stringify({
-          recommendations,
-          timestamp: new Date().toISOString()
-        }));
+        if (typeof window !== 'undefined') {
+          localStorage.setItem(
+            cacheKey,
+            JSON.stringify({
+              recommendations,
+              timestamp: new Date().toISOString(),
+            })
+          );
+        }
         console.log('Cached recommendations for future use');
-        
+
         return recommendations;
       } else {
         throw new Error('No JSON found in recommendation response');
@@ -278,6 +283,7 @@ export const AIPromptInput = () => {
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [currentExampleIndex, setCurrentExampleIndex] = useState(0);
   const [isExampleVisible, setIsExampleVisible] = useState(true);
+  const [showError, setShowError] = useState(false);
   const router = useRouter();
 
   // Rotate through examples every 3 seconds
@@ -295,8 +301,24 @@ export const AIPromptInput = () => {
 
   const handleSubmit = async (e: React.FormEvent, forceRefresh: boolean = false) => {
     e.preventDefault();
-    if (!inputValue && !selectedMood) return;
+    
+    // Show error feedback if no input
+    if (!inputValue && !selectedMood) {
+      setShowError(true);
+      // Shake animation for the input
+      const inputEl = document.querySelector('.search-input-container');
+      if (inputEl) {
+        inputEl.classList.add('animate-shake');
+        setTimeout(() => {
+          inputEl.classList.remove('animate-shake');
+        }, 500);
+      }
+      // Clear error after 3 seconds
+      setTimeout(() => setShowError(false), 3000);
+      return;
+    }
 
+    setShowError(false);
     setIsLoading(true);
     setSearchResults([]);
 
@@ -309,14 +331,16 @@ export const AIPromptInput = () => {
       setIsLoading(false);
 
       // Store categorized recommendations
-      localStorage.setItem(
-        'stacks_recommendations',
-        JSON.stringify({
-          ...recommendations,
-          userInput,
-          timestamp: new Date().toISOString(),
-        })
-      );
+      if (typeof window !== 'undefined') {
+        localStorage.setItem(
+          'stacks_recommendations',
+          JSON.stringify({
+            ...recommendations,
+            userInput,
+            timestamp: new Date().toISOString(),
+          })
+        );
+      }
 
       router.push('/stacks-recommendations');
     } catch (err) {
@@ -345,19 +369,23 @@ export const AIPromptInput = () => {
         }
 
         setIsLoading(false);
-        localStorage.setItem('stacks_recommendations', JSON.stringify({ books, userInput }));
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('stacks_recommendations', JSON.stringify({ books, userInput }));
+        }
         router.push('/stacks-recommendations');
       } catch (fallbackErr) {
         setIsLoading(false);
         console.error('Fallback also failed:', fallbackErr);
-        localStorage.setItem(
-          'stacks_recommendations',
-          JSON.stringify({
-            books: [],
-            userInput,
-            error: 'Failed to fetch recommendations',
-          })
-        );
+        if (typeof window !== 'undefined') {
+          localStorage.setItem(
+            'stacks_recommendations',
+            JSON.stringify({
+              books: [],
+              userInput,
+              error: 'Failed to fetch recommendations',
+            })
+          );
+        }
         router.push('/stacks-recommendations');
       }
     }
@@ -406,7 +434,7 @@ export const AIPromptInput = () => {
         {/* Search Input */}
         <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-0">
           <div className="flex flex-col gap-4 sm:flex-row">
-            <div className="relative flex-1">
+            <div className="search-input-container relative flex-1">
               <input
                 type="text"
                 placeholder=""
@@ -415,16 +443,28 @@ export const AIPromptInput = () => {
                 disabled={isLoading}
                 className="outline-bold-thin shadow-backdrop mobile-touch w-full rounded-full bg-white px-6 py-4 text-base font-bold text-text-primary focus:outline-none focus:ring-4 focus:ring-white/50 sm:px-8 sm:py-6 sm:text-lg"
               />
-              {/* Rotating placeholder examples */}
+              {/* Rotating placeholder examples - Layout stable version */}
               {!inputValue && (
-                <div className="pointer-events-none absolute inset-0 flex items-center">
-                  <span
-                    className={`px-6 text-base font-bold text-text-secondary transition-opacity duration-300 sm:px-8 sm:text-lg ${
-                      isExampleVisible ? 'opacity-100' : 'opacity-0'
-                    }`}
-                  >
-                    {discoveryExamples[currentExampleIndex]}
-                  </span>
+                <div className="pointer-events-none absolute inset-0 flex items-center overflow-hidden">
+                  <div className="relative h-full w-full">
+                    {discoveryExamples.map((example, index) => (
+                      <span
+                        key={index}
+                        className={`absolute left-6 top-1/2 -translate-y-1/2 transform px-0 text-base font-bold text-text-secondary transition-all duration-300 sm:left-8 sm:text-lg ${
+                          index === currentExampleIndex && isExampleVisible
+                            ? 'translate-y-[-50%] opacity-100'
+                            : index === currentExampleIndex
+                              ? 'translate-y-[-30%] opacity-0'
+                              : 'translate-y-[-70%] opacity-0'
+                        }`}
+                        style={{
+                          transitionTimingFunction: 'cubic-bezier(0.4, 0, 0.2, 1)',
+                        }}
+                      >
+                        {example}
+                      </span>
+                    ))}
+                  </div>
                 </div>
               )}
             </div>
@@ -434,7 +474,10 @@ export const AIPromptInput = () => {
               className="pop-element touch-feedback mobile-touch flex items-center justify-center rounded-full bg-text-primary px-6 py-4 text-base font-black text-white transition-all duration-300 hover:scale-110 hover:bg-text-primary/90 focus:outline-none focus:ring-4 focus:ring-white/50 disabled:cursor-not-allowed disabled:opacity-50 sm:px-8 sm:py-6 sm:text-lg"
             >
               {isLoading ? (
-                <div className="loading-pulse">LOADING</div>
+                <div className="flex items-center gap-2">
+                  <div className="loading-pulse">FINDING</div>
+                  <span className="animate-bounce">...</span>
+                </div>
               ) : (
                 <>
                   <span className="sm:hidden">Find Next Read</span>
@@ -442,34 +485,42 @@ export const AIPromptInput = () => {
                 </>
               )}
             </button>
-            
-            {/* Refresh button - only show if we have input */}
-            {(inputValue || selectedMood) && (
-              <button
-                type="button"
-                onClick={(e) => handleSubmit(e, true)}
-                disabled={isLoading}
-                className="pop-element touch-feedback mobile-touch flex items-center justify-center rounded-full bg-primary-orange px-4 py-4 text-base font-black text-white transition-all duration-300 hover:scale-110 hover:bg-primary-orange/90 focus:outline-none focus:ring-4 focus:ring-white/50 disabled:cursor-not-allowed disabled:opacity-50 sm:px-6 sm:py-6 sm:text-lg"
-                title="Get fresh recommendations"
-              >
-                {isLoading ? (
-                  <div className="loading-pulse">...</div>
-                ) : (
-                  <>
-                    <span className="sm:hidden">🔄</span>
-                    <span className="hidden sm:inline">🔄</span>
-                  </>
-                )}
-              </button>
-            )}
+
+            {/* Refresh button - stable layout version */}
+            <button
+              type="button"
+              onClick={(e) => handleSubmit(e, true)}
+              disabled={isLoading || (!inputValue && !selectedMood)}
+              className={`pop-element touch-feedback mobile-touch flex items-center justify-center rounded-full bg-primary-orange px-4 py-4 text-base font-black text-white transition-all duration-300 hover:scale-110 hover:bg-primary-orange/90 focus:outline-none focus:ring-4 focus:ring-white/50 disabled:cursor-not-allowed sm:px-6 sm:py-6 sm:text-lg ${
+                inputValue || selectedMood ? 'opacity-100' : 'opacity-0 pointer-events-none'
+              }`}
+              title="Get fresh recommendations"
+              style={{ transitionProperty: 'opacity, transform, background-color' }}
+            >
+              {isLoading ? (
+                <div className="loading-pulse">...</div>
+              ) : (
+                <>
+                  <span className="sm:hidden">🔄</span>
+                  <span className="hidden sm:inline">🔄</span>
+                </>
+              )}
+            </button>
           </div>
 
-          {/* Loading state feedback */}
-          {isLoading && (
-            <div className="animate-fade-in-up text-center text-sm font-bold text-text-secondary">
-              Finding your perfect match...
-            </div>
-          )}
+          {/* Loading state feedback - height stable */}
+          <div className="min-h-[24px] flex items-center justify-center">
+            {isLoading && (
+              <div className="animate-fade-in-up text-center text-sm font-bold text-text-secondary">
+                Finding your perfect match...
+              </div>
+            )}
+            {showError && !isLoading && (
+              <div className="animate-fade-in-up text-center text-sm font-bold text-red-600">
+                Please select a mood or enter what you&apos;re looking for!
+              </div>
+            )}
+          </div>
         </form>
       </div>
     </div>
