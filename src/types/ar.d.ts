@@ -15,13 +15,13 @@ declare module '@capacitor/camera' {
   export enum CameraResultType {
     Uri = 'uri',
     Base64 = 'base64',
-    DataUrl = 'dataUrl'
+    DataUrl = 'dataUrl',
   }
 
   export enum CameraSource {
     Camera = 'camera',
     Photos = 'photos',
-    Prompt = 'prompt'
+    Prompt = 'prompt',
   }
 
   export interface CameraOptions {

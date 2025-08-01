@@ -3,15 +3,8 @@
  * Handles platform-specific features and native capabilities
  */
 
-// Type declarations
-interface CapacitorWindow extends Window {
-  Capacitor?: {
-    getPlatform: () => string;
-    isNativePlatform: () => boolean;
-  };
-}
-
-declare const window: CapacitorWindow;
+// Use the global Window interface from capacitor.d.ts
+declare const window: Window;
 
 // Platform detection
 export const getPlatform = () => {

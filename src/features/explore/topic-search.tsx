@@ -49,7 +49,7 @@ export const TopicSearch = () => {
             <button
               type="submit"
               disabled={!topic.trim() || isSearching}
-              className="touch-feedback shadow-backdrop rounded-2xl bg-primary-blue px-8 py-4 text-base font-black text-white transition-all duration-300 hover:shadow-backdrop-lg focus:outline-none focus:ring-2 focus:ring-white/50 disabled:opacity-50"
+              className="touch-feedback shadow-backdrop hover:shadow-backdrop-lg rounded-2xl bg-primary-blue px-8 py-4 text-base font-black text-white transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-white/50 disabled:opacity-50"
             >
               {isSearching ? 'SEARCHING...' : 'SEARCH'}
             </button>

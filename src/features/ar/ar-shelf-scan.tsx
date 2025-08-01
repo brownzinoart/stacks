@@ -26,13 +26,13 @@ export const ARShelfScan = () => {
   //   queryFn: async () => {
   //     const { data: { user } } = await supabase.auth.getUser();
   //     if (!user) return null;
-  //     
+  //
   //     const { data } = await supabase
   //       .from('user_preferences')
   //       .select('*')
   //       .eq('user_id', user.id)
   //       .single();
-  //     
+  //
   //     return data;
   //   },
   // });
@@ -50,7 +50,7 @@ export const ARShelfScan = () => {
     return () => {
       // Cleanup
       if (streamRef.current) {
-        streamRef.current.getTracks().forEach(track => track.stop());
+        streamRef.current.getTracks().forEach((track) => track.stop());
       }
       // arService.terminateOCR().catch(console.error);
     };
@@ -59,7 +59,7 @@ export const ARShelfScan = () => {
   const startARScan = async () => {
     try {
       setError(null);
-      
+
       // AR features disabled for web version
       // const hasPermission = await arService.requestCameraPermission();
       // if (!hasPermission) {
@@ -68,20 +68,20 @@ export const ARShelfScan = () => {
 
       // Start camera stream
       const stream = await navigator.mediaDevices.getUserMedia({
-        video: { 
+        video: {
           facingMode: 'environment',
           width: { ideal: 1920 },
-          height: { ideal: 1080 }
-        }
+          height: { ideal: 1080 },
+        },
       });
-      
+
       streamRef.current = stream;
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
       }
-      
+
       setIsARActive(true);
-      
+
       // Start continuous scanning
       scanBooksFromVideo();
     } catch (error) {
@@ -93,56 +93,56 @@ export const ARShelfScan = () => {
 
   const stopARScan = () => {
     setIsARActive(false);
-    
+
     // Stop camera stream
     if (streamRef.current) {
-      streamRef.current.getTracks().forEach(track => track.stop());
+      streamRef.current.getTracks().forEach((track) => track.stop());
       streamRef.current = null;
     }
-    
+
     if (videoRef.current) {
       videoRef.current.srcObject = null;
     }
-    
+
     setRecognizedBooks([]);
   };
 
   const scanBooksFromVideo = async () => {
     if (!isARActive || isProcessing) return;
-    
+
     setIsProcessing(true);
-    
+
     try {
       // Capture frame from video
       if (videoRef.current && canvasRef.current) {
         const canvas = canvasRef.current;
         const context = canvas.getContext('2d');
         if (!context) return;
-        
+
         // Set canvas size to match video
         canvas.width = videoRef.current.videoWidth;
         canvas.height = videoRef.current.videoHeight;
-        
+
         // Draw current frame
         context.drawImage(videoRef.current, 0, 0);
-        
+
         // Convert to base64
         const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
         const base64Image = dataUrl.split(',')[1] || '';
-        
+
         // AR features disabled for web version - simulate some books for demo
         const mockBooks = [
           { title: 'The Great Gatsby', author: 'F. Scott Fitzgerald', isRecommended: true, isAvailable: true },
           { title: '1984', author: 'George Orwell', isRecommended: false, isAvailable: true },
         ];
-        
+
         setRecognizedBooks(mockBooks);
       }
     } catch (error) {
       console.error('Book scanning error:', error);
     } finally {
       setIsProcessing(false);
-      
+
       // Continue scanning if still active
       if (isARActive) {
         setTimeout(() => scanBooksFromVideo(), 2000); // Scan every 2 seconds
@@ -152,13 +152,13 @@ export const ARShelfScan = () => {
 
   const renderAROverlay = () => {
     if (!recognizedBooks.length) return null;
-    
+
     return (
-      <div className="absolute inset-0 pointer-events-none">
+      <div className="pointer-events-none absolute inset-0">
         {recognizedBooks.map((book, index) => (
           <div
             key={index}
-            className="absolute border-4 rounded-lg transition-all duration-300"
+            className="absolute rounded-lg border-4 transition-all duration-300"
             style={{
               left: `${(book.boundingBox.x / (videoRef.current?.videoWidth || 1)) * 100}%`,
               top: `${(book.boundingBox.y / (videoRef.current?.videoHeight || 1)) * 100}%`,
@@ -167,7 +167,7 @@ export const ARShelfScan = () => {
               borderColor: book.isRecommended ? '#4ADE80' : book.isAvailable ? '#60A5FA' : '#F87171',
             }}
           >
-            <div className="absolute -top-8 left-0 bg-black/80 text-white px-2 py-1 rounded text-xs font-bold">
+            <div className="absolute -top-8 left-0 rounded bg-black/80 px-2 py-1 text-xs font-bold text-white">
               {book.title}
               {book.isRecommended && ' ⭐'}
             </div>
@@ -219,7 +219,7 @@ export const ARShelfScan = () => {
         </div>
 
         {error && (
-          <div className="mb-6 outline-bold-thin rounded-2xl bg-primary-orange/20 p-4 backdrop-blur-sm">
+          <div className="outline-bold-thin mb-6 rounded-2xl bg-primary-orange/20 p-4 backdrop-blur-sm">
             <p className="text-center font-bold text-text-primary">{error}</p>
           </div>
         )}
@@ -262,19 +262,13 @@ export const ARShelfScan = () => {
           </div>
         ) : (
           <div className="space-y-6">
-            <div className="relative rounded-2xl overflow-hidden bg-black" style={{ aspectRatio: '16/9' }}>
-              <video
-                ref={videoRef}
-                autoPlay
-                playsInline
-                muted
-                className="w-full h-full object-cover"
-              />
+            <div className="relative overflow-hidden rounded-2xl bg-black" style={{ aspectRatio: '16/9' }}>
+              <video ref={videoRef} autoPlay playsInline muted className="h-full w-full object-cover" />
               <canvas ref={canvasRef} className="hidden" />
               {renderAROverlay()}
-              
+
               {isProcessing && (
-                <div className="absolute top-4 right-4 bg-black/80 text-white px-3 py-2 rounded-full flex items-center gap-2">
+                <div className="absolute right-4 top-4 flex items-center gap-2 rounded-full bg-black/80 px-3 py-2 text-white">
                   <span className="h-3 w-3 animate-pulse rounded-full bg-primary-green" />
                   <span className="text-sm font-bold">Processing...</span>
                 </div>
@@ -302,9 +296,9 @@ export const ARShelfScan = () => {
             {recognizedBooks.length > 0 && (
               <div className="outline-bold-thin rounded-2xl bg-primary-purple/20 p-4 backdrop-blur-sm">
                 <h3 className="mb-3 text-base font-black text-text-primary">FOUND {recognizedBooks.length} BOOKS</h3>
-                <div className="max-h-32 overflow-y-auto space-y-2">
+                <div className="max-h-32 space-y-2 overflow-y-auto">
                   {recognizedBooks.map((book, index) => (
-                    <div key={index} className="text-sm font-bold text-text-primary flex items-center gap-2">
+                    <div key={index} className="flex items-center gap-2 text-sm font-bold text-text-primary">
                       {book.isRecommended && <span>⭐</span>}
                       <span>{book.title}</span>
                       {book.author && <span className="text-text-secondary">by {book.author}</span>}

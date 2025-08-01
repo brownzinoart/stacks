@@ -98,7 +98,7 @@ export const StandardSearch = () => {
                 <button
                   type="submit"
                   disabled={!query.trim() || isSearching}
-                  className="touch-feedback shadow-backdrop rounded-2xl bg-primary-blue px-8 py-4 text-base font-black text-white transition-all duration-300 hover:shadow-backdrop-lg focus:outline-none focus:ring-2 focus:ring-white/50 disabled:opacity-50"
+                  className="touch-feedback shadow-backdrop hover:shadow-backdrop-lg rounded-2xl bg-primary-blue px-8 py-4 text-base font-black text-white transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-white/50 disabled:opacity-50"
                 >
                   {isSearching ? 'SEARCHING...' : 'SEARCH'}
                 </button>
@@ -111,7 +111,7 @@ export const StandardSearch = () => {
               <p className="text-lg font-bold text-text-primary">Point your camera at a book&apos;s barcode</p>
               <button
                 onClick={handleISBNScan}
-                className="touch-feedback shadow-backdrop rounded-2xl bg-primary-blue px-8 py-4 text-lg font-black text-white transition-all duration-300 hover:shadow-backdrop-lg focus:outline-none focus:ring-2 focus:ring-white/50"
+                className="touch-feedback shadow-backdrop hover:shadow-backdrop-lg rounded-2xl bg-primary-blue px-8 py-4 text-lg font-black text-white transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-white/50"
               >
                 📷 START ISBN SCAN
               </button>
@@ -123,7 +123,7 @@ export const StandardSearch = () => {
               <p className="text-lg font-bold text-text-primary">Tap to speak your search</p>
               <button
                 onClick={handleVoiceSearch}
-                className="touch-feedback shadow-backdrop rounded-2xl bg-primary-blue px-8 py-4 text-lg font-black text-white transition-all duration-300 hover:shadow-backdrop-lg focus:outline-none focus:ring-2 focus:ring-white/50"
+                className="touch-feedback shadow-backdrop hover:shadow-backdrop-lg rounded-2xl bg-primary-blue px-8 py-4 text-lg font-black text-white transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-white/50"
               >
                 🎤 START VOICE SEARCH
               </button>

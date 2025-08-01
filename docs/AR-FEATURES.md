@@ -63,6 +63,7 @@ src/
 ### Library Layout
 
 Currently configured for Durham County Main Library:
+
 - Single floor implementation
 - 4 main sections (Fiction A-M, Fiction N-Z, Non-Fiction 100-500, Non-Fiction 500-900)
 - Waypoint-based pathfinding
@@ -85,12 +86,14 @@ npm run test tests/ar-features.spec.ts
 ## Future Enhancements
 
 ### Short Term
+
 - [ ] Multi-floor navigation support
 - [ ] Improved OCR accuracy for curved spines
 - [ ] Book reservation from AR view
 - [ ] Offline mode for floor plans
 
 ### Long Term
+
 - [ ] Integration with more Triangle area libraries
 - [ ] Machine learning for better book spine recognition
 - [ ] Social features (see what friends are reading)
@@ -130,6 +133,7 @@ npm run test tests/ar-features.spec.ts
 ## Contributing
 
 When adding new AR features:
+
 1. Follow existing patterns in `ar-service.ts`
 2. Add appropriate TypeScript types
 3. Include E2E tests

@@ -27,7 +27,7 @@ const Camera = {
   },
   requestPermissions: async (): Promise<PermissionStatus> => {
     return { camera: 'denied' };
-  }
+  },
 };
 
 const createWorker = async (): Promise<TesseractWorker> => {
@@ -226,7 +226,7 @@ class ARService {
   async enrichBookData(
     books: RecognizedBook[],
     userPreferences: any,
-    libraryInventory: any,
+    libraryInventory: any
   ): Promise<RecognizedBook[]> {
     // This would integrate with your existing book recommendation system
     // and library availability APIs
@@ -261,7 +261,7 @@ class ARService {
    */
   calculatePathToBook(
     currentLocation: { x: number; y: number; floor: number },
-    bookLocation: { sectionId: string; floor: number },
+    bookLocation: { sectionId: string; floor: number }
   ): NavigationPath | null {
     if (!this.currentFloorPlan) return null;
 
@@ -294,17 +294,12 @@ class ARService {
   /**
    * Find nearest waypoint to a position
    */
-  private findNearestWaypoint(
-    waypoints: Waypoint[],
-    position: { x: number; y: number },
-  ): Waypoint | null {
+  private findNearestWaypoint(waypoints: Waypoint[], position: { x: number; y: number }): Waypoint | null {
     let nearest: Waypoint | null = null;
     let minDistance = Infinity;
 
     for (const waypoint of waypoints) {
-      const distance = Math.sqrt(
-        Math.pow(waypoint.x - position.x, 2) + Math.pow(waypoint.y - position.y, 2),
-      );
+      const distance = Math.sqrt(Math.pow(waypoint.x - position.x, 2) + Math.pow(waypoint.y - position.y, 2));
       if (distance < minDistance) {
         minDistance = distance;
         nearest = waypoint;
@@ -323,10 +318,7 @@ class ARService {
       const current = waypoints[i - 1];
       const next = waypoints[i];
       if (current && next) {
-        distance += Math.sqrt(
-          Math.pow(next.x - current.x, 2) +
-            Math.pow(next.y - current.y, 2),
-        );
+        distance += Math.sqrt(Math.pow(next.x - current.x, 2) + Math.pow(next.y - current.y, 2));
       }
     }
     return distance;
@@ -370,7 +362,12 @@ class ARService {
           ],
           waypoints: [
             { id: 'entrance', x: 300, y: 50, connectedTo: ['central-1'] },
-            { id: 'central-1', x: 300, y: 250, connectedTo: ['entrance', 'fiction-left', 'fiction-right', 'central-2'] },
+            {
+              id: 'central-1',
+              x: 300,
+              y: 250,
+              connectedTo: ['entrance', 'fiction-left', 'fiction-right', 'central-2'],
+            },
             { id: 'fiction-left', x: 150, y: 250, connectedTo: ['central-1'] },
             { id: 'fiction-right', x: 450, y: 250, connectedTo: ['central-1'] },
             { id: 'central-2', x: 300, y: 600, connectedTo: ['central-1', 'nonfiction-left', 'nonfiction-right'] },
@@ -396,7 +393,7 @@ class ARService {
           sections: [
             {
               id: 'childrens',
-              name: 'Children\'s Section',
+              name: "Children's Section",
               category: 'childrens',
               bounds: { x: 50, y: 50, width: 250, height: 200 },
             },
@@ -452,7 +449,12 @@ class ARService {
             },
           ],
           waypoints: [
-            { id: 'stairs-2', x: 300, y: 250, connectedTo: ['adult-fiction-entry', 'non-fiction-entry', 'study-entry'] },
+            {
+              id: 'stairs-2',
+              x: 300,
+              y: 250,
+              connectedTo: ['adult-fiction-entry', 'non-fiction-entry', 'study-entry'],
+            },
             { id: 'adult-fiction-entry', x: 150, y: 150, connectedTo: ['stairs-2'] },
             { id: 'non-fiction-entry', x: 450, y: 150, connectedTo: ['stairs-2'] },
             { id: 'study-entry', x: 300, y: 350, connectedTo: ['stairs-2'] },
@@ -476,13 +478,13 @@ class ARService {
           sections: [
             {
               id: 'tree-house',
-              name: 'Tree House (Children\'s Story Room)',
+              name: "Tree House (Children's Story Room)",
               category: 'childrens',
               bounds: { x: 50, y: 50, width: 150, height: 150 },
             },
             {
               id: 'childrens',
-              name: 'Children\'s Collection',
+              name: "Children's Collection",
               category: 'childrens',
               bounds: { x: 50, y: 250, width: 200, height: 250 },
             },
@@ -513,7 +515,19 @@ class ARService {
           ],
           waypoints: [
             { id: 'entrance', x: 375, y: 550, connectedTo: ['central'] },
-            { id: 'central', x: 375, y: 275, connectedTo: ['entrance', 'tree-house-entry', 'childrens-entry', 'teen-entry', 'fiction-entry', 'non-fiction-entry'] },
+            {
+              id: 'central',
+              x: 375,
+              y: 275,
+              connectedTo: [
+                'entrance',
+                'tree-house-entry',
+                'childrens-entry',
+                'teen-entry',
+                'fiction-entry',
+                'non-fiction-entry',
+              ],
+            },
             { id: 'tree-house-entry', x: 125, y: 125, connectedTo: ['central'] },
             { id: 'childrens-entry', x: 150, y: 375, connectedTo: ['central'] },
             { id: 'teen-entry', x: 375, y: 125, connectedTo: ['central'] },

@@ -3,7 +3,9 @@
   "appName": "Stacks",
   "webDir": "out",
   "server": {
-    "androidScheme": "https"
+    "androidScheme": "https",
+    "cleartext": true,
+    "allowNavigation": ["*"]
   },
   "ios": {
     "preferredContentMode": "mobile",

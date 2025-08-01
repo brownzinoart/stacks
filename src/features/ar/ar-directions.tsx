@@ -42,7 +42,7 @@ export const ARDirections = ({ targetBookLocation, libraryId = 'durham-main' }: 
 
     return () => {
       if (streamRef.current) {
-        streamRef.current.getTracks().forEach(track => track.stop());
+        streamRef.current.getTracks().forEach((track) => track.stop());
       }
       if (animationFrameRef.current) {
         cancelAnimationFrame(animationFrameRef.current);
@@ -61,9 +61,12 @@ export const ARDirections = ({ targetBookLocation, libraryId = 'durham-main' }: 
 
       // AR features disabled for web version - create mock path
       const path = {
-        waypoints: [{ x: 300, y: 400 }, { x: 450, y: 150 }],
+        waypoints: [
+          { x: 300, y: 400 },
+          { x: 450, y: 150 },
+        ],
         distance: 25,
-        estimatedTime: 2
+        estimatedTime: 2,
       };
 
       setCurrentPath(path);
@@ -73,8 +76,8 @@ export const ARDirections = ({ targetBookLocation, libraryId = 'durham-main' }: 
         video: {
           facingMode: 'environment',
           width: { ideal: 1920 },
-          height: { ideal: 1080 }
-        }
+          height: { ideal: 1080 },
+        },
       });
 
       streamRef.current = stream;
@@ -83,7 +86,7 @@ export const ARDirections = ({ targetBookLocation, libraryId = 'durham-main' }: 
       }
 
       setIsNavigating(true);
-      
+
       // Start AR rendering
       renderARPath();
     } catch (error) {
@@ -94,20 +97,20 @@ export const ARDirections = ({ targetBookLocation, libraryId = 'durham-main' }: 
 
   const stopNavigation = () => {
     setIsNavigating(false);
-    
+
     if (streamRef.current) {
-      streamRef.current.getTracks().forEach(track => track.stop());
+      streamRef.current.getTracks().forEach((track) => track.stop());
       streamRef.current = null;
     }
-    
+
     if (videoRef.current) {
       videoRef.current.srcObject = null;
     }
-    
+
     if (animationFrameRef.current) {
       cancelAnimationFrame(animationFrameRef.current);
     }
-    
+
     setCurrentPath(null);
   };
 
@@ -177,7 +180,7 @@ export const ARDirections = ({ targetBookLocation, libraryId = 'durham-main' }: 
 
       // Pulsing animation
       const pulse = Math.sin(Date.now() * 0.003) * 10 + 30;
-      
+
       context.fillStyle = '#F59E0B';
       context.beginPath();
       context.arc(destX, destY, pulse, 0, Math.PI * 2);
@@ -193,7 +196,7 @@ export const ARDirections = ({ targetBookLocation, libraryId = 'durham-main' }: 
     // Draw distance and time info
     context.fillStyle = 'rgba(0, 0, 0, 0.8)';
     context.fillRect(20, 20, 300, 80);
-    
+
     context.fillStyle = '#FFFFFF';
     context.font = 'bold 18px sans-serif';
     context.textAlign = 'left';
@@ -207,16 +210,16 @@ export const ARDirections = ({ targetBookLocation, libraryId = 'durham-main' }: 
       const progress = (Date.now() % 10000) / 10000; // 10 second loop
       const waypointIndex = Math.floor(progress * (currentPath.waypoints.length - 1));
       const nextIndex = Math.min(waypointIndex + 1, currentPath.waypoints.length - 1);
-      
+
       const current = currentPath.waypoints[waypointIndex];
       const next = currentPath.waypoints[nextIndex];
       const segmentProgress = (progress * (currentPath.waypoints.length - 1)) % 1;
-      
+
       if (current && next) {
         setUserLocation({
           x: current.x + (next.x - current.x) * segmentProgress,
           y: current.y + (next.y - current.y) * segmentProgress,
-          floor: 1
+          floor: 1,
         });
       }
     }
@@ -239,9 +242,7 @@ export const ARDirections = ({ targetBookLocation, libraryId = 'durham-main' }: 
             <br />
             <span className="text-mega">SUPPORTED</span>
           </h2>
-          <p className="text-lg font-bold text-text-primary">
-            Your device doesn&apos;t support AR navigation.
-          </p>
+          <p className="text-lg font-bold text-text-primary">Your device doesn&apos;t support AR navigation.</p>
         </div>
       </div>
     );
@@ -280,34 +281,23 @@ export const ARDirections = ({ targetBookLocation, libraryId = 'durham-main' }: 
                   Section: {targetBookLocation.sectionId}
                   {targetBookLocation.shelfNumber && ` • Shelf ${targetBookLocation.shelfNumber}`}
                 </p>
-                <p className="font-bold text-text-secondary">
-                  Floor {targetBookLocation.floor}
-                </p>
+                <p className="font-bold text-text-secondary">Floor {targetBookLocation.floor}</p>
               </div>
             )}
 
             <button
               onClick={startNavigation}
               disabled={!targetBookLocation}
-              className="touch-feedback shadow-backdrop w-full rounded-2xl bg-primary-green px-8 py-4 text-lg font-black text-text-primary transition-transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="touch-feedback shadow-backdrop w-full rounded-2xl bg-primary-green px-8 py-4 text-lg font-black text-text-primary transition-transform hover:scale-105 disabled:cursor-not-allowed disabled:opacity-50"
             >
               🚀 START AR NAVIGATION
             </button>
           </div>
         ) : (
           <div className="space-y-6">
-            <div className="relative rounded-2xl overflow-hidden bg-black" style={{ aspectRatio: '16/9' }}>
-              <video
-                ref={videoRef}
-                autoPlay
-                playsInline
-                muted
-                className="w-full h-full object-cover"
-              />
-              <canvas 
-                ref={canvasRef} 
-                className="absolute inset-0 w-full h-full"
-              />
+            <div className="relative overflow-hidden rounded-2xl bg-black" style={{ aspectRatio: '16/9' }}>
+              <video ref={videoRef} autoPlay playsInline muted className="h-full w-full object-cover" />
+              <canvas ref={canvasRef} className="absolute inset-0 h-full w-full" />
             </div>
 
             <div className="outline-bold-thin rounded-2xl bg-primary-green/20 p-6 backdrop-blur-sm">

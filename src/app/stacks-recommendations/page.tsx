@@ -59,15 +59,23 @@ const StacksRecommendationsPage = () => {
 
   // Load recommendations from localStorage on mount
   useEffect(() => {
+    console.log('[Recommendations Debug] Loading data from localStorage');
     const data = localStorage.getItem('stacks_recommendations');
+    console.log('[Recommendations Debug] Raw data:', data);
+    console.log('[Recommendations Debug] Data length:', data?.length);
+    
     if (data) {
       try {
         const parsed = JSON.parse(data);
+        console.log('[Recommendations Debug] Parsed data:', parsed);
+        console.log('[Recommendations Debug] Parsed data keys:', Object.keys(parsed));
         setUserInput(parsed.userInput || '');
         setSearchValue(parsed.userInput || '');
 
         // Handle new categorized format
         if (parsed.categories) {
+          console.log('[Recommendations Debug] Using categories format, found', parsed.categories.length, 'categories');
+          console.log('[Recommendations Debug] Categories:', parsed.categories);
           setCategories(parsed.categories);
           // Flatten all books for display with category info
           const allBooks = parsed.categories.flatMap((cat: any, catIdx: number) =>
@@ -77,14 +85,28 @@ const StacksRecommendationsPage = () => {
               globalIdx: catIdx * 10 + bookIdx, // Unique index across categories
             }))
           );
+          console.log('[Recommendations Debug] Setting', allBooks.length, 'books from categories');
+          console.log('[Recommendations Debug] All books:', allBooks);
           setBooks(allBooks);
-        } else {
+        } else if (parsed.books) {
           // Fallback for old format
+          console.log('[Recommendations Debug] Using fallback format, found', (parsed.books || []).length, 'books');
+          console.log('[Recommendations Debug] Books array:', parsed.books);
           setBooks(parsed.books || []);
+        } else {
+          // Emergency case - no valid data found
+          console.log('[Recommendations Debug] No valid books or categories found in data');
+          console.log('[Recommendations Debug] Available keys:', Object.keys(parsed));
+          setBooks([]);
         }
-      } catch {
-        console.error('Failed to parse recommendations data');
+      } catch (parseError) {
+        console.error('[Recommendations Debug] Failed to parse recommendations data:', parseError);
+        console.error('[Recommendations Debug] Raw data that failed to parse:', data);
       }
+    } else {
+      console.log('[Recommendations Debug] No data found in localStorage');
+      // Check if there's any other storage key
+      console.log('[Recommendations Debug] All localStorage keys:', Object.keys(localStorage));
     }
   }, []);
 

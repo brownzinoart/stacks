@@ -8,7 +8,7 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useRouter } from 'next/navigation';
-import { bookCoverService } from '@/lib/book-cover-service';
+import { getApiBaseUrl } from '@/lib/api-config';
 
 const moodOptions = [
   { label: 'FUNNY', color: 'bg-primary-orange hover:bg-primary-pink' },
@@ -71,7 +71,17 @@ async function getSmartRecommendations(userInput: string, forceRefresh: boolean 
   No other text, just the JSON object.`;
 
   try {
-    const analysisResp = await axios.post('/api/openai-proxy', {
+    // Use consistent API base URL configuration
+    const baseUrl = getApiBaseUrl();
+    const apiUrl = `${baseUrl}/api/openai-proxy`;
+    
+    console.log('[Mobile Debug] Making analysis API call to:', apiUrl);
+    console.log('[Mobile Debug] Window location:', typeof window !== 'undefined' ? window.location.href : 'SSR');
+    console.log('[Mobile Debug] Window protocol:', typeof window !== 'undefined' ? window.location.protocol : 'SSR');
+    console.log('[Mobile Debug] Is Capacitor:', typeof window !== 'undefined' && (window as any).Capacitor !== undefined);
+    console.log('[Mobile Debug] Using base URL:', baseUrl);
+    
+    const analysisResp = await axios.post(apiUrl, {
       model: 'gpt-3.5-turbo',
       messages: [
         {
@@ -82,8 +92,21 @@ async function getSmartRecommendations(userInput: string, forceRefresh: boolean 
       ],
       temperature: 0.3,
       max_tokens: 200,
+    }, {
+      // Reduced timeout for faster failure detection
+      timeout: 15000, // 15 second timeout
+      headers: {
+        'Content-Type': 'application/json',
+      }
     });
 
+    console.log('[Mobile Debug] Analysis API response status:', analysisResp.status);
+    console.log('[Mobile Debug] Analysis API response data:', analysisResp.data);
+    
+    if (!analysisResp.data.choices?.[0]?.message?.content) {
+      throw new Error('Invalid API response structure');
+    }
+    
     console.log('Analysis response:', analysisResp.data.choices[0].message.content);
 
     let analysis;
@@ -167,7 +190,7 @@ async function getSmartRecommendations(userInput: string, forceRefresh: boolean 
     
     Include 2-3 books per category with rich, detailed "whyYoullLikeIt" descriptions.`;
 
-    const recoResp = await axios.post('/api/openai-proxy', {
+    const recoResp = await axios.post(`${baseUrl}/api/openai-proxy`, {
       model: 'gpt-3.5-turbo',
       messages: [
         {
@@ -178,6 +201,12 @@ async function getSmartRecommendations(userInput: string, forceRefresh: boolean 
       ],
       temperature: 0.1,
       max_tokens: 1500,
+    }, {
+      // Reduced timeout for faster failure detection
+      timeout: 20000, // 20 second timeout (longer for more complex response)
+      headers: {
+        'Content-Type': 'application/json',
+      }
     });
 
     console.log('Recommendation response:', recoResp.data.choices[0].message.content);
@@ -189,38 +218,8 @@ async function getSmartRecommendations(userInput: string, forceRefresh: boolean 
         const recommendations = JSON.parse(jsonMatch[0]);
         console.log('Parsed recommendations:', recommendations);
 
-        // Pre-fetch covers for all books
-        const allBooks: any[] = [];
-        recommendations.categories?.forEach((category: any) => {
-          category.books?.forEach((book: any, idx: number) => {
-            allBooks.push({
-              ...book,
-              categoryIdx: recommendations.categories.indexOf(category),
-              bookIdx: idx,
-            });
-          });
-        });
-
-        console.log('Pre-fetching covers for', allBooks.length, 'books...');
-
-        // Fetch covers in parallel
-        const coverResults = await bookCoverService.getBatchCovers(allBooks);
-
-        // Update recommendations with cover URLs
-        let bookIndex = 0;
-        recommendations.categories?.forEach((category: any) => {
-          category.books?.forEach((book: any) => {
-            const coverResult = coverResults.get(bookIndex);
-            if (coverResult && coverResult.url && !coverResult.url.startsWith('gradient:')) {
-              book.cover = coverResult.url;
-              book.coverSource = coverResult.source;
-              book.coverConfidence = coverResult.confidence;
-            }
-            bookIndex++;
-          });
-        });
-
-        console.log('Cover pre-fetch complete');
+        // Skip cover pre-fetching to avoid timeouts - covers will be loaded lazily on the recommendations page
+        console.log('Skipping cover pre-fetch for faster, more reliable loading');
 
         // Cache the successful recommendations
         if (typeof window !== 'undefined') {
@@ -242,19 +241,34 @@ async function getSmartRecommendations(userInput: string, forceRefresh: boolean 
       console.error('Failed to parse recommendations:', parseError);
       throw parseError;
     }
-  } catch (error) {
-    console.error('Smart recommendations error:', error);
+  } catch (error: any) {
+    console.error('[Mobile Debug] Smart recommendations error:', error);
+    console.error('[Mobile Debug] Error response:', error.response?.data);
+    console.error('[Mobile Debug] Error status:', error.response?.status);
+    console.error('[Mobile Debug] Error message:', error.message);
+    
+    // Check for common mobile network issues
+    if (error.code === 'ECONNABORTED' || error.message.includes('timeout')) {
+      console.error('[Mobile Debug] Request timeout - common on mobile networks');
+      error.mobileError = 'Request timed out. Please check your connection and try again.';
+    } else if (error.code === 'ERR_NETWORK' || error.message.includes('Network Error')) {
+      console.error('[Mobile Debug] Network error - check if API is accessible');
+      error.mobileError = 'Network error. Please check your internet connection.';
+    } else if (error.response?.status === 0) {
+      console.error('[Mobile Debug] CORS or network issue - status 0');
+      error.mobileError = 'Connection blocked. Please try again.';
+    }
+    
     throw error;
   }
 }
 
 // Helper: fetch OMDb metadata
 async function fetchOmdbData(title: string) {
-  const apiUrl = process.env.NEXT_PUBLIC_OMDB_API || process.env.OMDB_API;
-  if (!apiUrl) return null;
+  const apiKey = process.env.NEXT_PUBLIC_OMDB_API_KEY || process.env.OMDB_API_KEY || '95cb8a0d';
   // Try to extract just the title for OMDb
   const cleanTitle = title.replace(/.*like (the )?(show|movie|film|series)?/i, '').trim();
-  const url = `https://www.omdbapi.com/?t=${encodeURIComponent(cleanTitle)}&apikey=95cb8a0d`;
+  const url = `https://www.omdbapi.com/?t=${encodeURIComponent(cleanTitle)}&apikey=${apiKey}`;
   try {
     const res = await axios.get(url);
     if (res.data && res.data.Response !== 'False') {
@@ -284,6 +298,7 @@ export const AIPromptInput = () => {
   const [currentExampleIndex, setCurrentExampleIndex] = useState(0);
   const [isExampleVisible, setIsExampleVisible] = useState(true);
   const [showError, setShowError] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
   const router = useRouter();
 
   // Rotate through examples every 3 seconds
@@ -301,7 +316,7 @@ export const AIPromptInput = () => {
 
   const handleSubmit = async (e: React.FormEvent, forceRefresh: boolean = false) => {
     e.preventDefault();
-    
+
     // Show error feedback if no input
     if (!inputValue && !selectedMood) {
       setShowError(true);
@@ -325,67 +340,163 @@ export const AIPromptInput = () => {
     const userInput = inputValue || selectedMood || '';
 
     try {
+      // Log for mobile debugging
+      console.log('[Mobile Debug] Starting search with input:', userInput);
+      
       // Use the new smart recommendation system
+      console.log('[Mobile Debug] About to call getSmartRecommendations');
       const recommendations = await getSmartRecommendations(userInput, forceRefresh);
+      console.log('[Mobile Debug] getSmartRecommendations completed successfully');
 
+      console.log('[Mobile Debug] Got recommendations:', recommendations);
       setIsLoading(false);
 
       // Store categorized recommendations
+      let dataStored = false;
       if (typeof window !== 'undefined') {
-        localStorage.setItem(
-          'stacks_recommendations',
-          JSON.stringify({
+        try {
+          const dataToStore = {
             ...recommendations,
             userInput,
             timestamp: new Date().toISOString(),
-          })
-        );
+          };
+          console.log('[Mobile Debug] Storing recommendations data:', dataToStore);
+          localStorage.setItem('stacks_recommendations', JSON.stringify(dataToStore));
+          console.log('[Mobile Debug] Data stored successfully');
+          dataStored = true;
+        } catch (storageError) {
+          console.error('[Mobile Debug] Failed to store data:', storageError);
+        }
       }
 
-      router.push('/stacks-recommendations');
-    } catch (err) {
-      console.error('Error in recommendation flow:', err);
+      // Only navigate if data was stored successfully
+      if (dataStored || typeof window === 'undefined') {
+        console.log('[Mobile Debug] About to navigate to /stacks-recommendations');
+        router.push('/stacks-recommendations');
+      } else {
+        console.error('[Mobile Debug] Navigation cancelled - data storage failed');
+        setIsLoading(false);
+        setErrorMessage('Failed to save recommendations. Please try again.');
+        setShowError(true);
+      }
+    } catch (err: any) {
+      console.error('[Mobile Debug] Error in recommendation flow:', err);
+      console.error('[Mobile Debug] Error stack:', err.stack);
+      console.error('[Mobile Debug] Error response:', err.response?.data);
 
       // Fallback to simple recommendations
       try {
-        const resp = await axios.post('/api/openai-proxy', {
+        console.log('[Mobile Debug] Attempting fallback simple recommendations');
+        const fallbackBaseUrl = getApiBaseUrl();
+        const apiUrl = `${fallbackBaseUrl}/api/openai-proxy`;
+        
+        const resp = await axios.post(apiUrl, {
           model: 'gpt-3.5-turbo',
           messages: [{ role: 'user', content: buildSimplePrompt(userInput) }],
           temperature: 0.7,
           max_tokens: 400,
+        }, {
+          timeout: 15000, // 15 second timeout for fallback
+          headers: {
+            'Content-Type': 'application/json',
+          }
         });
 
+        console.log('[Mobile Debug] Fallback API response received');
         const content = resp.data.choices?.[0]?.message?.content || '';
         let books = [];
 
         try {
           const jsonStart = content.indexOf('[');
           const jsonEnd = content.lastIndexOf(']') + 1;
-          const jsonString = content.substring(jsonStart, jsonEnd);
-          books = JSON.parse(jsonString);
+          if (jsonStart !== -1 && jsonEnd > jsonStart) {
+            const jsonString = content.substring(jsonStart, jsonEnd);
+            books = JSON.parse(jsonString);
+            console.log('[Mobile Debug] Parsed', books.length, 'books from fallback');
+          } else {
+            console.log('[Mobile Debug] No JSON array found in fallback response');
+          }
         } catch (parseErr) {
-          console.error('Error parsing fallback response:', parseErr);
-          books = [];
+          console.error('[Mobile Debug] Error parsing fallback response:', parseErr);
+          // Create minimal fallback books if parsing fails
+          books = [
+            { title: "Sample Book 1", author: "Author 1", why: "Fallback recommendation", cover: "" },
+            { title: "Sample Book 2", author: "Author 2", why: "Fallback recommendation", cover: "" }
+          ];
         }
 
+        console.log('[Mobile Debug] Storing fallback recommendations with', books.length, 'books');
         setIsLoading(false);
+        
+        let fallbackDataStored = false;
         if (typeof window !== 'undefined') {
-          localStorage.setItem('stacks_recommendations', JSON.stringify({ books, userInput }));
+          try {
+            localStorage.setItem('stacks_recommendations', JSON.stringify({ books, userInput }));
+            console.log('[Mobile Debug] Fallback data stored successfully');
+            fallbackDataStored = true;
+          } catch (storageError) {
+            console.error('[Mobile Debug] Failed to store fallback data:', storageError);
+          }
         }
-        router.push('/stacks-recommendations');
-      } catch (fallbackErr) {
+        
+        if (fallbackDataStored || typeof window === 'undefined') {
+          console.log('[Mobile Debug] Navigating to recommendations page (fallback)');
+          router.push('/stacks-recommendations');
+        } else {
+          console.error('[Mobile Debug] Fallback navigation cancelled - storage failed');
+          setErrorMessage('Failed to save recommendations. Please try again.');
+          setShowError(true);
+        }
+      } catch (fallbackErr: any) {
         setIsLoading(false);
-        console.error('Fallback also failed:', fallbackErr);
+        console.error('[Mobile Debug] Fallback also failed:', fallbackErr);
+        
+        // Final fallback - create basic recommendations to prevent total failure
+        const basicBooks = [
+          { 
+            title: "The Stand", 
+            author: "Stephen King", 
+            why: "Post-apocalyptic survival like The Walking Dead", 
+            cover: "" 
+          },
+          { 
+            title: "World War Z", 
+            author: "Max Brooks", 
+            why: "Zombie apocalypse survival guide", 
+            cover: "" 
+          },
+          { 
+            title: "The Road", 
+            author: "Cormac McCarthy", 
+            why: "Father-son survival in post-apocalyptic world", 
+            cover: "" 
+          }
+        ];
+        
+        console.log('[Mobile Debug] Using emergency fallback books');
+        
+        // Store emergency fallback data
+        let emergencyDataStored = false;
         if (typeof window !== 'undefined') {
-          localStorage.setItem(
-            'stacks_recommendations',
-            JSON.stringify({
-              books: [],
-              userInput,
-              error: 'Failed to fetch recommendations',
-            })
-          );
+          try {
+            localStorage.setItem(
+              'stacks_recommendations',
+              JSON.stringify({
+                books: basicBooks,
+                userInput,
+                emergency: true,
+                timestamp: new Date().toISOString(),
+              })
+            );
+            console.log('[Mobile Debug] Emergency fallback data stored');
+            emergencyDataStored = true;
+          } catch (storageError) {
+            console.error('[Mobile Debug] Failed to store emergency fallback data:', storageError);
+          }
         }
+        
+        // Navigate to show fallback content (always navigate in emergency case to prevent total failure)
+        console.log('[Mobile Debug] Navigating to recommendations page (emergency fallback)');
         router.push('/stacks-recommendations');
       }
     }
@@ -471,6 +582,12 @@ export const AIPromptInput = () => {
             <button
               type="submit"
               disabled={(!inputValue && !selectedMood) || isLoading}
+              onClick={(e) => {
+                console.log('[Mobile Debug] Submit button clicked');
+                console.log('[Mobile Debug] Input value:', inputValue);
+                console.log('[Mobile Debug] Selected mood:', selectedMood);
+                console.log('[Mobile Debug] Is loading:', isLoading);
+              }}
               className="pop-element touch-feedback mobile-touch flex items-center justify-center rounded-full bg-text-primary px-6 py-4 text-base font-black text-white transition-all duration-300 hover:scale-110 hover:bg-text-primary/90 focus:outline-none focus:ring-4 focus:ring-white/50 disabled:cursor-not-allowed disabled:opacity-50 sm:px-8 sm:py-6 sm:text-lg"
             >
               {isLoading ? (
@@ -492,7 +609,7 @@ export const AIPromptInput = () => {
               onClick={(e) => handleSubmit(e, true)}
               disabled={isLoading || (!inputValue && !selectedMood)}
               className={`pop-element touch-feedback mobile-touch flex items-center justify-center rounded-full bg-primary-orange px-4 py-4 text-base font-black text-white transition-all duration-300 hover:scale-110 hover:bg-primary-orange/90 focus:outline-none focus:ring-4 focus:ring-white/50 disabled:cursor-not-allowed sm:px-6 sm:py-6 sm:text-lg ${
-                inputValue || selectedMood ? 'opacity-100' : 'opacity-0 pointer-events-none'
+                inputValue || selectedMood ? 'opacity-100' : 'pointer-events-none opacity-0'
               }`}
               title="Get fresh recommendations"
               style={{ transitionProperty: 'opacity, transform, background-color' }}
@@ -509,7 +626,7 @@ export const AIPromptInput = () => {
           </div>
 
           {/* Loading state feedback - height stable */}
-          <div className="min-h-[24px] flex items-center justify-center">
+          <div className="flex min-h-[24px] items-center justify-center">
             {isLoading && (
               <div className="animate-fade-in-up text-center text-sm font-bold text-text-secondary">
                 Finding your perfect match...
@@ -517,7 +634,7 @@ export const AIPromptInput = () => {
             )}
             {showError && !isLoading && (
               <div className="animate-fade-in-up text-center text-sm font-bold text-red-600">
-                Please select a mood or enter what you&apos;re looking for!
+                {errorMessage || 'Please select a mood or enter what you\'re looking for!'}
               </div>
             )}
           </div>

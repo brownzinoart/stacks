@@ -58,9 +58,7 @@ const ARDiscoveryPage = () => {
                   <div className="space-y-3">
                     <div className="text-4xl">🧭</div>
                     <h3 className="text-xl font-black text-text-primary">BOOK NAVIGATOR</h3>
-                    <p className="text-base font-bold text-text-primary">
-                      Get AR directions to any book location
-                    </p>
+                    <p className="text-base font-bold text-text-primary">Get AR directions to any book location</p>
                   </div>
                 </button>
               </div>
@@ -73,7 +71,7 @@ const ARDiscoveryPage = () => {
                     onClick={() => setSelectedLibrary('cary-regional')}
                     className={`touch-feedback rounded-2xl p-4 text-left transition-all ${
                       selectedLibrary === 'cary-regional'
-                        ? 'bg-primary-yellow shadow-backdrop'
+                        ? 'shadow-backdrop bg-primary-yellow'
                         : 'bg-white/80 hover:bg-white/90'
                     }`}
                   >
@@ -84,7 +82,7 @@ const ARDiscoveryPage = () => {
                     onClick={() => setSelectedLibrary('eva-perry-apex')}
                     className={`touch-feedback rounded-2xl p-4 text-left transition-all ${
                       selectedLibrary === 'eva-perry-apex'
-                        ? 'bg-primary-yellow shadow-backdrop'
+                        ? 'shadow-backdrop bg-primary-yellow'
                         : 'bg-white/80 hover:bg-white/90'
                     }`}
                   >
@@ -96,7 +94,7 @@ const ARDiscoveryPage = () => {
             </div>
 
             {/* Decorative elements */}
-            <div className="animate-float absolute left-6 top-4 z-0 h-14 w-14 rounded-full bg-primary-yellow opacity-25 shadow-[0_4px_15px_rgb(0,0,0,0.2)] sm:h-18 sm:w-18" />
+            <div className="animate-float sm:h-18 sm:w-18 absolute left-6 top-4 z-0 h-14 w-14 rounded-full bg-primary-yellow opacity-25 shadow-[0_4px_15px_rgb(0,0,0,0.2)]" />
             <div className="animate-float-delayed absolute bottom-8 left-4 z-0 h-10 w-10 rounded-full bg-primary-green opacity-30 shadow-[0_4px_15px_rgb(0,0,0,0.2)] sm:h-14 sm:w-14" />
             <div className="animate-float-slow absolute left-2 top-12 z-0 h-8 w-8 rounded-full bg-primary-orange opacity-35 shadow-[0_4px_15px_rgb(0,0,0,0.2)] sm:h-12 sm:w-12" />
             <div className="animate-float absolute bottom-4 right-8 z-0 h-12 w-12 rounded-full bg-primary-purple opacity-20 shadow-[0_4px_15px_rgb(0,0,0,0.2)] sm:h-16 sm:w-16" />
@@ -118,15 +116,17 @@ const ARDiscoveryPage = () => {
                 <div className="pop-element-lg relative overflow-hidden rounded-3xl bg-primary-orange p-8 shadow-[0_10px_40px_rgb(0,0,0,0.3)] sm:p-12">
                   <div className="relative z-10 space-y-6">
                     <h2 className="text-xl font-black text-text-primary">SELECT A BOOK TO NAVIGATE TO:</h2>
-                    
+
                     <div className="grid gap-4">
                       {selectedLibrary === 'cary-regional' ? (
                         <>
                           <button
-                            onClick={() => setSelectedBook({
-                              title: 'The Great Gatsby',
-                              location: { sectionId: 'adult-fiction', floor: 2, shelfNumber: 'F-7' }
-                            })}
+                            onClick={() =>
+                              setSelectedBook({
+                                title: 'The Great Gatsby',
+                                location: { sectionId: 'adult-fiction', floor: 2, shelfNumber: 'F-7' },
+                              })
+                            }
                             className="outline-bold-thin rounded-2xl bg-white/80 p-4 text-left backdrop-blur-sm hover:bg-white/90"
                           >
                             <h3 className="font-black text-text-primary">The Great Gatsby</h3>
@@ -134,21 +134,27 @@ const ARDiscoveryPage = () => {
                           </button>
 
                           <button
-                            onClick={() => setSelectedBook({
-                              title: 'Harry Potter and the Sorcerer\'s Stone',
-                              location: { sectionId: 'childrens', floor: 1, shelfNumber: 'J-15' }
-                            })}
+                            onClick={() =>
+                              setSelectedBook({
+                                title: "Harry Potter and the Sorcerer's Stone",
+                                location: { sectionId: 'childrens', floor: 1, shelfNumber: 'J-15' },
+                              })
+                            }
                             className="outline-bold-thin rounded-2xl bg-white/80 p-4 text-left backdrop-blur-sm hover:bg-white/90"
                           >
                             <h3 className="font-black text-text-primary">Harry Potter</h3>
-                            <p className="text-sm font-bold text-text-secondary">Children&apos;s • Floor 1 • Shelf J-15</p>
+                            <p className="text-sm font-bold text-text-secondary">
+                              Children&apos;s • Floor 1 • Shelf J-15
+                            </p>
                           </button>
 
                           <button
-                            onClick={() => setSelectedBook({
-                              title: 'Educated: A Memoir',
-                              location: { sectionId: 'non-fiction', floor: 2, shelfNumber: 'B-22' }
-                            })}
+                            onClick={() =>
+                              setSelectedBook({
+                                title: 'Educated: A Memoir',
+                                location: { sectionId: 'non-fiction', floor: 2, shelfNumber: 'B-22' },
+                              })
+                            }
                             className="outline-bold-thin rounded-2xl bg-white/80 p-4 text-left backdrop-blur-sm hover:bg-white/90"
                           >
                             <h3 className="font-black text-text-primary">Educated</h3>
@@ -158,10 +164,12 @@ const ARDiscoveryPage = () => {
                       ) : (
                         <>
                           <button
-                            onClick={() => setSelectedBook({
-                              title: 'Where the Crawdads Sing',
-                              location: { sectionId: 'adult-fiction', floor: 1, shelfNumber: 'F-12' }
-                            })}
+                            onClick={() =>
+                              setSelectedBook({
+                                title: 'Where the Crawdads Sing',
+                                location: { sectionId: 'adult-fiction', floor: 1, shelfNumber: 'F-12' },
+                              })
+                            }
                             className="outline-bold-thin rounded-2xl bg-white/80 p-4 text-left backdrop-blur-sm hover:bg-white/90"
                           >
                             <h3 className="font-black text-text-primary">Where the Crawdads Sing</h3>
@@ -169,10 +177,12 @@ const ARDiscoveryPage = () => {
                           </button>
 
                           <button
-                            onClick={() => setSelectedBook({
-                              title: 'The Very Hungry Caterpillar',
-                              location: { sectionId: 'tree-house', floor: 1, shelfNumber: 'P-3' }
-                            })}
+                            onClick={() =>
+                              setSelectedBook({
+                                title: 'The Very Hungry Caterpillar',
+                                location: { sectionId: 'tree-house', floor: 1, shelfNumber: 'P-3' },
+                              })
+                            }
                             className="outline-bold-thin rounded-2xl bg-white/80 p-4 text-left backdrop-blur-sm hover:bg-white/90"
                           >
                             <h3 className="font-black text-text-primary">The Very Hungry Caterpillar</h3>
@@ -180,10 +190,12 @@ const ARDiscoveryPage = () => {
                           </button>
 
                           <button
-                            onClick={() => setSelectedBook({
-                              title: 'Atomic Habits',
-                              location: { sectionId: 'non-fiction', floor: 1, shelfNumber: 'S-18' }
-                            })}
+                            onClick={() =>
+                              setSelectedBook({
+                                title: 'Atomic Habits',
+                                location: { sectionId: 'non-fiction', floor: 1, shelfNumber: 'S-18' },
+                              })
+                            }
                             className="outline-bold-thin rounded-2xl bg-white/80 p-4 text-left backdrop-blur-sm hover:bg-white/90"
                           >
                             <h3 className="font-black text-text-primary">Atomic Habits</h3>
@@ -199,9 +211,7 @@ const ARDiscoveryPage = () => {
               {selectedBook && (
                 <>
                   <div className="mb-4 flex items-center justify-between">
-                    <h3 className="text-lg font-black text-text-primary">
-                      Navigating to: {selectedBook.title}
-                    </h3>
+                    <h3 className="text-lg font-black text-text-primary">Navigating to: {selectedBook.title}</h3>
                     <button
                       onClick={() => setSelectedBook(null)}
                       className="font-bold text-primary-blue hover:underline"
@@ -221,7 +231,7 @@ const ARDiscoveryPage = () => {
               <div className="pop-element-lg relative overflow-hidden rounded-3xl bg-primary-yellow p-8 shadow-[0_10px_40px_rgb(0,0,0,0.3)] sm:p-12">
                 <div className="relative z-10 space-y-6 sm:space-y-8">
                   <h2 className="text-xl font-black text-text-primary">HOW IT WORKS</h2>
-                  
+
                   <div className="grid gap-6 sm:grid-cols-2">
                     <div className="outline-bold-thin rounded-2xl bg-white/80 p-6 backdrop-blur-sm">
                       <h3 className="mb-3 text-lg font-black text-text-primary">📚 SHELF SCANNER</h3>

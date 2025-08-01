@@ -51,7 +51,7 @@ export const NativeIOSTabBar = () => {
         <div className="flex items-center justify-center gap-1 px-2 py-3">
           {navigationItems.map((item) => {
             const isActive = pathname === item.href;
-            
+
             // Debug which tab is active
             if (isActive) {
               console.log('Active tab:', item.name, 'href:', item.href, 'pathname:', pathname);

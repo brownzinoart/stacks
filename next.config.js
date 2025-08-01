@@ -7,6 +7,10 @@
 const nextConfig = {
   // Enable for Capacitor/mobile deployment
   output: 'export',
+  // Allow dev requests from mobile devices
+  ...(process.env.NODE_ENV === 'development' && {
+    allowedDevOrigins: ['192.168.86.174', 'capacitor://localhost', '*.local'],
+  }),
   images: {
     // Keep unoptimized for both dev and export
     unoptimized: true,
