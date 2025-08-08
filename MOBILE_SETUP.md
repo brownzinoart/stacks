@@ -39,15 +39,18 @@ The app now includes extensive logging. To view logs:
 ### Common Issues and Solutions
 
 #### "Cannot connect to server" Error
+
 - Ensure your dev server is running (`npm run dev`)
 - Check that your phone is on the same WiFi network
 - Verify the IP address in `.env.local` matches your computer's current IP
 
 #### "Network request failed" Error
+
 - This usually means CORS or network connectivity issues
 - Make sure the API URL includes your computer's IP, not localhost
 
 #### Finding Your Computer's IP
+
 ```bash
 ifconfig | grep "inet " | grep -v 127.0.0.1
 ```

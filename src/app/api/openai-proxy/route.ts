@@ -15,16 +15,13 @@ export async function POST(request: NextRequest) {
   const apiKey = process.env.OPENAI_API_KEY;
   if (!apiKey) {
     console.error('OpenAI API key not found in environment variables');
-    return NextResponse.json(
-      { error: 'OpenAI API key not configured' }, 
-      { status: 500, headers: corsHeaders }
-    );
+    return NextResponse.json({ error: 'OpenAI API key not configured' }, { status: 500, headers: corsHeaders });
   }
 
   try {
     const body = await request.json();
     console.log('Making request to OpenAI with body:', JSON.stringify(body, null, 2));
-    
+
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -41,7 +38,7 @@ export async function POST(request: NextRequest) {
     if (!response.ok) {
       console.error('OpenAI API error:', data);
       return NextResponse.json(
-        { error: 'OpenAI API error', details: data }, 
+        { error: 'OpenAI API error', details: data },
         { status: response.status, headers: corsHeaders }
       );
     }
@@ -53,7 +50,7 @@ export async function POST(request: NextRequest) {
       {
         error: 'Error communicating with OpenAI',
         details: error instanceof Error ? error.message : 'Unknown error',
-      }, 
+      },
       { status: 500, headers: corsHeaders }
     );
   }

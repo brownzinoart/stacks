@@ -77,16 +77,16 @@ export function BookFlipbookCustom3D({ book, onClose }: BookFlipbookCustom3DProp
     }
   };
 
-  const handleKeyDown = (e: KeyboardEvent) => {
-    if (e.key === 'ArrowRight') turnPage(1);
-    if (e.key === 'ArrowLeft') turnPage(-1);
-    if (e.key === 'Escape') onClose();
-  };
-
   useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'ArrowRight') turnPage(1);
+      if (e.key === 'ArrowLeft') turnPage(-1);
+      if (e.key === 'Escape') onClose();
+    };
+
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [currentPage, handleKeyDown]);
+  }, [currentPage, totalPages, onClose]);
 
   if (loading) {
     return (

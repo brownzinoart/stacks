@@ -12,8 +12,8 @@ const nextConfig = {
     allowedDevOrigins: ['192.168.86.174', 'capacitor://localhost', '*.local'],
   }),
   images: {
-    // Keep unoptimized for both dev and export
-    unoptimized: true,
+    // Enable optimization for better performance
+    unoptimized: false,
     remotePatterns: [
       {
         protocol: 'https',

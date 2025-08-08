@@ -1,16 +1,33 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, useMemo } from 'react';
+import dynamic from 'next/dynamic';
 import { BookCover } from '@/components/book-cover';
-import { BookFlipbookCustom3D } from '@/components/book-flipbook-custom-3d';
-import { BookDetailsModal } from '@/components/book-details-modal';
 import { MobileLayout } from '@/components/mobile-layout';
 import { SimilarityBadge } from '@/components/similarity-badge';
 import { LibraryAvailability } from '@/components/library-availability';
-import axios from 'axios';
 import { hapticFeedback, isMobile } from '@/lib/mobile-utils';
 import { readingHistory, type SimilarityScore } from '@/lib/reading-history';
+
+// Dynamic imports for heavy components
+const BookFlipbookCustom3D = dynamic(
+  () => import('@/components/book-flipbook-custom-3d').then(mod => ({ default: mod.BookFlipbookCustom3D })),
+  {
+    loading: () => <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm">
+      <div className="text-lg text-white">Loading flipbook...</div>
+    </div>,
+  }
+);
+
+const BookDetailsModal = dynamic(
+  () => import('@/components/book-details-modal').then(mod => ({ default: mod.BookDetailsModal })),
+  {
+    loading: () => <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm">
+      <div className="text-lg text-white">Loading details...</div>
+    </div>,
+  }
+);
 
 const getQueue = () => {
   try {
@@ -63,7 +80,7 @@ const StacksRecommendationsPage = () => {
     const data = localStorage.getItem('stacks_recommendations');
     console.log('[Recommendations Debug] Raw data:', data);
     console.log('[Recommendations Debug] Data length:', data?.length);
-    
+
     if (data) {
       try {
         const parsed = JSON.parse(data);
@@ -122,8 +139,8 @@ const StacksRecommendationsPage = () => {
     setAdded(addedState);
   }, [books]);
 
-  // Calculate similarity scores for all books
-  useEffect(() => {
+  // Calculate similarity scores for all books (memoized for performance)
+  const calculatedSimilarityScores = useMemo(() => {
     const scores: { [key: number]: SimilarityScore } = {};
     books.forEach((book, idx) => {
       const similarity = readingHistory.calculateSimilarity({
@@ -134,8 +151,13 @@ const StacksRecommendationsPage = () => {
       });
       scores[idx] = similarity;
     });
-    setSimilarityScores(scores);
+    return scores;
   }, [books]);
+
+  // Update similarity scores when calculated scores change
+  useEffect(() => {
+    setSimilarityScores(calculatedSimilarityScores);
+  }, [calculatedSimilarityScores]);
 
   // Books should already have covers from pre-fetch, but we'll still check for any missing ones
   useEffect(() => {

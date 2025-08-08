@@ -40,12 +40,9 @@ export default function TestSearchPage() {
 
   return (
     <div className="p-8">
-      <h1 className="text-2xl font-bold mb-4">API Test Page</h1>
-      
-      <button
-        onClick={testAPI}
-        className="bg-blue-500 text-white px-4 py-2 rounded mb-4"
-      >
+      <h1 className="mb-4 text-2xl font-bold">API Test Page</h1>
+
+      <button onClick={testAPI} className="mb-4 rounded bg-blue-500 px-4 py-2 text-white">
         Test API
       </button>
 
@@ -53,25 +50,25 @@ export default function TestSearchPage() {
         <div>
           <strong>Status:</strong> {status}
         </div>
-        
+
         {error && (
           <div>
             <strong>Error:</strong>
-            <pre className="bg-red-100 p-2 mt-2">{error}</pre>
+            <pre className="mt-2 bg-red-100 p-2">{error}</pre>
           </div>
         )}
 
         {response && (
           <div>
             <strong>Response:</strong>
-            <pre className="bg-green-100 p-2 mt-2 text-xs overflow-auto">{response}</pre>
+            <pre className="mt-2 overflow-auto bg-green-100 p-2 text-xs">{response}</pre>
           </div>
         )}
 
         <div>
           <strong>Debug Info:</strong>
-          <pre className="bg-gray-100 p-2 mt-2 text-xs">
-{`User Agent: ${typeof navigator !== 'undefined' ? navigator.userAgent : 'N/A'}
+          <pre className="mt-2 bg-gray-100 p-2 text-xs">
+            {`User Agent: ${typeof navigator !== 'undefined' ? navigator.userAgent : 'N/A'}
 Online: ${typeof navigator !== 'undefined' ? navigator.onLine : 'N/A'}
 Location: ${typeof window !== 'undefined' ? window.location.href : 'N/A'}`}
           </pre>

@@ -6,7 +6,6 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import axios from 'axios';
 import { useRouter } from 'next/navigation';
 import { getApiBaseUrl } from '@/lib/api-config';
 
@@ -74,45 +73,60 @@ async function getSmartRecommendations(userInput: string, forceRefresh: boolean 
     // Use consistent API base URL configuration
     const baseUrl = getApiBaseUrl();
     const apiUrl = `${baseUrl}/api/openai-proxy`;
-    
+
     console.log('[Mobile Debug] Making analysis API call to:', apiUrl);
     console.log('[Mobile Debug] Window location:', typeof window !== 'undefined' ? window.location.href : 'SSR');
     console.log('[Mobile Debug] Window protocol:', typeof window !== 'undefined' ? window.location.protocol : 'SSR');
-    console.log('[Mobile Debug] Is Capacitor:', typeof window !== 'undefined' && (window as any).Capacitor !== undefined);
+    console.log(
+      '[Mobile Debug] Is Capacitor:',
+      typeof window !== 'undefined' && (window as any).Capacitor !== undefined
+    );
     console.log('[Mobile Debug] Using base URL:', baseUrl);
-    
-    const analysisResp = await axios.post(apiUrl, {
-      model: 'gpt-3.5-turbo',
-      messages: [
-        {
-          role: 'system',
-          content: 'You are a JSON-only response bot. Return only valid JSON, no markdown, no explanation.',
-        },
-        { role: 'user', content: analysisPrompt },
-      ],
-      temperature: 0.3,
-      max_tokens: 200,
-    }, {
-      // Reduced timeout for faster failure detection
-      timeout: 15000, // 15 second timeout
+
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 second timeout
+
+    const analysisResp = await fetch(apiUrl, {
+      method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-      }
+      },
+      body: JSON.stringify({
+        model: 'gpt-3.5-turbo',
+        messages: [
+          {
+            role: 'system',
+            content: 'You are a JSON-only response bot. Return only valid JSON, no markdown, no explanation.',
+          },
+          { role: 'user', content: analysisPrompt },
+        ],
+        temperature: 0.3,
+        max_tokens: 200,
+      }),
+      signal: controller.signal,
     });
 
+    clearTimeout(timeoutId);
+
     console.log('[Mobile Debug] Analysis API response status:', analysisResp.status);
-    console.log('[Mobile Debug] Analysis API response data:', analysisResp.data);
     
-    if (!analysisResp.data.choices?.[0]?.message?.content) {
+    if (!analysisResp.ok) {
+      throw new Error(`API request failed with status ${analysisResp.status}`);
+    }
+
+    const analysisData = await analysisResp.json();
+    console.log('[Mobile Debug] Analysis API response data:', analysisData);
+
+    if (!analysisData.choices?.[0]?.message?.content) {
       throw new Error('Invalid API response structure');
     }
-    
-    console.log('Analysis response:', analysisResp.data.choices[0].message.content);
+
+    console.log('Analysis response:', analysisData.choices[0].message.content);
 
     let analysis;
     try {
       // Clean the response in case of markdown or extra text
-      const content = analysisResp.data.choices[0].message.content;
+      const content = analysisData.choices[0].message.content;
       const jsonMatch = content.match(/\{[\s\S]*\}/);
       if (jsonMatch) {
         analysis = JSON.parse(jsonMatch[0]);
@@ -190,29 +204,40 @@ async function getSmartRecommendations(userInput: string, forceRefresh: boolean 
     
     Include 2-3 books per category with rich, detailed "whyYoullLikeIt" descriptions.`;
 
-    const recoResp = await axios.post(`${baseUrl}/api/openai-proxy`, {
-      model: 'gpt-3.5-turbo',
-      messages: [
-        {
-          role: 'system',
-          content: 'You are a JSON-only response bot. Return only valid JSON for book recommendations.',
-        },
-        { role: 'user', content: recommendPrompt },
-      ],
-      temperature: 0.1,
-      max_tokens: 1500,
-    }, {
-      // Reduced timeout for faster failure detection
-      timeout: 20000, // 20 second timeout (longer for more complex response)
+    const recoController = new AbortController();
+    const recoTimeoutId = setTimeout(() => recoController.abort(), 20000); // 20 second timeout
+
+    const recoResp = await fetch(`${baseUrl}/api/openai-proxy`, {
+      method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-      }
+      },
+      body: JSON.stringify({
+        model: 'gpt-3.5-turbo',
+        messages: [
+          {
+            role: 'system',
+            content: 'You are a JSON-only response bot. Return only valid JSON for book recommendations.',
+          },
+          { role: 'user', content: recommendPrompt },
+        ],
+        temperature: 0.1,
+        max_tokens: 1500,
+      }),
+      signal: recoController.signal,
     });
 
-    console.log('Recommendation response:', recoResp.data.choices[0].message.content);
+    clearTimeout(recoTimeoutId);
+
+    if (!recoResp.ok) {
+      throw new Error(`Recommendation API request failed with status ${recoResp.status}`);
+    }
+
+    const recoData = await recoResp.json();
+    console.log('Recommendation response:', recoData.choices[0].message.content);
 
     try {
-      const content = recoResp.data.choices[0].message.content;
+      const content = recoData.choices[0].message.content;
       const jsonMatch = content.match(/\{[\s\S]*\}/);
       if (jsonMatch) {
         const recommendations = JSON.parse(jsonMatch[0]);
@@ -243,22 +268,20 @@ async function getSmartRecommendations(userInput: string, forceRefresh: boolean 
     }
   } catch (error: any) {
     console.error('[Mobile Debug] Smart recommendations error:', error);
-    console.error('[Mobile Debug] Error response:', error.response?.data);
-    console.error('[Mobile Debug] Error status:', error.response?.status);
     console.error('[Mobile Debug] Error message:', error.message);
-    
+
     // Check for common mobile network issues
-    if (error.code === 'ECONNABORTED' || error.message.includes('timeout')) {
+    if (error.name === 'AbortError' || error.message.includes('aborted')) {
       console.error('[Mobile Debug] Request timeout - common on mobile networks');
       error.mobileError = 'Request timed out. Please check your connection and try again.';
-    } else if (error.code === 'ERR_NETWORK' || error.message.includes('Network Error')) {
+    } else if (error.message.includes('fetch') || error.message.includes('Network')) {
       console.error('[Mobile Debug] Network error - check if API is accessible');
       error.mobileError = 'Network error. Please check your internet connection.';
-    } else if (error.response?.status === 0) {
-      console.error('[Mobile Debug] CORS or network issue - status 0');
+    } else if (error.message.includes('Failed to fetch')) {
+      console.error('[Mobile Debug] CORS or network issue - fetch failed');
       error.mobileError = 'Connection blocked. Please try again.';
     }
-    
+
     throw error;
   }
 }
@@ -270,14 +293,17 @@ async function fetchOmdbData(title: string) {
   const cleanTitle = title.replace(/.*like (the )?(show|movie|film|series)?/i, '').trim();
   const url = `https://www.omdbapi.com/?t=${encodeURIComponent(cleanTitle)}&apikey=${apiKey}`;
   try {
-    const res = await axios.get(url);
-    if (res.data && res.data.Response !== 'False') {
-      return {
-        plot: res.data.Plot,
-        genres: res.data.Genre,
-        rated: res.data.Rated,
-        title: res.data.Title,
-      };
+    const res = await fetch(url);
+    if (res.ok) {
+      const data = await res.json();
+      if (data && data.Response !== 'False') {
+        return {
+          plot: data.Plot,
+          genres: data.Genre,
+          rated: data.Rated,
+          title: data.Title,
+        };
+      }
     }
   } catch (e) {
     // ignore
@@ -342,7 +368,7 @@ export const AIPromptInput = () => {
     try {
       // Log for mobile debugging
       console.log('[Mobile Debug] Starting search with input:', userInput);
-      
+
       // Use the new smart recommendation system
       console.log('[Mobile Debug] About to call getSmartRecommendations');
       const recommendations = await getSmartRecommendations(userInput, forceRefresh);
@@ -382,28 +408,39 @@ export const AIPromptInput = () => {
     } catch (err: any) {
       console.error('[Mobile Debug] Error in recommendation flow:', err);
       console.error('[Mobile Debug] Error stack:', err.stack);
-      console.error('[Mobile Debug] Error response:', err.response?.data);
 
       // Fallback to simple recommendations
       try {
         console.log('[Mobile Debug] Attempting fallback simple recommendations');
         const fallbackBaseUrl = getApiBaseUrl();
         const apiUrl = `${fallbackBaseUrl}/api/openai-proxy`;
-        
-        const resp = await axios.post(apiUrl, {
-          model: 'gpt-3.5-turbo',
-          messages: [{ role: 'user', content: buildSimplePrompt(userInput) }],
-          temperature: 0.7,
-          max_tokens: 400,
-        }, {
-          timeout: 15000, // 15 second timeout for fallback
+
+        const fallbackController = new AbortController();
+        const fallbackTimeoutId = setTimeout(() => fallbackController.abort(), 15000); // 15 second timeout
+
+        const resp = await fetch(apiUrl, {
+          method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-          }
+          },
+          body: JSON.stringify({
+            model: 'gpt-3.5-turbo',
+            messages: [{ role: 'user', content: buildSimplePrompt(userInput) }],
+            temperature: 0.7,
+            max_tokens: 400,
+          }),
+          signal: fallbackController.signal,
         });
 
+        clearTimeout(fallbackTimeoutId);
+
+        if (!resp.ok) {
+          throw new Error(`Fallback API request failed with status ${resp.status}`);
+        }
+
+        const fallbackData = await resp.json();
         console.log('[Mobile Debug] Fallback API response received');
-        const content = resp.data.choices?.[0]?.message?.content || '';
+        const content = fallbackData.choices?.[0]?.message?.content || '';
         let books = [];
 
         try {
@@ -420,14 +457,14 @@ export const AIPromptInput = () => {
           console.error('[Mobile Debug] Error parsing fallback response:', parseErr);
           // Create minimal fallback books if parsing fails
           books = [
-            { title: "Sample Book 1", author: "Author 1", why: "Fallback recommendation", cover: "" },
-            { title: "Sample Book 2", author: "Author 2", why: "Fallback recommendation", cover: "" }
+            { title: 'Sample Book 1', author: 'Author 1', why: 'Fallback recommendation', cover: '' },
+            { title: 'Sample Book 2', author: 'Author 2', why: 'Fallback recommendation', cover: '' },
           ];
         }
 
         console.log('[Mobile Debug] Storing fallback recommendations with', books.length, 'books');
         setIsLoading(false);
-        
+
         let fallbackDataStored = false;
         if (typeof window !== 'undefined') {
           try {
@@ -438,7 +475,7 @@ export const AIPromptInput = () => {
             console.error('[Mobile Debug] Failed to store fallback data:', storageError);
           }
         }
-        
+
         if (fallbackDataStored || typeof window === 'undefined') {
           console.log('[Mobile Debug] Navigating to recommendations page (fallback)');
           router.push('/stacks-recommendations');
@@ -450,31 +487,31 @@ export const AIPromptInput = () => {
       } catch (fallbackErr: any) {
         setIsLoading(false);
         console.error('[Mobile Debug] Fallback also failed:', fallbackErr);
-        
+
         // Final fallback - create basic recommendations to prevent total failure
         const basicBooks = [
-          { 
-            title: "The Stand", 
-            author: "Stephen King", 
-            why: "Post-apocalyptic survival like The Walking Dead", 
-            cover: "" 
+          {
+            title: 'The Stand',
+            author: 'Stephen King',
+            why: 'Post-apocalyptic survival like The Walking Dead',
+            cover: '',
           },
-          { 
-            title: "World War Z", 
-            author: "Max Brooks", 
-            why: "Zombie apocalypse survival guide", 
-            cover: "" 
+          {
+            title: 'World War Z',
+            author: 'Max Brooks',
+            why: 'Zombie apocalypse survival guide',
+            cover: '',
           },
-          { 
-            title: "The Road", 
-            author: "Cormac McCarthy", 
-            why: "Father-son survival in post-apocalyptic world", 
-            cover: "" 
-          }
+          {
+            title: 'The Road',
+            author: 'Cormac McCarthy',
+            why: 'Father-son survival in post-apocalyptic world',
+            cover: '',
+          },
         ];
-        
+
         console.log('[Mobile Debug] Using emergency fallback books');
-        
+
         // Store emergency fallback data
         let emergencyDataStored = false;
         if (typeof window !== 'undefined') {
@@ -494,7 +531,7 @@ export const AIPromptInput = () => {
             console.error('[Mobile Debug] Failed to store emergency fallback data:', storageError);
           }
         }
-        
+
         // Navigate to show fallback content (always navigate in emergency case to prevent total failure)
         console.log('[Mobile Debug] Navigating to recommendations page (emergency fallback)');
         router.push('/stacks-recommendations');
@@ -634,7 +671,7 @@ export const AIPromptInput = () => {
             )}
             {showError && !isLoading && (
               <div className="animate-fade-in-up text-center text-sm font-bold text-red-600">
-                {errorMessage || 'Please select a mood or enter what you\'re looking for!'}
+                {errorMessage || "Please select a mood or enter what you're looking for!"}
               </div>
             )}
           </div>

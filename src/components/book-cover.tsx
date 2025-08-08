@@ -4,7 +4,7 @@
  */
 
 import { getBookCover } from '@/lib/book-covers';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, memo } from 'react';
 
 interface BookCoverProps {
   title: string;
@@ -13,7 +13,7 @@ interface BookCoverProps {
   coverUrl?: string;
 }
 
-export const BookCover = ({ title, author, className = 'w-16 h-20', coverUrl }: BookCoverProps) => {
+const BookCover = memo(({ title, author, className = 'w-16 h-20', coverUrl }: BookCoverProps) => {
   let url = coverUrl;
   if (!url) url = getBookCover(title, author);
   const isRealCover = url && url.startsWith('http');
@@ -84,4 +84,8 @@ export const BookCover = ({ title, author, className = 'w-16 h-20', coverUrl }: 
       )}
     </div>
   );
-};
+});
+
+BookCover.displayName = 'BookCover';
+
+export { BookCover };
