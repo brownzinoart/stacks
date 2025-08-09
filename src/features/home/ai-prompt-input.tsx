@@ -109,7 +109,7 @@ async function getSmartRecommendations(userInput: string, forceRefresh: boolean 
     clearTimeout(timeoutId);
 
     console.log('[Mobile Debug] Analysis API response status:', analysisResp.status);
-    
+
     if (!analysisResp.ok) {
       throw new Error(`API request failed with status ${analysisResp.status}`);
     }

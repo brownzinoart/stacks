@@ -58,8 +58,11 @@ export async function apiCall(endpoint: string, options: RequestInit = {}) {
       ...options,
       headers: {
         'Content-Type': 'application/json',
+        'X-Requested-With': 'XMLHttpRequest', // Help with CORS
         ...options.headers,
       },
+      // Add timeout for mobile networks
+      signal: AbortSignal.timeout(30000), // 30 second timeout
     });
 
     if (!response.ok) {
@@ -69,6 +72,11 @@ export async function apiCall(endpoint: string, options: RequestInit = {}) {
     return await response.json();
   } catch (error: any) {
     console.error('[API] Request failed:', error);
+
+    // Handle timeout errors
+    if (error.name === 'AbortError' || error.message.includes('timeout')) {
+      throw new Error('Request timeout. Please check your connection and try again.');
+    }
 
     // Provide helpful error messages for common issues
     if (error.message.includes('Failed to fetch') || error.message.includes('Network request failed')) {
@@ -82,4 +90,22 @@ export async function apiCall(endpoint: string, options: RequestInit = {}) {
 
     throw error;
   }
+}
+
+// Helper for checking network connectivity
+export function checkNetworkConnectivity(): Promise<boolean> {
+  return new Promise((resolve) => {
+    if (!navigator.onLine) {
+      resolve(false);
+      return;
+    }
+
+    // Try to fetch a small resource to verify connectivity
+    fetch('/manifest.json', {
+      method: 'HEAD',
+      signal: AbortSignal.timeout(5000),
+    })
+      .then(() => resolve(true))
+      .catch(() => resolve(false));
+  });
 }

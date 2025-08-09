@@ -20,37 +20,41 @@ test.describe('Home Page', () => {
   test('should display main navigation', async ({ page }) => {
     await page.goto('/home');
 
-    // Check for main navigation elements
-    await expect(page.getByRole('navigation')).toBeVisible();
-    await expect(page.getByRole('link', { name: 'Home' })).toBeVisible();
-    await expect(page.getByRole('link', { name: 'Explore' })).toBeVisible();
-    await expect(page.getByRole('link', { name: 'Discovery' })).toBeVisible();
+    // Check for iOS tab bar navigation elements with updated names
+    await expect(page.getByRole('link', { name: /Discover/i })).toBeVisible();
+    await expect(page.getByRole('link', { name: /Library/i })).toBeVisible();
+    await expect(page.getByRole('link', { name: /Community/i })).toBeVisible();
+    await expect(page.getByRole('link', { name: /Progress/i })).toBeVisible();
   });
 
   test('should display home page content', async ({ page }) => {
     await page.goto('/home');
 
-    // Check for main heading
-    await expect(page.getByRole('heading', { name: /what.*mood/i })).toBeVisible();
+    // Check for main heading (discovery-first strategy)
+    await expect(page.getByRole('heading', { name: /WHAT'S.*NEXT/i })).toBeVisible();
 
-    // Check for AI prompt input
-    await expect(page.getByPlaceholder(/feeling nostalgic/i)).toBeVisible();
+    // Check for AI prompt input with rotating examples
+    await expect(page.locator('input[type="text"]')).toBeVisible();
 
-    // Check for main sections
-    await expect(page.getByText('Recent Searches')).toBeVisible();
-    await expect(page.getByText('My Queue')).toBeVisible();
-    await expect(page.getByText('Reading Streak')).toBeVisible();
+    // Check for discovery sections
+    await expect(page.getByText('MORE WAYS')).toBeVisible();
+    await expect(page.getByText('TO DISCOVER')).toBeVisible();
+
+    // Check for main sections with correct titles
+    await expect(page.getByText('NEW')).toBeVisible(); // From NewReleases
+    await expect(page.getByText('BOOK')).toBeVisible(); // From MyQueue (BOOK QUEUE)
+    await expect(page.getByText('READING')).toBeVisible(); // From ReadingStreak (READING PLAN)
   });
 
   test('should be accessible', async ({ page }) => {
     await page.goto('/home');
 
-    // Basic accessibility checks
-    await expect(page.locator('h1')).toBeVisible();
-    await expect(page.locator('[role="main"]')).toBeVisible();
+    // Basic accessibility checks - use specific heading to avoid multiple h1 elements
+    await expect(page.getByRole('heading', { name: /WHAT'S.*NEXT/i })).toBeVisible();
+    await expect(page.locator('main').first()).toBeVisible();
 
-    // Check for proper form labels
-    const promptInput = page.getByPlaceholder(/feeling nostalgic/i);
+    // Check for AI prompt input
+    const promptInput = page.locator('input[type="text"]').first();
     await expect(promptInput).toBeVisible();
 
     // Verify navigation is keyboard accessible
@@ -61,31 +65,31 @@ test.describe('Home Page', () => {
   test('should handle AI prompt submission', async ({ page }) => {
     await page.goto('/home');
 
-    // Fill in the AI prompt
-    await page.fill('textarea[placeholder*="feeling nostalgic"]', 'I want something adventurous');
+    // Fill in the AI prompt with the correct input selector
+    const promptInput = page.locator('input[type="text"]').first();
+    await promptInput.fill('I want something adventurous');
 
-    // Submit the form
-    await page.click('button:text("Get Recommendations")');
+    // Submit the form with the correct button selector
+    await page.click('button:has-text("Find Next Read")');
 
     // Verify loading state appears
-    await expect(page.getByText('Finding books...')).toBeVisible();
+    await expect(page.getByText('FINDING').first()).toBeVisible();
   });
 
   test('should navigate between pages', async ({ page }) => {
     await page.goto('/home');
 
-    // Navigate to Explore page
-    await page.click('a:text("Explore")');
-    await expect(page).toHaveURL('/explore');
-    await expect(page.getByRole('heading', { name: 'Explore & Learn' })).toBeVisible();
+    // Navigate to Library (AR Discovery) page
+    await page.getByRole('link', { name: /Library/i }).click();
+    await expect(page).toHaveURL('/ar-discovery');
+    await expect(page.getByRole('heading', { name: /AR BOOK.*DISCOVERY/i })).toBeVisible();
 
-    // Navigate to Discovery page
-    await page.click('a:text("Discovery")');
-    await expect(page).toHaveURL('/discovery');
-    await expect(page.getByRole('heading', { name: 'Discovery' })).toBeVisible();
+    // Navigate to Community page
+    await page.getByRole('link', { name: /Community/i }).click();
+    await expect(page).toHaveURL('/community');
 
-    // Navigate back to Home
-    await page.click('a:text("Home")');
+    // Navigate back to Discover (Home)
+    await page.getByRole('link', { name: /Discover/i }).click();
     await expect(page).toHaveURL('/home');
   });
 });

@@ -181,13 +181,79 @@ npm run test:headed            # With browser UI
 npm run test:ui                # Interactive test runner
 ```
 
-## 📱 Progressive Web App
+## ⚡ Performance Optimizations
 
-Stacks is designed as a PWA with:
+Recent performance improvements implemented:
+
+- **Image Optimization** - Enabled Next.js built-in image optimization for faster loading
+- **Component Memoization** - Added React.memo to BookCover component to prevent unnecessary re-renders
+- **Network Optimization** - Replaced axios with native fetch API for reduced bundle size
+- **Computation Caching** - Implemented useMemo for expensive similarity calculations
+- **Code Splitting** - Added dynamic imports for heavy components to reduce initial bundle size
+- **Memory Management** - Fixed event listener cleanup to prevent memory leaks
+
+### Performance Tips for Developers
+
+- Use `React.memo()` for components that receive stable props
+- Implement `useMemo()` for expensive calculations or data transformations
+- Use dynamic imports for components that aren't needed immediately
+- Always clean up event listeners, timers, and subscriptions in useEffect
+- Prefer native fetch over external HTTP libraries when possible
+- Enable Next.js image optimization for all image components
+
+### Performance Monitoring
+
+Monitor these metrics during development:
+
+- **FMP (First Meaningful Paint)** - Target ≤ 1.8s on 3G
+- **Bundle Size** - Check webpack-bundle-analyzer for large chunks
+- **Memory Usage** - Use Chrome DevTools to detect memory leaks
+- **Re-render Count** - Use React DevTools Profiler to identify unnecessary renders
+
+## 📱 Progressive Web App & Mobile Support
+
+Stacks is designed as a PWA with native iOS app capabilities:
+
+### Web App Features
 
 - **Offline Support** - Cached pages and offline UI
 - **App-like Experience** - Can be installed on mobile devices
 - **Fast Loading** - Optimized for 3G networks (FMP ≤ 1.8s)
+
+### iOS Native App
+
+- **Complete Icon Set** - Full iOS app icon collection (20px to 1024px)
+- **Native Integration** - Built with Capacitor for native iOS features
+- **AR Ready** - Camera permissions configured for book spine scanning
+- **PWA Optimized** - Service worker and manifest configured for iOS
+
+#### iOS Development Commands
+
+```bash
+# Navigate to mobile directory
+cd mobile
+
+# Install dependencies and sync
+npm install
+npm run sync
+
+# Development testing
+npm run ios              # Run on iOS simulator
+npm run open:ios         # Open in Xcode
+
+# Production testing
+npm run build:ios        # Build for iOS device testing
+```
+
+#### iOS Deployment Status
+
+✅ **Ready for TestFlight/App Store submission**
+
+- Complete app icon set generated
+- iOS-specific configurations in place
+- Camera usage permissions configured
+- Service worker and PWA features implemented
+- Successfully tested on iOS simulator and physical device
 
 ## 🚀 Deployment
 

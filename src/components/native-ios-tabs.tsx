@@ -9,13 +9,12 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { clsx } from 'clsx';
 
-// Modern icon representations without emojis
+// Modern icon representations - Discovery-first strategy
 const navigationItems = [
-  { name: 'Learning', href: '/discovery', icon: '◈', color: 'primary-green' },
-  { name: 'Explore', href: '/explore', icon: '◐', color: 'primary-blue' },
-  { name: 'Stacks', href: '/home', icon: '▣', color: 'primary-purple' },
-  { name: 'Events', href: '/events', icon: '◆', color: 'primary-orange' },
-  { name: 'Profile', href: '/profile', icon: '●', color: 'primary-pink' },
+  { name: 'Discover', href: '/home', icon: '◈', color: 'primary-purple' },
+  { name: 'Library', href: '/ar-discovery', icon: '▣', color: 'primary-blue' },
+  { name: 'Community', href: '/events', icon: '◆', color: 'primary-orange' },
+  { name: 'Progress', href: '/profile', icon: '●', color: 'primary-green' },
 ];
 
 export const NativeIOSTabBar = () => {

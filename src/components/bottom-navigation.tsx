@@ -1,6 +1,6 @@
 /**
  * Bottom navigation bar for mobile app experience
- * Supports up to 6 tabs with icons
+ * Discovery-first navigation strategy with 4 core tabs
  */
 
 'use client';
@@ -8,15 +8,14 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { clsx } from 'clsx';
-import { Home, Search, Calendar, QrCode, User, Sparkles, BookOpen, MapPin, Camera } from 'lucide-react';
+import { Compass, Library, Users, TrendingUp } from 'lucide-react';
 
-// Navigation items configuration - can support up to 6 items
+// Navigation items configuration - Discovery-first strategy
 const navigationItems = [
-  { name: 'AR', href: '/ar-discovery', icon: Camera },
-  { name: 'Explore', href: '/explore', icon: Search },
-  { name: 'Stacks', href: '/home', icon: Sparkles },
-  { name: 'Events', href: '/events', icon: Calendar },
-  { name: 'Profile', href: '/profile', icon: User },
+  { name: 'Discover', href: '/home', icon: Compass },
+  { name: 'Library', href: '/ar-discovery', icon: Library },
+  { name: 'Community', href: '/events', icon: Users },
+  { name: 'Progress', href: '/profile', icon: TrendingUp },
 ];
 
 export const BottomNavigation = () => {
@@ -24,7 +23,7 @@ export const BottomNavigation = () => {
 
   return (
     <nav className="pb-safe fixed bottom-0 left-0 right-0 z-50 border-t border-gray-200 bg-white">
-      <div className="grid grid-cols-5 gap-1 px-2 py-2">
+      <div className="grid grid-cols-4 gap-1 px-2 py-2">
         {navigationItems.map((item) => {
           const Icon = item.icon;
           const isActive = pathname === item.href;

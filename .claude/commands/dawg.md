@@ -8,11 +8,12 @@ arguments:
     description: The task for that agent
     required: true
 ---
+
 Use the **{{agent}}** subagent to tackle: "{{prompt}}"
 
 If another agent would be better, briefly say why and propose a plan.
+
 - If no consent detected, emit `__QUEUE__` only.
 - If user consents ("run all" or "run selected: ..."), emit `__QUEUE__` (remaining) + `__NEXT_AGENT__` (first).
 
 Always include `__STATUS__`.
-

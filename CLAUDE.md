@@ -8,6 +8,7 @@
   - `__NEXT_AGENT__=<json>` — the immediate next agent (confidence gated)
 
 Tips:
+
 - Use `/dawgs` to propose a plan and wait for consent.
 - Approve with `/approve` or by replying "run all" or "run selected: …".
 - Tune auto-handoff threshold via env: `MYDAWGS_CONF_THRESHOLD=0.75`.

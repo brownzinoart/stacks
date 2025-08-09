@@ -12,7 +12,7 @@ import { clsx } from 'clsx';
 const navigationItems = [
   { name: 'Home', href: '/home' },
   { name: 'Discover', href: '/explore' },
-  { name: 'Events', href: '/events' },
+  { name: 'Community', href: '/community' },
 ];
 
 export const Navigation = () => {

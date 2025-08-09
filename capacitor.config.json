@@ -2,27 +2,51 @@
   "appId": "com.stacks.library",
   "appName": "Stacks",
   "webDir": "out",
+  "bundledWebRuntime": false,
   "server": {
     "androidScheme": "https",
+    "iosScheme": "capacitor",
+    "hostname": "localhost",
     "cleartext": true,
-    "allowNavigation": ["*"]
+    "allowNavigation": ["capacitor://localhost", "https://localhost", "http://localhost:*", "http://192.168.*.*:*"]
   },
   "ios": {
     "preferredContentMode": "mobile",
     "backgroundColor": "#FBF7F4",
-    "scrollEnabled": false,
-    "limitsNavigationsToAppBoundDomains": true
+    "scrollEnabled": true,
+    "disableLogs": false,
+    "minVersion": "13.0",
+    "webContentsDebuggingEnabled": true,
+    "allowsLinkPreview": false,
+    "handleApplicationNotifications": false,
+    "limitsNavigationsToAppBoundDomains": true,
+    "contentInset": "automatic"
   },
   "android": {
     "backgroundColor": "#FBF7F4",
-    "allowMixedContent": false,
+    "allowMixedContent": true,
     "captureInput": true,
-    "webContentsDebuggingEnabled": true
+    "webContentsDebuggingEnabled": true,
+    "minVersion": "22",
+    "appendUserAgent": "StacksApp/1.0"
   },
   "plugins": {
     "StatusBar": {
       "style": "light",
-      "backgroundColor": "#FBF7F4"
+      "backgroundColor": "#3B82F6",
+      "overlay": false
+    },
+    "Keyboard": {
+      "resize": "body",
+      "style": "dark",
+      "resizeOnFullScreen": true
+    },
+    "SplashScreen": {
+      "launchShowDuration": 2000,
+      "backgroundColor": "#FBF7F4",
+      "showSpinner": false,
+      "androidSpinnerStyle": "small",
+      "iosSpinnerStyle": "small"
     }
   }
 }

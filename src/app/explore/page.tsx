@@ -3,10 +3,29 @@
  * Features: Standard search, AR shelf scan, branch explorer
  */
 
+'use client';
+
 import { MobileLayout } from '@/components/mobile-layout';
-import { StandardSearch } from '@/features/ar/standard-search';
-import { ARShelfScan } from '@/features/ar/ar-shelf-scan';
-import { BranchExplorer } from '@/features/ar/branch-explorer';
+import { Suspense, lazy } from 'react';
+
+// Lazy load heavy components for better performance
+const StandardSearch = lazy(() =>
+  import('@/features/ar/standard-search').then((module) => ({ default: module.StandardSearch }))
+);
+const ARShelfScan = lazy(() =>
+  import('@/features/ar/ar-shelf-scan').then((module) => ({ default: module.ARShelfScan }))
+);
+const BranchExplorer = lazy(() =>
+  import('@/features/ar/branch-explorer').then((module) => ({ default: module.BranchExplorer }))
+);
+
+// Loading fallback component
+const ComponentLoader = () => (
+  <div className="animate-pulse rounded-2xl bg-gray-100 p-6">
+    <div className="mb-4 h-4 rounded bg-gray-200"></div>
+    <div className="h-4 w-3/4 rounded bg-gray-200"></div>
+  </div>
+);
 
 const ExplorePage = () => {
   return (
@@ -38,15 +57,21 @@ const ExplorePage = () => {
 
           {/* Discovery Features */}
           <div className="animate-fade-in-up animation-delay-200">
-            <StandardSearch />
+            <Suspense fallback={<ComponentLoader />}>
+              <StandardSearch />
+            </Suspense>
           </div>
 
           <div className="animate-fade-in-up animation-delay-400">
-            <ARShelfScan />
+            <Suspense fallback={<ComponentLoader />}>
+              <ARShelfScan />
+            </Suspense>
           </div>
 
           <div className="animate-fade-in-up animation-delay-600">
-            <BranchExplorer />
+            <Suspense fallback={<ComponentLoader />}>
+              <BranchExplorer />
+            </Suspense>
           </div>
         </div>
       </div>

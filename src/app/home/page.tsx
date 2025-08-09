@@ -1,16 +1,20 @@
 /**
  * Stacks page - Personal reading hub and main dashboard
- * Features: Mood-based recommendations, queue, reading streak, borrowed books
+ * Features: Mood-based recommendations, discovery options, queue, reading streak, borrowed books, community discoveries
  */
 
 'use client';
 
 import { MobileLayout } from '@/components/mobile-layout';
+import PWAInstallPrompt from '@/components/pwa-install-prompt';
 import { AIPromptInput } from '@/features/home/ai-prompt-input';
 import { NewReleases } from '@/features/home/recent-searches';
 import { MyQueue } from '@/features/home/my-queue';
 import { ReadingStreak } from '@/features/home/reading-streak';
 import { BorrowedBooks } from '@/features/stacks/borrowed-books';
+import { MoreWaysToDiscover } from '@/features/home/more-ways-to-discover';
+import { ReadyForPickup } from '@/features/home/ready-for-pickup';
+import { CommunityDiscoveries } from '@/features/home/community-discoveries';
 import { useEffect, useState } from 'react';
 
 const HomePage = () => {
@@ -71,27 +75,43 @@ const HomePage = () => {
             )}
           </div>
 
-          {/* New Releases */}
+          {/* More Ways to Discover */}
           <div className="animate-fade-in-up animation-delay-200">
+            <MoreWaysToDiscover />
+          </div>
+
+          {/* New Releases */}
+          <div className="animate-fade-in-up animation-delay-300">
             <NewReleases />
           </div>
 
           {/* Borrowed Books */}
-          <div className="animate-fade-in-up animation-delay-300">
+          <div className="animate-fade-in-up animation-delay-400">
             <BorrowedBooks />
+          </div>
+
+          {/* Ready for Pickup */}
+          <div className="animate-fade-in-up animation-delay-500">
+            <ReadyForPickup />
           </div>
 
           {/* Bottom Grid - Queue and Reading Streak */}
           <div className="grid gap-8 sm:gap-12 lg:grid-cols-2">
-            <div className="animate-fade-in-up animation-delay-400">
+            <div className="animate-fade-in-up animation-delay-600">
               <MyQueue />
             </div>
-            <div className="animate-fade-in-up animation-delay-600">
+            <div className="animate-fade-in-up animation-delay-700">
               <ReadingStreak />
             </div>
           </div>
+
+          {/* Community Discoveries */}
+          <div className="animate-fade-in-up animation-delay-800">
+            <CommunityDiscoveries />
+          </div>
         </div>
       </div>
+      <PWAInstallPrompt />
     </MobileLayout>
   );
 };

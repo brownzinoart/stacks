@@ -12,20 +12,24 @@ import { readingHistory, type SimilarityScore } from '@/lib/reading-history';
 
 // Dynamic imports for heavy components
 const BookFlipbookCustom3D = dynamic(
-  () => import('@/components/book-flipbook-custom-3d').then(mod => ({ default: mod.BookFlipbookCustom3D })),
+  () => import('@/components/book-flipbook-custom-3d').then((mod) => ({ default: mod.BookFlipbookCustom3D })),
   {
-    loading: () => <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm">
-      <div className="text-lg text-white">Loading flipbook...</div>
-    </div>,
+    loading: () => (
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm">
+        <div className="text-lg text-white">Loading flipbook...</div>
+      </div>
+    ),
   }
 );
 
 const BookDetailsModal = dynamic(
-  () => import('@/components/book-details-modal').then(mod => ({ default: mod.BookDetailsModal })),
+  () => import('@/components/book-details-modal').then((mod) => ({ default: mod.BookDetailsModal })),
   {
-    loading: () => <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm">
-      <div className="text-lg text-white">Loading details...</div>
-    </div>,
+    loading: () => (
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm">
+        <div className="text-lg text-white">Loading details...</div>
+      </div>
+    ),
   }
 );
 
