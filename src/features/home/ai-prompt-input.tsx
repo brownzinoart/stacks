@@ -54,11 +54,13 @@ export const AIPromptInput = () => {
   const [selectedMood, setSelectedMood] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [currentStage, setCurrentStage] = useState(0);
+  const [progress, setProgress] = useState(0);
   const [currentExampleIndex, setCurrentExampleIndex] = useState(0);
   const [isExampleVisible, setIsExampleVisible] = useState(true);
   const [showError, setShowError] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
-  const [costSavings, setCostSavings] = useState<string>('');
+  const [costSavings, setCostSavings] = useState<string>('~65%');
+  const [userQuery, setUserQuery] = useState('');
   const router = useRouter();
 
   // Cleanup function to cancel requests
@@ -84,10 +86,20 @@ export const AIPromptInput = () => {
     return () => clearInterval(interval);
   }, []);
 
-  // Progress callback for loading stages
-  const handleProgress = useCallback((stage: number) => {
+  // Progress callback for loading stages with progress percentage
+  const handleProgress = useCallback((stage: number, progressPercent: number = 0) => {
     setCurrentStage(stage);
+    setProgress(progressPercent);
   }, []);
+
+  // Cancel handler for full takeover loader
+  const handleCancel = useCallback(() => {
+    cleanup();
+    setIsLoading(false);
+    setCurrentStage(0);
+    setProgress(0);
+    setUserQuery('');
+  }, [cleanup]);
 
   // Optimized submit handler with new AI service
   const handleSubmit = async (e: React.FormEvent, forceRefresh: boolean = false) => {
@@ -112,9 +124,11 @@ export const AIPromptInput = () => {
     setShowError(false);
     setIsLoading(true);
     setCurrentStage(0);
-    setCostSavings('');
+    setProgress(0);
+    setCostSavings('~65%');
 
     const userInput = inputValue || selectedMood || '';
+    setUserQuery(userInput); // Store for display in full takeover loader
     const inputType = detectInputType(userInput);
     
     console.log('[AI Input] Starting recommendations for:', userInput, 'Type:', inputType);
@@ -151,6 +165,8 @@ export const AIPromptInput = () => {
       console.error('[AI Input] Error:', error);
       setIsLoading(false);
       setCurrentStage(0);
+      setProgress(0);
+      setUserQuery('');
       
       // Enhanced error handling
       let errorMsg = 'Something went wrong. Please try again.';
@@ -180,10 +196,32 @@ export const AIPromptInput = () => {
 
   return (
     <div className="relative space-y-6 sm:space-y-8">
-      {/* Content Layer */}
-      <div className="relative z-10">
-        {/* Mood Selection */}
-        <div className="mb-8 grid grid-cols-2 gap-3 sm:gap-4">
+      {/* Loading State - Takes over entire container */}
+      {isLoading ? (
+        <div className="flex min-h-[500px] items-center justify-center bg-white/90 backdrop-blur-sm rounded-3xl">
+          <div className="w-full max-w-md mx-auto">
+            <ProgressiveLoadingIndicator
+              stages={BOOK_RECOMMENDATION_STAGES}
+              currentStage={currentStage}
+              className="mx-auto"
+            />
+            {userQuery && (
+              <div className="mt-6 text-center">
+                <p className="text-sm text-text-secondary mb-1">Searching for:</p>
+                <p className="text-text-primary font-bold">"{userQuery}"</p>
+              </div>
+            )}
+            <div className="mt-4 text-center text-sm text-text-secondary">
+              ~{Math.max(15 - Math.floor(progress * 0.15), 0)}s remaining
+            </div>
+          </div>
+        </div>
+      ) : (
+        <>
+          {/* Content Layer */}
+          <div className="relative z-10">
+            {/* Mood Selection */}
+            <div className="mb-8 grid grid-cols-2 gap-3 sm:gap-4">
           {moodOptions.map((mood) => (
             <button
               key={mood.label}
@@ -291,22 +329,9 @@ export const AIPromptInput = () => {
             </button>
           </div>
 
-          {/* Enhanced Loading State with Progress */}
-          <div className="flex min-h-[140px] items-center justify-center">
-            {isLoading ? (
-              <div className="w-full animate-fade-in-up">
-                <ProgressiveLoadingIndicator
-                  stages={BOOK_RECOMMENDATION_STAGES}
-                  currentStage={currentStage}
-                  className="mx-auto max-w-md"
-                />
-                {costSavings && (
-                  <div className="mt-4 text-center text-xs text-primary-green font-bold">
-                    💰 {costSavings}
-                  </div>
-                )}
-              </div>
-            ) : showError ? (
+          {/* Error State (when not loading) */}
+          {!isLoading && showError && (
+            <div className="flex min-h-[60px] items-center justify-center">
               <div className="animate-fade-in-up text-center">
                 <div className="text-sm font-bold text-red-600 mb-2">
                   {errorMessage || "Please select a mood or enter what you're looking for!"}
@@ -318,14 +343,13 @@ export const AIPromptInput = () => {
                   Dismiss
                 </button>
               </div>
-            ) : (
-              <div className="text-center text-sm text-text-secondary">
-                💡 Pro tip: Try "books like Breaking Bad" or "I need something uplifting"
-              </div>
-            )}
-          </div>
+            </div>
+          )}
+
         </form>
-      </div>
+          </div>
+        </>
+      )}
     </div>
   );
 };

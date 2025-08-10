@@ -9,7 +9,7 @@ import { createHash } from 'crypto';
 export interface RecommendationRequest {
   userInput: string;
   forceRefresh?: boolean;
-  onProgress?: (stage: number) => void;
+  onProgress?: (stage: number, progress?: number) => void;
 }
 
 export interface BookRecommendation {
@@ -116,7 +116,7 @@ export class AIRecommendationService {
 
     try {
       // Stage 1: Analyze user intent (optimized with Gemini for speed/cost)
-      onProgress?.(0);
+      onProgress?.(0, 5);
       console.log('[AI Service] Stage 1: Analyzing user intent');
       
       const analysisResponse = await aiRouter.routeRequest({
@@ -145,7 +145,7 @@ export class AIRecommendationService {
       console.log('[AI Service] Analysis result:', analysis);
 
       // Stage 2: Enrich with OMDb if needed
-      onProgress?.(1);
+      onProgress?.(1, 35);
       let enrichedContext = '';
       if ((analysis.referenceType === 'show' || analysis.referenceType === 'movie') && analysis.referenceTitle) {
         console.log('[AI Service] Stage 2: Enriching with OMDb data');
@@ -158,7 +158,7 @@ export class AIRecommendationService {
       }
 
       // Stage 3: Generate categorized recommendations (GPT-4o for best quality)
-      onProgress?.(2);
+      onProgress?.(2, 65);
       console.log('[AI Service] Stage 3: Generating recommendations');
       
       const recommendationResponse = await aiRouter.routeRequest({
@@ -196,6 +196,7 @@ export class AIRecommendationService {
       // Cache the result
       this.setCache(cacheKey, result);
       
+      onProgress?.(2, 100);
       console.log(`[AI Service] Recommendations complete! Cost: $${totalCost.toFixed(4)}, Models: ${modelsUsed.join(', ')}`);
       return result;
 
