@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { BookCover } from './book-cover';
+import Image from 'next/image';
 import { hapticFeedback, isMobile } from '@/lib/mobile-utils';
 import { fetchBookContent, BookContent } from '@/lib/book-content-service';
 
@@ -139,11 +140,13 @@ export function BookFlipbookCustom3D({ book, onClose }: BookFlipbookCustom3DProp
               <div className="page-face front">
                 <div className="page-content p-0">
                   {content?.coverUrl ? (
-                    <img
+                    <Image
                       src={content.coverUrl}
                       alt={book.title}
-                      className="h-full w-full rounded-lg object-cover"
-                      style={{ objectFit: 'cover' }}
+                      fill
+                      className="rounded-lg object-cover"
+                      sizes="(max-width: 768px) 90vw, 400px"
+                      priority
                     />
                   ) : (
                     <div className="flex h-full flex-col items-center justify-center bg-gradient-to-br from-primary-blue to-primary-purple p-8 text-white">
@@ -292,11 +295,12 @@ export function BookFlipbookCustom3D({ book, onClose }: BookFlipbookCustom3DProp
                   <h2>Stacks</h2>
                   <p className="mb-4 text-sm">AI-Powered Book Discovery</p>
                   {content?.backCoverUrl ? (
-                    <img
+                    <Image
                       src={content.backCoverUrl}
                       alt="Back cover"
-                      className="h-full w-full rounded-lg object-cover"
-                      style={{ objectFit: 'cover' }}
+                      fill
+                      className="rounded-lg object-cover"
+                      sizes="(max-width: 768px) 90vw, 400px"
                     />
                   ) : (
                     <div className="mt-8 text-sm text-gray-600">

@@ -6,6 +6,7 @@
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import './globals.css';
+import { OptimizedAppShell } from '@/components/optimized-app-shell';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -71,7 +72,9 @@ const RootLayout = ({ children }: RootLayoutProps) => {
       </head>
       <body className={`${inter.className} h-full bg-bg-light antialiased`} suppressHydrationWarning={true}>
         <div id="root" className="flex h-full flex-col">
-          {children}
+          <OptimizedAppShell>
+            {children}
+          </OptimizedAppShell>
         </div>
       </body>
     </html>

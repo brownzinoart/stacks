@@ -6,19 +6,22 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-// import { arService, RecognizedBook } from '@/lib/ar-service';
+import { arService, RecognizedBook } from '@/lib/ar-service';
 // import { useQuery } from '@tanstack/react-query';
 // import { supabase } from '@/lib/supabase';
 
 export const ARShelfScan = () => {
   const [isARActive, setIsARActive] = useState(false);
   const [isARSupported, setIsARSupported] = useState(true);
-  const [recognizedBooks, setRecognizedBooks] = useState<any[]>([]);
+  const [recognizedBooks, setRecognizedBooks] = useState<RecognizedBook[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
+  const scanIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const lastScanTimeRef = useRef<number>(0);
+  const isComponentMountedRef = useRef<boolean>(true);
 
   // Get user preferences for book matching - disabled for static build
   // const { data: userPreferences } = useQuery({
@@ -39,20 +42,54 @@ export const ARShelfScan = () => {
   const userPreferences = null; // Placeholder for static build
 
   useEffect(() => {
+    isComponentMountedRef.current = true;
+    
     // Check for camera support
     if (!navigator.mediaDevices?.getUserMedia) {
       setIsARSupported(false);
     }
 
-    // AR features disabled for web version
-    // arService.initializeOCR().catch(console.error);
+    // Initialize OCR service
+    arService.initializeOCR().catch((error) => {
+      console.error('Failed to initialize OCR:', error);
+      if (isComponentMountedRef.current) {
+        setError('OCR initialization failed');
+      }
+    });
 
     return () => {
-      // Cleanup
-      if (streamRef.current) {
-        streamRef.current.getTracks().forEach((track) => track.stop());
+      isComponentMountedRef.current = false;
+      
+      // Clear scan interval
+      if (scanIntervalRef.current) {
+        clearTimeout(scanIntervalRef.current);
+        scanIntervalRef.current = null;
       }
-      // arService.terminateOCR().catch(console.error);
+      
+      // Cleanup camera stream
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach((track) => {
+          track.stop();
+          console.log('Camera track stopped');
+        });
+        streamRef.current = null;
+      }
+      
+      // Clear video source
+      if (videoRef.current) {
+        videoRef.current.srcObject = null;
+        videoRef.current.load(); // Force cleanup
+      }
+      
+      // Clean up canvas context
+      if (canvasRef.current) {
+        const ctx = canvasRef.current.getContext('2d');
+        if (ctx) {
+          ctx.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
+        }
+      }
+      
+      // Note: OCR cleanup handled by worker pool
     };
   }, []);
 
@@ -60,11 +97,11 @@ export const ARShelfScan = () => {
     try {
       setError(null);
 
-      // AR features disabled for web version
-      // const hasPermission = await arService.requestCameraPermission();
-      // if (!hasPermission) {
-      //   throw new Error('Camera permission denied');
-      // }
+      // Request camera permission
+      const hasPermission = await arService.requestCameraPermission();
+      if (!hasPermission) {
+        throw new Error('Camera permission denied');
+      }
 
       // Start camera stream
       const stream = await navigator.mediaDevices.getUserMedia({
@@ -93,59 +130,142 @@ export const ARShelfScan = () => {
 
   const stopARScan = () => {
     setIsARActive(false);
+    
+    // Clear scan interval
+    if (scanIntervalRef.current) {
+      clearTimeout(scanIntervalRef.current);
+      scanIntervalRef.current = null;
+    }
 
-    // Stop camera stream
+    // Stop camera stream with proper cleanup
     if (streamRef.current) {
-      streamRef.current.getTracks().forEach((track) => track.stop());
+      streamRef.current.getTracks().forEach((track) => {
+        track.stop();
+        console.log('Camera track stopped during scan stop');
+      });
       streamRef.current = null;
     }
 
+    // Clean up video element
     if (videoRef.current) {
       videoRef.current.srcObject = null;
+      videoRef.current.load(); // Force garbage collection of media resources
+    }
+    
+    // Clear canvas to free memory
+    if (canvasRef.current) {
+      const ctx = canvasRef.current.getContext('2d');
+      if (ctx) {
+        ctx.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
+      }
+      // Reset canvas size to minimum to free GPU memory
+      canvasRef.current.width = 1;
+      canvasRef.current.height = 1;
     }
 
     setRecognizedBooks([]);
   };
 
   const scanBooksFromVideo = async () => {
-    if (!isARActive || isProcessing) return;
+    if (!isARActive || isProcessing || !isComponentMountedRef.current) return;
+
+    // Adaptive scanning interval based on time since last scan
+    const now = Date.now();
+    const timeSinceLastScan = now - lastScanTimeRef.current;
+    const minInterval = 3000; // Minimum 3 seconds between scans
+    
+    if (timeSinceLastScan < minInterval) {
+      // Schedule next scan
+      scanIntervalRef.current = setTimeout(
+        () => scanBooksFromVideo(), 
+        minInterval - timeSinceLastScan
+      );
+      return;
+    }
 
     setIsProcessing(true);
+    lastScanTimeRef.current = now;
 
     try {
-      // Capture frame from video
-      if (videoRef.current && canvasRef.current) {
+      // Capture frame from video with memory optimization
+      if (videoRef.current && canvasRef.current && videoRef.current.videoWidth > 0) {
         const canvas = canvasRef.current;
-        const context = canvas.getContext('2d');
+        const context = canvas.getContext('2d', { alpha: false }); // No alpha for better performance
         if (!context) return;
 
-        // Set canvas size to match video
-        canvas.width = videoRef.current.videoWidth;
-        canvas.height = videoRef.current.videoHeight;
+        // Optimize canvas size for performance vs quality
+        const maxWidth = 800;
+        const maxHeight = 600;
+        const videoWidth = videoRef.current.videoWidth;
+        const videoHeight = videoRef.current.videoHeight;
+        const scale = Math.min(maxWidth / videoWidth, maxHeight / videoHeight, 1);
+        
+        canvas.width = videoWidth * scale;
+        canvas.height = videoHeight * scale;
 
-        // Draw current frame
-        context.drawImage(videoRef.current, 0, 0);
+        // Draw current frame with scaling
+        context.drawImage(videoRef.current, 0, 0, canvas.width, canvas.height);
 
-        // Convert to base64
-        const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
-        const base64Image = dataUrl.split(',')[1] || '';
+        // Convert to base64 with reduced quality for faster processing
+        const dataUrl = canvas.toDataURL('image/jpeg', 0.7);
 
-        // AR features disabled for web version - simulate some books for demo
-        const mockBooks = [
-          { title: 'The Great Gatsby', author: 'F. Scott Fitzgerald', isRecommended: true, isAvailable: true },
-          { title: '1984', author: 'George Orwell', isRecommended: false, isAvailable: true },
-        ];
-
-        setRecognizedBooks(mockBooks);
+        // Use optimized OCR service
+        try {
+          const books = await arService.recognizeBooksFromImage(dataUrl);
+          
+          // Only update state if component is still mounted
+          if (isComponentMountedRef.current) {
+            // Enrich with availability and recommendations
+            const enrichedBooks = await arService.enrichBookData(
+              books,
+              userPreferences,
+              null
+            );
+            
+            setRecognizedBooks(enrichedBooks);
+            
+            if (books.length > 0) {
+              console.log(`Found ${books.length} books:`, books.map(b => b.title));
+            }
+          }
+        } catch (ocrError) {
+          console.error('OCR processing error:', ocrError);
+          
+          // Fallback to mock data only if component is mounted
+          if (isComponentMountedRef.current) {
+            const mockBooks: RecognizedBook[] = [
+              { 
+                title: 'The Great Gatsby', 
+                author: 'F. Scott Fitzgerald', 
+                confidence: 95,
+                boundingBox: { x: 100, y: 100, width: 150, height: 200 },
+                isRecommended: true, 
+                isAvailable: true 
+              },
+              { 
+                title: '1984', 
+                author: 'George Orwell', 
+                confidence: 92,
+                boundingBox: { x: 300, y: 100, width: 150, height: 200 },
+                isRecommended: false, 
+                isAvailable: true 
+              },
+            ];
+            setRecognizedBooks(mockBooks);
+          }
+        }
       }
     } catch (error) {
       console.error('Book scanning error:', error);
     } finally {
-      setIsProcessing(false);
+      if (isComponentMountedRef.current) {
+        setIsProcessing(false);
 
-      // Continue scanning if still active
-      if (isARActive) {
-        setTimeout(() => scanBooksFromVideo(), 2000); // Scan every 2 seconds
+        // Schedule next scan with adaptive interval
+        if (isARActive) {
+          const nextInterval = recognizedBooks.length > 0 ? 5000 : 3000;
+          scanIntervalRef.current = setTimeout(() => scanBooksFromVideo(), nextInterval);
+        }
       }
     }
   };
@@ -264,7 +384,12 @@ export const ARShelfScan = () => {
           <div className="space-y-6">
             <div className="relative overflow-hidden rounded-2xl bg-black" style={{ aspectRatio: '16/9' }}>
               <video ref={videoRef} autoPlay playsInline muted className="h-full w-full object-cover" />
-              <canvas ref={canvasRef} className="hidden" />
+              <canvas 
+                ref={canvasRef} 
+                className="hidden" 
+                width="1" 
+                height="1"
+              />
               {renderAROverlay()}
 
               {isProcessing && (

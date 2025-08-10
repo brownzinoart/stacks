@@ -8,6 +8,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { clsx } from 'clsx';
+import Image from 'next/image';
 
 const navigationItems = [
   { name: 'Home', href: '/home' },
@@ -57,7 +58,13 @@ export const Navigation = () => {
               window.location.href = '/settings';
             }}
           >
-            <img src="/avatar.png" alt="Profile" className="h-full w-full object-cover" />
+            <Image 
+              src="/avatar.png" 
+              alt="Profile" 
+              width={64}
+              height={64}
+              className="object-cover"
+            />
           </button>
         </div>
       </div>

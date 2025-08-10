@@ -20,9 +20,8 @@ const API_CONFIG = {
   },
 };
 
-// For mobile apps, we'll need to use a backend proxy since API keys can't be exposed
-// This is a simplified version - in production, use your backend API
-export const callAIAPI = async (provider: 'openai' | 'anthropic', payload: any) => {
+// Enhanced AI API client with support for all three models
+export const callAIAPI = async (provider: 'openai' | 'anthropic' | 'vertex', payload: any) => {
   if (isCapacitor()) {
     // For mobile, route through your backend
     const backendUrl = `${API_CONFIG.backend.url}/api/ai/${provider}`;
@@ -41,7 +40,12 @@ export const callAIAPI = async (provider: 'openai' | 'anthropic', payload: any) 
     return response.json();
   } else {
     // For web development, use the Next.js API route
-    const response = await fetch(`/api/${provider}-proxy`, {
+    let endpoint = `/api/${provider}-proxy`;
+    if (provider === 'vertex') {
+      endpoint = '/api/vertex-ai-proxy';
+    }
+    
+    const response = await fetch(endpoint, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

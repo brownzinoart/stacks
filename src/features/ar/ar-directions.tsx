@@ -6,13 +6,9 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-// import { arService, NavigationPath } from '@/lib/ar-service';
-
-interface NavigationPath {
-  waypoints: any[];
-  distance: number;
-  estimatedTime: number;
-}
+import { arService, NavigationPath } from '@/lib/ar-service';
+import { qrPositioning, UserPosition, QRPositioningSystem } from '@/lib/qr-positioning';
+import floorPlansData from '@/data/library-floorplans.json';
 
 interface ARDirectionsProps {
   targetBookLocation?: {
@@ -23,12 +19,14 @@ interface ARDirectionsProps {
   libraryId?: string;
 }
 
-export const ARDirections = ({ targetBookLocation, libraryId = 'durham-main' }: ARDirectionsProps) => {
+export const ARDirections = ({ targetBookLocation, libraryId = 'apartment-test' }: ARDirectionsProps) => {
   const [isNavigating, setIsNavigating] = useState(false);
   const [currentPath, setCurrentPath] = useState<NavigationPath | null>(null);
   const [userLocation, setUserLocation] = useState({ x: 300, y: 50, floor: 1 });
+  const [userPosition, setUserPosition] = useState<UserPosition | null>(null);
   const [isARSupported, setIsARSupported] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isQRScanning, setIsQRScanning] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
@@ -40,13 +38,24 @@ export const ARDirections = ({ targetBookLocation, libraryId = 'durham-main' }: 
       setIsARSupported(false);
     }
 
+    // Listen for position updates from QR scanning
+    const handlePositionUpdate = (event: CustomEvent) => {
+      const position = event.detail as UserPosition;
+      setUserPosition(position);
+      setUserLocation({ x: position.x, y: position.y, floor: position.floor });
+    };
+
+    window.addEventListener('ar-position-update', handlePositionUpdate as EventListener);
+
     return () => {
+      window.removeEventListener('ar-position-update', handlePositionUpdate as EventListener);
       if (streamRef.current) {
         streamRef.current.getTracks().forEach((track) => track.stop());
       }
       if (animationFrameRef.current) {
         cancelAnimationFrame(animationFrameRef.current);
       }
+      qrPositioning.stopScanner().catch(console.error);
     };
   }, []);
 
@@ -59,15 +68,21 @@ export const ARDirections = ({ targetBookLocation, libraryId = 'durham-main' }: 
     try {
       setError(null);
 
-      // AR features disabled for web version - create mock path
-      const path = {
-        waypoints: [
-          { x: 300, y: 400 },
-          { x: 450, y: 150 },
-        ],
-        distance: 25,
-        estimatedTime: 2,
-      };
+      // Load library floor plan
+      await arService.loadLibraryFloorPlan(libraryId);
+
+      // Get current position or use entrance as default
+      const currentPos = userPosition || { x: 350, y: 525, floor: 1 };
+      
+      // Calculate path to book
+      const path = arService.calculatePathToBook(
+        currentPos,
+        targetBookLocation
+      );
+
+      if (!path) {
+        throw new Error('Could not calculate path to book');
+      }
 
       setCurrentPath(path);
 
@@ -86,6 +101,16 @@ export const ARDirections = ({ targetBookLocation, libraryId = 'durham-main' }: 
       }
 
       setIsNavigating(true);
+
+      // Initialize QR scanner for positioning
+      if (videoRef.current) {
+        try {
+          await qrPositioning.initializeScanner(videoRef.current);
+          setIsQRScanning(true);
+        } catch (qrError) {
+          console.warn('QR scanning not available, using estimated positioning');
+        }
+      }
 
       // Start AR rendering
       renderARPath();
@@ -282,6 +307,18 @@ export const ARDirections = ({ targetBookLocation, libraryId = 'durham-main' }: 
                   {targetBookLocation.shelfNumber && ` • Shelf ${targetBookLocation.shelfNumber}`}
                 </p>
                 <p className="font-bold text-text-secondary">Floor {targetBookLocation.floor}</p>
+                
+                {/* Show book info if available */}
+                {(() => {
+                  const bookInfo = Object.entries((floorPlansData as any).bookLocations).find(
+                    ([_, location]: [string, any]) => 
+                      location.sectionId === targetBookLocation.sectionId &&
+                      location.shelfNumber === targetBookLocation.shelfNumber
+                  );
+                  return bookInfo ? (
+                    <p className="mt-2 font-bold text-primary-green">📚 {bookInfo[0]}</p>
+                  ) : null;
+                })()}
               </div>
             )}
 
@@ -306,6 +343,14 @@ export const ARDirections = ({ targetBookLocation, libraryId = 'durham-main' }: 
                 <p>📍 Keep your phone pointed at the floor</p>
                 <p>➡️ Follow the green dotted line</p>
                 <p>📚 Look for the orange marker at your destination</p>
+                {isQRScanning && (
+                  <p>🔍 Scanning for QR codes to improve accuracy</p>
+                )}
+                {userPosition && (
+                  <p className="text-sm">
+                    Position confidence: {QRPositioningSystem.getConfidenceDescription(userPosition.confidence)}
+                  </p>
+                )}
               </div>
             </div>
 

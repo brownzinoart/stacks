@@ -5,15 +5,17 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { getApiBaseUrl } from '@/lib/api-config';
+import { aiRecommendationService } from '@/lib/ai-recommendation-service';
+import { ProgressiveLoadingIndicator, BOOK_RECOMMENDATION_STAGES } from '@/components/progressive-loading-indicator';
 
+// Simplified mood options for better UX
 const moodOptions = [
-  { label: 'FUNNY', color: 'bg-primary-orange hover:bg-primary-pink' },
-  { label: 'MIND-BLOWING', color: 'bg-primary-yellow hover:bg-primary-teal' },
-  { label: 'LOVE STORY', color: 'bg-primary-pink hover:bg-primary-purple' },
-  { label: 'MAGICAL', color: 'bg-primary-purple hover:bg-primary-blue' },
+  { label: 'FUNNY', color: 'bg-primary-orange hover:bg-primary-pink', emoji: '😂' },
+  { label: 'MIND-BLOWING', color: 'bg-primary-yellow hover:bg-primary-teal', emoji: '🤯' },
+  { label: 'LOVE STORY', color: 'bg-primary-pink hover:bg-primary-purple', emoji: '💕' },
+  { label: 'MAGICAL', color: 'bg-primary-purple hover:bg-primary-blue', emoji: '✨' },
 ];
 
 const discoveryExamples = [
@@ -27,305 +29,47 @@ const discoveryExamples = [
   'I want to read about space',
 ];
 
-// Multi-stage intelligent recommendation system
-async function getSmartRecommendations(userInput: string, forceRefresh: boolean = false) {
-  console.log('Starting smart recommendations for:', userInput);
-
-  // Check cache first - create hash of input for consistent caching
-  const inputHash = btoa(userInput.toLowerCase().trim()).replace(/[^a-zA-Z0-9]/g, '');
-  const cacheKey = `stacks_cache_${inputHash}`;
-  const cachedData = typeof window !== 'undefined' ? localStorage.getItem(cacheKey) : null;
-
-  if (cachedData && !forceRefresh) {
-    try {
-      const parsed = JSON.parse(cachedData);
-      const cacheAge = Date.now() - new Date(parsed.timestamp).getTime();
-      const CACHE_DURATION = 24 * 60 * 60 * 1000; // 24 hours
-
-      if (cacheAge < CACHE_DURATION) {
-        console.log('Using cached recommendations for:', userInput);
-        return parsed.recommendations;
-      } else {
-        console.log('Cache expired, fetching fresh recommendations');
-        if (typeof window !== 'undefined') localStorage.removeItem(cacheKey);
-      }
-    } catch (e) {
-      console.log('Invalid cache data, removing');
-      if (typeof window !== 'undefined') localStorage.removeItem(cacheKey);
-    }
-  }
-
-  // Stage 1: Analyze user intent with clearer JSON instructions
-  const analysisPrompt = `Analyze this book request: "${userInput}"
+// Smart input detection - unified approach
+const detectInputType = (input: string): 'mood' | 'comparison' | 'topic' | 'general' => {
+  const lowerInput = input.toLowerCase();
   
-  Return ONLY valid JSON with this exact structure:
-  {
-    "isComparison": true or false,
-    "referenceTitle": "title if comparing to something, otherwise empty string",
-    "referenceType": "show" or "movie" or "book" or "none",
-    "aspectsOfInterest": ["choose from: plot, characters, themes, atmosphere, writing_style"],
-    "emotionalContext": "one sentence description"
+  if (lowerInput.includes('like') && (lowerInput.includes('movie') || lowerInput.includes('show') || lowerInput.includes('tv'))) {
+    return 'comparison';
   }
-  
-  No other text, just the JSON object.`;
-
-  try {
-    // Use consistent API base URL configuration
-    const baseUrl = getApiBaseUrl();
-    const apiUrl = `${baseUrl}/api/openai-proxy`;
-
-    console.log('[Mobile Debug] Making analysis API call to:', apiUrl);
-    console.log('[Mobile Debug] Window location:', typeof window !== 'undefined' ? window.location.href : 'SSR');
-    console.log('[Mobile Debug] Window protocol:', typeof window !== 'undefined' ? window.location.protocol : 'SSR');
-    console.log(
-      '[Mobile Debug] Is Capacitor:',
-      typeof window !== 'undefined' && (window as any).Capacitor !== undefined
-    );
-    console.log('[Mobile Debug] Using base URL:', baseUrl);
-
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 second timeout
-
-    const analysisResp = await fetch(apiUrl, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'gpt-3.5-turbo',
-        messages: [
-          {
-            role: 'system',
-            content: 'You are a JSON-only response bot. Return only valid JSON, no markdown, no explanation.',
-          },
-          { role: 'user', content: analysisPrompt },
-        ],
-        temperature: 0.3,
-        max_tokens: 200,
-      }),
-      signal: controller.signal,
-    });
-
-    clearTimeout(timeoutId);
-
-    console.log('[Mobile Debug] Analysis API response status:', analysisResp.status);
-
-    if (!analysisResp.ok) {
-      throw new Error(`API request failed with status ${analysisResp.status}`);
-    }
-
-    const analysisData = await analysisResp.json();
-    console.log('[Mobile Debug] Analysis API response data:', analysisData);
-
-    if (!analysisData.choices?.[0]?.message?.content) {
-      throw new Error('Invalid API response structure');
-    }
-
-    console.log('Analysis response:', analysisData.choices[0].message.content);
-
-    let analysis;
-    try {
-      // Clean the response in case of markdown or extra text
-      const content = analysisData.choices[0].message.content;
-      const jsonMatch = content.match(/\{[\s\S]*\}/);
-      if (jsonMatch) {
-        analysis = JSON.parse(jsonMatch[0]);
-      } else {
-        throw new Error('No JSON found in response');
-      }
-    } catch (parseError) {
-      console.error('Failed to parse analysis:', parseError);
-      // Default analysis
-      analysis = {
-        isComparison: false,
-        referenceTitle: '',
-        referenceType: 'none',
-        aspectsOfInterest: ['themes'],
-        emotionalContext: userInput,
-      };
-    }
-
-    console.log('Parsed analysis:', analysis);
-
-    // Stage 2: Enrich with OMDB if needed
-    let enrichedContext = '';
-    if ((analysis.referenceType === 'show' || analysis.referenceType === 'movie') && analysis.referenceTitle) {
-      const omdb = await fetchOmdbData(analysis.referenceTitle);
-      if (omdb) {
-        enrichedContext = `\nReference: ${omdb.title} - ${omdb.plot}\nGenres: ${omdb.genres}\nTone: ${omdb.rated}`;
-      }
-    }
-
-    // Stage 3: Generate categorized recommendations with robust descriptions
-    const recommendPrompt = `Based on the user wanting books like "${userInput}", create exactly 3 categories of recommendations.
-    ${enrichedContext}
-    
-    Return ONLY this JSON structure with NO additional text:
-    {
-      "overallTheme": "One sentence summary",
-      "categories": [
-        {
-          "name": "The Atmosphere",
-          "description": "1-2 sentences why",
-          "books": [
-            {
-              "title": "Book Title", 
-              "author": "Author Name", 
-              "isbn": "ISBN-13 if known", 
-              "year": "publication year",
-              "whyYoullLikeIt": "Natural, compelling description that explains the book's appeal without repetitive phrasing",
-              "summary": "Brief plot summary for book details section",
-              "pageCount": "estimated pages",
-              "readingTime": "estimated hours",
-              "publisher": "publisher if known"
-            }
-          ]
-        }
-      ]
-    }
-    
-    IMPORTANT for "whyYoullLikeIt" field:
-    - Write natural, engaging descriptions WITHOUT repetitive "You'll like this because..." phrasing
-    - Use varied sentence starters like: "This gripping tale...", "A haunting story that...", "Perfect for readers who...", "The emotional depth...", etc.
-    - Be specific about themes, atmosphere, characters, or plot elements
-    - Explain WHY it connects to the user's original request naturally
-    - Make it 2-4 sentences that flow naturally and compellingly
-    - Example: "This haunting tale follows the last man on Earth as he battles vampire-like creatures while grappling with profound loneliness and what it means to be human. The psychological tension and moral complexity will keep you questioning every decision, perfect for fans of isolated survival horror."
-    
-    Create 3 different categories using names like:
-    - "The Atmosphere" (for mood/setting/tone)
-    - "The Characters" (for character-driven stories)  
-    - "The Plot" (for similar storylines)
-    - "The Themes" (for similar concepts/messages)
-    - "The Writing Style" (for similar prose/narrative)
-    - "The World Building" (for fantasy/sci-fi)
-    - "The Emotions" (for similar feelings)
-    - "The Mystery" (for suspense/thriller elements)
-    
-    Include 2-3 books per category with rich, detailed "whyYoullLikeIt" descriptions.`;
-
-    const recoController = new AbortController();
-    const recoTimeoutId = setTimeout(() => recoController.abort(), 20000); // 20 second timeout
-
-    const recoResp = await fetch(`${baseUrl}/api/openai-proxy`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'gpt-3.5-turbo',
-        messages: [
-          {
-            role: 'system',
-            content: 'You are a JSON-only response bot. Return only valid JSON for book recommendations.',
-          },
-          { role: 'user', content: recommendPrompt },
-        ],
-        temperature: 0.1,
-        max_tokens: 1500,
-      }),
-      signal: recoController.signal,
-    });
-
-    clearTimeout(recoTimeoutId);
-
-    if (!recoResp.ok) {
-      throw new Error(`Recommendation API request failed with status ${recoResp.status}`);
-    }
-
-    const recoData = await recoResp.json();
-    console.log('Recommendation response:', recoData.choices[0].message.content);
-
-    try {
-      const content = recoData.choices[0].message.content;
-      const jsonMatch = content.match(/\{[\s\S]*\}/);
-      if (jsonMatch) {
-        const recommendations = JSON.parse(jsonMatch[0]);
-        console.log('Parsed recommendations:', recommendations);
-
-        // Skip cover pre-fetching to avoid timeouts - covers will be loaded lazily on the recommendations page
-        console.log('Skipping cover pre-fetch for faster, more reliable loading');
-
-        // Cache the successful recommendations
-        if (typeof window !== 'undefined') {
-          localStorage.setItem(
-            cacheKey,
-            JSON.stringify({
-              recommendations,
-              timestamp: new Date().toISOString(),
-            })
-          );
-        }
-        console.log('Cached recommendations for future use');
-
-        return recommendations;
-      } else {
-        throw new Error('No JSON found in recommendation response');
-      }
-    } catch (parseError) {
-      console.error('Failed to parse recommendations:', parseError);
-      throw parseError;
-    }
-  } catch (error: any) {
-    console.error('[Mobile Debug] Smart recommendations error:', error);
-    console.error('[Mobile Debug] Error message:', error.message);
-
-    // Check for common mobile network issues
-    if (error.name === 'AbortError' || error.message.includes('aborted')) {
-      console.error('[Mobile Debug] Request timeout - common on mobile networks');
-      error.mobileError = 'Request timed out. Please check your connection and try again.';
-    } else if (error.message.includes('fetch') || error.message.includes('Network')) {
-      console.error('[Mobile Debug] Network error - check if API is accessible');
-      error.mobileError = 'Network error. Please check your internet connection.';
-    } else if (error.message.includes('Failed to fetch')) {
-      console.error('[Mobile Debug] CORS or network issue - fetch failed');
-      error.mobileError = 'Connection blocked. Please try again.';
-    }
-
-    throw error;
+  if (lowerInput.includes('funny') || lowerInput.includes('sad') || lowerInput.includes('scary') || lowerInput.includes('romantic')) {
+    return 'mood';
   }
-}
-
-// Helper: fetch OMDb metadata
-async function fetchOmdbData(title: string) {
-  const apiKey = process.env.NEXT_PUBLIC_OMDB_API_KEY || process.env.OMDB_API_KEY || '95cb8a0d';
-  // Try to extract just the title for OMDb
-  const cleanTitle = title.replace(/.*like (the )?(show|movie|film|series)?/i, '').trim();
-  const url = `https://www.omdbapi.com/?t=${encodeURIComponent(cleanTitle)}&apikey=${apiKey}`;
-  try {
-    const res = await fetch(url);
-    if (res.ok) {
-      const data = await res.json();
-      if (data && data.Response !== 'False') {
-        return {
-          plot: data.Plot,
-          genres: data.Genre,
-          rated: data.Rated,
-          title: data.Title,
-        };
-      }
-    }
-  } catch (e) {
-    // ignore
+  if (lowerInput.includes('learn') || lowerInput.includes('about') || lowerInput.includes('understand')) {
+    return 'topic';
   }
-  return null;
-}
+  return 'general';
+};
 
-// Fallback for simple recommendations (kept for compatibility)
-function buildSimplePrompt(input: string) {
-  return `${input}\n\nPlease recommend 5 books in JSON array format: [{"title": "", "author": "", "cover": "", "why": ""}].`;
-}
+// Legacy function removed - now using optimized AI recommendation service
+
+// Legacy helper functions removed - now handled by AI recommendation service
 
 export const AIPromptInput = () => {
   const [inputValue, setInputValue] = useState('');
   const [selectedMood, setSelectedMood] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [searchResults, setSearchResults] = useState<any[]>([]);
+  const [currentStage, setCurrentStage] = useState(0);
   const [currentExampleIndex, setCurrentExampleIndex] = useState(0);
   const [isExampleVisible, setIsExampleVisible] = useState(true);
   const [showError, setShowError] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
+  const [costSavings, setCostSavings] = useState<string>('');
   const router = useRouter();
+
+  // Cleanup function to cancel requests
+  const cleanup = useCallback(() => {
+    aiRecommendationService.cancel();
+  }, []);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return cleanup;
+  }, [cleanup]);
 
   // Rotate through examples every 3 seconds
   useEffect(() => {
@@ -340,6 +84,12 @@ export const AIPromptInput = () => {
     return () => clearInterval(interval);
   }, []);
 
+  // Progress callback for loading stages
+  const handleProgress = useCallback((stage: number) => {
+    setCurrentStage(stage);
+  }, []);
+
+  // Optimized submit handler with new AI service
   const handleSubmit = async (e: React.FormEvent, forceRefresh: boolean = false) => {
     e.preventDefault();
 
@@ -361,188 +111,66 @@ export const AIPromptInput = () => {
 
     setShowError(false);
     setIsLoading(true);
-    setSearchResults([]);
+    setCurrentStage(0);
+    setCostSavings('');
 
     const userInput = inputValue || selectedMood || '';
+    const inputType = detectInputType(userInput);
+    
+    console.log('[AI Input] Starting recommendations for:', userInput, 'Type:', inputType);
 
     try {
-      // Log for mobile debugging
-      console.log('[Mobile Debug] Starting search with input:', userInput);
+      const result = await aiRecommendationService.getSmartRecommendations({
+        userInput,
+        forceRefresh,
+        onProgress: handleProgress,
+      });
 
-      // Use the new smart recommendation system
-      console.log('[Mobile Debug] About to call getSmartRecommendations');
-      const recommendations = await getSmartRecommendations(userInput, forceRefresh);
-      console.log('[Mobile Debug] getSmartRecommendations completed successfully');
+      console.log('[AI Input] Recommendations complete:', result);
+      
+      // Show cost savings info
+      const savings = ((0.03 - (result.cost / 1000)) * 1000 * 100).toFixed(0); // Estimate vs GPT-4 only
+      setCostSavings(`Optimized routing saved ~${savings}% vs single model`);
 
-      console.log('[Mobile Debug] Got recommendations:', recommendations);
       setIsLoading(false);
 
-      // Store categorized recommendations
-      let dataStored = false;
+      // Store recommendations and navigate
       if (typeof window !== 'undefined') {
         try {
-          const dataToStore = {
-            ...recommendations,
-            userInput,
-            timestamp: new Date().toISOString(),
-          };
-          console.log('[Mobile Debug] Storing recommendations data:', dataToStore);
-          localStorage.setItem('stacks_recommendations', JSON.stringify(dataToStore));
-          console.log('[Mobile Debug] Data stored successfully');
-          dataStored = true;
-        } catch (storageError) {
-          console.error('[Mobile Debug] Failed to store data:', storageError);
-        }
-      }
-
-      // Only navigate if data was stored successfully
-      if (dataStored || typeof window === 'undefined') {
-        console.log('[Mobile Debug] About to navigate to /stacks-recommendations');
-        router.push('/stacks-recommendations');
-      } else {
-        console.error('[Mobile Debug] Navigation cancelled - data storage failed');
-        setIsLoading(false);
-        setErrorMessage('Failed to save recommendations. Please try again.');
-        setShowError(true);
-      }
-    } catch (err: any) {
-      console.error('[Mobile Debug] Error in recommendation flow:', err);
-      console.error('[Mobile Debug] Error stack:', err.stack);
-
-      // Fallback to simple recommendations
-      try {
-        console.log('[Mobile Debug] Attempting fallback simple recommendations');
-        const fallbackBaseUrl = getApiBaseUrl();
-        const apiUrl = `${fallbackBaseUrl}/api/openai-proxy`;
-
-        const fallbackController = new AbortController();
-        const fallbackTimeoutId = setTimeout(() => fallbackController.abort(), 15000); // 15 second timeout
-
-        const resp = await fetch(apiUrl, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            model: 'gpt-3.5-turbo',
-            messages: [{ role: 'user', content: buildSimplePrompt(userInput) }],
-            temperature: 0.7,
-            max_tokens: 400,
-          }),
-          signal: fallbackController.signal,
-        });
-
-        clearTimeout(fallbackTimeoutId);
-
-        if (!resp.ok) {
-          throw new Error(`Fallback API request failed with status ${resp.status}`);
-        }
-
-        const fallbackData = await resp.json();
-        console.log('[Mobile Debug] Fallback API response received');
-        const content = fallbackData.choices?.[0]?.message?.content || '';
-        let books = [];
-
-        try {
-          const jsonStart = content.indexOf('[');
-          const jsonEnd = content.lastIndexOf(']') + 1;
-          if (jsonStart !== -1 && jsonEnd > jsonStart) {
-            const jsonString = content.substring(jsonStart, jsonEnd);
-            books = JSON.parse(jsonString);
-            console.log('[Mobile Debug] Parsed', books.length, 'books from fallback');
-          } else {
-            console.log('[Mobile Debug] No JSON array found in fallback response');
-          }
-        } catch (parseErr) {
-          console.error('[Mobile Debug] Error parsing fallback response:', parseErr);
-          // Create minimal fallback books if parsing fails
-          books = [
-            { title: 'Sample Book 1', author: 'Author 1', why: 'Fallback recommendation', cover: '' },
-            { title: 'Sample Book 2', author: 'Author 2', why: 'Fallback recommendation', cover: '' },
-          ];
-        }
-
-        console.log('[Mobile Debug] Storing fallback recommendations with', books.length, 'books');
-        setIsLoading(false);
-
-        let fallbackDataStored = false;
-        if (typeof window !== 'undefined') {
-          try {
-            localStorage.setItem('stacks_recommendations', JSON.stringify({ books, userInput }));
-            console.log('[Mobile Debug] Fallback data stored successfully');
-            fallbackDataStored = true;
-          } catch (storageError) {
-            console.error('[Mobile Debug] Failed to store fallback data:', storageError);
-          }
-        }
-
-        if (fallbackDataStored || typeof window === 'undefined') {
-          console.log('[Mobile Debug] Navigating to recommendations page (fallback)');
+          localStorage.setItem('stacks_recommendations', JSON.stringify(result));
+          console.log('[AI Input] Data stored successfully, cost: $' + result.cost.toFixed(4));
           router.push('/stacks-recommendations');
-        } else {
-          console.error('[Mobile Debug] Fallback navigation cancelled - storage failed');
+        } catch (storageError) {
+          console.error('[AI Input] Failed to store data:', storageError);
           setErrorMessage('Failed to save recommendations. Please try again.');
           setShowError(true);
+          setIsLoading(false);
         }
-      } catch (fallbackErr: any) {
-        setIsLoading(false);
-        console.error('[Mobile Debug] Fallback also failed:', fallbackErr);
-
-        // Final fallback - create basic recommendations to prevent total failure
-        const basicBooks = [
-          {
-            title: 'The Stand',
-            author: 'Stephen King',
-            why: 'Post-apocalyptic survival like The Walking Dead',
-            cover: '',
-          },
-          {
-            title: 'World War Z',
-            author: 'Max Brooks',
-            why: 'Zombie apocalypse survival guide',
-            cover: '',
-          },
-          {
-            title: 'The Road',
-            author: 'Cormac McCarthy',
-            why: 'Father-son survival in post-apocalyptic world',
-            cover: '',
-          },
-        ];
-
-        console.log('[Mobile Debug] Using emergency fallback books');
-
-        // Store emergency fallback data
-        let emergencyDataStored = false;
-        if (typeof window !== 'undefined') {
-          try {
-            localStorage.setItem(
-              'stacks_recommendations',
-              JSON.stringify({
-                books: basicBooks,
-                userInput,
-                emergency: true,
-                timestamp: new Date().toISOString(),
-              })
-            );
-            console.log('[Mobile Debug] Emergency fallback data stored');
-            emergencyDataStored = true;
-          } catch (storageError) {
-            console.error('[Mobile Debug] Failed to store emergency fallback data:', storageError);
-          }
-        }
-
-        // Navigate to show fallback content (always navigate in emergency case to prevent total failure)
-        console.log('[Mobile Debug] Navigating to recommendations page (emergency fallback)');
-        router.push('/stacks-recommendations');
       }
+    } catch (error: any) {
+      console.error('[AI Input] Error:', error);
+      setIsLoading(false);
+      setCurrentStage(0);
+      
+      // Enhanced error handling
+      let errorMsg = 'Something went wrong. Please try again.';
+      if (error.message.includes('cancelled')) {
+        errorMsg = 'Request was cancelled.';
+      } else if (error.message.includes('Network')) {
+        errorMsg = 'Network error. Please check your connection.';
+      }
+      
+      setErrorMessage(errorMsg);
+      setShowError(true);
+      
+      // Clear error after 5 seconds
+      setTimeout(() => setShowError(false), 5000);
     }
   };
 
   const handleMoodSelect = (mood: string) => {
     setSelectedMood(selectedMood === mood ? null : mood);
     setInputValue(''); // Clear text input when mood is selected
-    setSearchResults([]); // Clear previous results
   };
 
   const handleLibraryCheck = (bookId: number) => {
@@ -574,6 +202,7 @@ export const AIPromptInput = () => {
                       : '#A78BFA',
               }}
             >
+              <span className="mr-2">{mood.emoji}</span>
               {mood.label}
             </button>
           ))}
@@ -662,16 +291,36 @@ export const AIPromptInput = () => {
             </button>
           </div>
 
-          {/* Loading state feedback - height stable */}
-          <div className="flex min-h-[24px] items-center justify-center">
-            {isLoading && (
-              <div className="animate-fade-in-up text-center text-sm font-bold text-text-secondary">
-                Finding your perfect match...
+          {/* Enhanced Loading State with Progress */}
+          <div className="flex min-h-[140px] items-center justify-center">
+            {isLoading ? (
+              <div className="w-full animate-fade-in-up">
+                <ProgressiveLoadingIndicator
+                  stages={BOOK_RECOMMENDATION_STAGES}
+                  currentStage={currentStage}
+                  className="mx-auto max-w-md"
+                />
+                {costSavings && (
+                  <div className="mt-4 text-center text-xs text-primary-green font-bold">
+                    💰 {costSavings}
+                  </div>
+                )}
               </div>
-            )}
-            {showError && !isLoading && (
-              <div className="animate-fade-in-up text-center text-sm font-bold text-red-600">
-                {errorMessage || "Please select a mood or enter what you're looking for!"}
+            ) : showError ? (
+              <div className="animate-fade-in-up text-center">
+                <div className="text-sm font-bold text-red-600 mb-2">
+                  {errorMessage || "Please select a mood or enter what you're looking for!"}
+                </div>
+                <button
+                  onClick={() => setShowError(false)}
+                  className="text-xs text-text-secondary hover:text-primary-blue transition-colors"
+                >
+                  Dismiss
+                </button>
+              </div>
+            ) : (
+              <div className="text-center text-sm text-text-secondary">
+                💡 Pro tip: Try "books like Breaking Bad" or "I need something uplifting"
               </div>
             )}
           </div>

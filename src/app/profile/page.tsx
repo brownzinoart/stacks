@@ -3,6 +3,7 @@
  */
 
 import { MobileLayout } from '@/components/mobile-layout';
+import Image from 'next/image';
 
 const ProfilePage = () => {
   return (
@@ -33,7 +34,14 @@ const ProfilePage = () => {
             <div className="rounded-3xl bg-white p-8 shadow-card">
               <div className="text-center">
                 <div className="mx-auto mb-6 h-32 w-32 overflow-hidden rounded-full border-4 border-primary-orange">
-                  <img src="/avatar.png" alt="Profile" className="h-full w-full object-cover" />
+                  <Image 
+                    src="/avatar.png" 
+                    alt="Profile" 
+                    width={128}
+                    height={128}
+                    className="object-cover"
+                    priority
+                  />
                 </div>
                 <h2 className="mb-2 text-2xl font-black text-text-primary">Reader Name</h2>
                 <p className="text-lg font-bold text-text-secondary">Member since 2024</p>

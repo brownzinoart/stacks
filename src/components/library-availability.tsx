@@ -6,6 +6,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import Image from 'next/image';
 import { libraryService, LibraryBook } from '@/lib/library-integration';
 
 interface LibraryAvailabilityProps {
@@ -132,10 +133,12 @@ export const LibraryAvailability = ({ isbn, onLibrarySelect }: LibraryAvailabili
               <div key={`${book.libraryName}-${book.id}`} className="rounded-xl bg-white/90 p-4">
                 <div className="flex items-start gap-4">
                   {book.coverUrl && (
-                    <img
+                    <Image
                       src={book.coverUrl}
                       alt={book.title}
-                      className="shadow-backdrop h-16 w-12 rounded-lg object-cover"
+                      width={48}
+                      height={64}
+                      className="shadow-backdrop rounded-lg object-cover"
                     />
                   )}
                   <div className="min-w-0 flex-1">

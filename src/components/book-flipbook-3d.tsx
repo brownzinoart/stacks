@@ -1,8 +1,9 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { PageFlip } from 'page-flip';
+import { loadPageFlip, preloadFlipbook } from '@/lib/book-flipbook-loader';
 import { BookCover } from './book-cover';
+import Image from 'next/image';
 import { hapticFeedback, isMobile } from '@/lib/mobile-utils';
 import { fetchBookContent, BookContent } from '@/lib/book-content-service';
 
@@ -92,7 +93,8 @@ export function BookFlipbook3D({ book, onClose }: BookFlipbook3DProps) {
           return;
         }
 
-        // Initialize PageFlip with the container
+        // Initialize PageFlip with dynamic loading
+        const PageFlip = await loadPageFlip();
         const pageFlip = new PageFlip(bookRef.current, {
           width: 400,
           height: 600,
@@ -226,7 +228,14 @@ export function BookFlipbook3D({ book, onClose }: BookFlipbook3DProps) {
               <div className="page-content">
                 <div className="relative h-full w-full">
                   {content?.coverUrl ? (
-                    <img src={content.coverUrl} alt={book.title} className="h-full w-full object-cover" />
+                    <Image 
+                      src={content.coverUrl} 
+                      alt={book.title} 
+                      fill
+                      className="object-cover"
+                      sizes="400px"
+                      priority
+                    />
                   ) : (
                     <BookCover title={book.title} author={book.author} className="h-full w-full" />
                   )}
@@ -366,7 +375,13 @@ export function BookFlipbook3D({ book, onClose }: BookFlipbook3DProps) {
             <div className="page page-cover page-cover-bottom" data-density="hard">
               <div className="page-content">
                 {content?.backCoverUrl ? (
-                  <img src={content.backCoverUrl} alt="Back cover" className="h-full w-full object-cover" />
+                  <Image 
+                    src={content.backCoverUrl} 
+                    alt="Back cover" 
+                    fill
+                    className="object-cover"
+                    sizes="400px"
+                  />
                 ) : (
                   <div className="h-full w-full bg-gradient-to-br from-gray-700 to-gray-900 p-8 text-white">
                     <div className="flex h-full flex-col justify-between">
