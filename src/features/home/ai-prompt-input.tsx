@@ -9,6 +9,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { aiRecommendationService } from '@/lib/ai-recommendation-service';
 import { ProgressiveLoadingIndicator, BOOK_RECOMMENDATION_STAGES } from '@/components/progressive-loading-indicator';
+import { formatFallbackRecommendations } from '@/lib/emergency-fallback';
 
 // Simplified mood options for better UX
 const moodOptions = [
@@ -90,7 +91,22 @@ export const AIPromptInput = () => {
   const handleProgress = useCallback((stage: number, progressPercent: number = 0) => {
     setCurrentStage(stage);
     setProgress(progressPercent);
-  }, []);
+    
+    // Auto-timeout protection - if we're stuck at a stage too long, show error
+    const stageTimeout = setTimeout(() => {
+      if (stage === currentStage && isLoading) {
+        setErrorMessage('Request is taking longer than expected. This might be due to slow internet. Please try again.');
+        setShowError(true);
+        setIsLoading(false);
+        setCurrentStage(0);
+        setProgress(0);
+        cleanup();
+      }
+    }, 90000); // 90 second timeout per stage for mobile
+    
+    // Clear timeout on next progress update
+    return () => clearTimeout(stageTimeout);
+  }, [currentStage, isLoading, cleanup]);
 
   // Cancel handler for full takeover loader
   const handleCancel = useCallback(() => {
@@ -108,6 +124,7 @@ export const AIPromptInput = () => {
     // Show error feedback if no input
     if (!inputValue && !selectedMood) {
       setShowError(true);
+      setErrorMessage('Please select a mood or enter what you\'re looking for!');
       // Shake animation for the input
       const inputEl = document.querySelector('.search-input-container');
       if (inputEl) {
@@ -130,8 +147,19 @@ export const AIPromptInput = () => {
     const userInput = inputValue || selectedMood || '';
     setUserQuery(userInput); // Store for display in full takeover loader
     const inputType = detectInputType(userInput);
-    
-    console.log('[AI Input] Starting recommendations for:', userInput, 'Type:', inputType);
+
+    // Set up overall timeout protection (120 seconds total for mobile)
+    const overallTimeout = setTimeout(() => {
+      if (isLoading) {
+        cleanup();
+        setIsLoading(false);
+        setCurrentStage(0);
+        setProgress(0);
+        setUserQuery('');
+        setErrorMessage('Request timed out. This might be due to slow internet. Please try again.');
+        setShowError(true);
+      }
+    }, 120000);
 
     try {
       const result = await aiRecommendationService.getSmartRecommendations({
@@ -140,47 +168,74 @@ export const AIPromptInput = () => {
         onProgress: handleProgress,
       });
 
-      console.log('[AI Input] Recommendations complete:', result);
+      clearTimeout(overallTimeout);
       
       // Show cost savings info
       const savings = ((0.03 - (result.cost / 1000)) * 1000 * 100).toFixed(0); // Estimate vs GPT-4 only
       setCostSavings(`Optimized routing saved ~${savings}% vs single model`);
 
+      // Final progress update
+      setCurrentStage(2);
+      setProgress(100);
+      
+      // Small delay to show completion
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
       setIsLoading(false);
 
       // Store recommendations and navigate
       if (typeof window !== 'undefined') {
         try {
           localStorage.setItem('stacks_recommendations', JSON.stringify(result));
-          console.log('[AI Input] Data stored successfully, cost: $' + result.cost.toFixed(4));
           router.push('/stacks-recommendations');
         } catch (storageError) {
-          console.error('[AI Input] Failed to store data:', storageError);
           setErrorMessage('Failed to save recommendations. Please try again.');
           setShowError(true);
           setIsLoading(false);
         }
       }
     } catch (error: any) {
-      console.error('[AI Input] Error:', error);
+      clearTimeout(overallTimeout);
       setIsLoading(false);
       setCurrentStage(0);
       setProgress(0);
       setUserQuery('');
       
-      // Enhanced error handling
+      // Enhanced error handling with specific mobile considerations
       let errorMsg = 'Something went wrong. Please try again.';
       if (error.message.includes('cancelled')) {
         errorMsg = 'Request was cancelled.';
+      } else if (error.message.includes('timeout')) {
+        errorMsg = error.message; // Use the mobile-specific timeout message from AI service
       } else if (error.message.includes('Network')) {
-        errorMsg = 'Network error. Please check your connection.';
+        errorMsg = 'Network error. Please check your internet connection.';
+      } else if (error.message.includes('Unable to generate')) {
+        errorMsg = 'Unable to generate recommendations for this search. Try different keywords.';
+      }
+      
+      // If network error or timeout, use emergency fallback
+      if (error.message.includes('timeout') || error.message.includes('Network') || error.message.includes('fetch')) {
+        console.log('[Mobile Debug] Using emergency fallback for:', userInput);
+        const fallbackData = formatFallbackRecommendations(userInput);
+        
+        // Store fallback data and navigate
+        if (typeof window !== 'undefined') {
+          try {
+            localStorage.setItem('stacks_recommendations', JSON.stringify(fallbackData));
+            console.log('[Mobile Debug] Emergency fallback data stored');
+            router.push('/stacks-recommendations');
+            return; // Exit early after successful fallback
+          } catch (storageError) {
+            console.error('[Mobile Debug] Failed to store fallback data:', storageError);
+          }
+        }
       }
       
       setErrorMessage(errorMsg);
       setShowError(true);
       
-      // Clear error after 5 seconds
-      setTimeout(() => setShowError(false), 5000);
+      // Clear error after 10 seconds (longer for mobile users to read)
+      setTimeout(() => setShowError(false), 10000);
     }
   };
 
@@ -196,23 +251,100 @@ export const AIPromptInput = () => {
 
   return (
     <div className="relative space-y-6 sm:space-y-8">
-      {/* Loading State - Takes over entire container */}
+      {/* Progressive Loading State - Replaces the main content */}
       {isLoading ? (
-        <div className="flex min-h-[500px] items-center justify-center bg-white/90 backdrop-blur-sm rounded-3xl">
-          <div className="w-full max-w-md mx-auto">
-            <ProgressiveLoadingIndicator
-              stages={BOOK_RECOMMENDATION_STAGES}
-              currentStage={currentStage}
-              className="mx-auto"
-            />
-            {userQuery && (
-              <div className="mt-6 text-center">
-                <p className="text-sm text-text-secondary mb-1">Searching for:</p>
-                <p className="text-text-primary font-bold">"{userQuery}"</p>
+        <div className="space-y-8 sm:space-y-10">
+          {/* Loading Content with backdrop for better visibility */}
+          <div className="relative">
+            {/* Background overlay for text legibility */}
+            <div className="absolute inset-0 bg-black/60 backdrop-blur-sm rounded-3xl -m-4 sm:-m-6"></div>
+            
+            <div className="relative z-10 text-center space-y-6 p-4 sm:p-6">
+              {userQuery && (
+                <div className="mb-6">
+                  <p className="text-sm text-white/70 mb-2">Searching for:</p>
+                  <p className="text-white font-bold text-xl">&quot;{userQuery}&quot;</p>
+                </div>
+              )}
+
+              {/* Progressive Loading Interface */}
+              <div className="w-full space-y-8 max-w-lg mx-auto">
+                {/* Progress Bar */}
+                <div className="relative">
+                  <div className="h-3 w-full overflow-hidden rounded-full bg-white/20">
+                    <div
+                      className="h-full rounded-full bg-gradient-to-r from-primary-blue to-primary-teal transition-all duration-500"
+                      style={{ width: `${progress}%` }}
+                    />
+                  </div>
+                  <div className="mt-3 text-center">
+                    <span className="text-sm font-bold text-white/80">
+                      {Math.round(progress)}% Complete
+                    </span>
+                  </div>
+                </div>
+
+                {/* Current Stage Display */}
+                <div className="text-center space-y-3">
+                  <h2 className="text-2xl font-black text-white">
+                    {currentStage === 0 ? '🧠 Analyzing Request' : 
+                     currentStage === 1 ? '🔍 Enriching Context' : 
+                     '📚 Finding Perfect Matches'}
+                  </h2>
+                  <p className="text-white/80">
+                    {currentStage === 0 ? 'Understanding your mood and preferences...' : 
+                     currentStage === 1 ? 'Gathering additional context and references...' : 
+                     'AI is curating personalized book recommendations...'}
+                  </p>
+                </div>
+
+                {/* Stage Timeline */}
+                <div className="flex justify-center">
+                  <div className="flex items-center space-x-3">
+                    {[0, 1, 2].map((stageIndex) => (
+                      <div key={stageIndex} className="flex items-center">
+                        <div
+                          className={`flex h-10 w-10 items-center justify-center rounded-full text-sm font-bold transition-all duration-300 ${
+                            stageIndex < currentStage
+                              ? 'bg-primary-green text-white scale-110'
+                              : stageIndex === currentStage
+                                ? 'bg-primary-blue text-white animate-pulse scale-110'
+                                : 'bg-white/20 text-white/50'
+                          }`}
+                        >
+                          {stageIndex < currentStage ? '✓' : stageIndex + 1}
+                        </div>
+                        {stageIndex < 2 && (
+                          <div
+                            className={`h-1 w-8 transition-all duration-300 ${
+                              stageIndex < currentStage ? 'bg-primary-green' : 'bg-white/20'
+                            }`}
+                          />
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Time Estimate */}
+                <div className="text-center text-sm text-white/70">
+                  {progress > 0 ? (
+                    <>~{Math.max(15 - Math.floor(progress * 0.15), 0)}s remaining</>
+                  ) : (
+                    'Starting analysis...'
+                  )}
+                </div>
+
+                {/* Cancel button */}
+                <div className="text-center">
+                  <button
+                    onClick={handleCancel}
+                    className="text-sm text-white/70 hover:text-white transition-colors underline"
+                  >
+                    Cancel search
+                  </button>
+                </div>
               </div>
-            )}
-            <div className="mt-4 text-center text-sm text-text-secondary">
-              ~{Math.max(15 - Math.floor(progress * 0.15), 0)}s remaining
             </div>
           </div>
         </div>
@@ -286,25 +418,10 @@ export const AIPromptInput = () => {
             <button
               type="submit"
               disabled={(!inputValue && !selectedMood) || isLoading}
-              onClick={(e) => {
-                console.log('[Mobile Debug] Submit button clicked');
-                console.log('[Mobile Debug] Input value:', inputValue);
-                console.log('[Mobile Debug] Selected mood:', selectedMood);
-                console.log('[Mobile Debug] Is loading:', isLoading);
-              }}
               className="pop-element touch-feedback mobile-touch flex items-center justify-center rounded-full bg-text-primary px-6 py-4 text-base font-black text-white transition-all duration-300 hover:scale-110 hover:bg-text-primary/90 focus:outline-none focus:ring-4 focus:ring-white/50 disabled:cursor-not-allowed disabled:opacity-50 sm:px-8 sm:py-6 sm:text-lg"
             >
-              {isLoading ? (
-                <div className="flex items-center gap-2">
-                  <div className="loading-pulse">FINDING</div>
-                  <span className="animate-bounce">...</span>
-                </div>
-              ) : (
-                <>
-                  <span className="sm:hidden">Find Next Read</span>
-                  <span className="hidden sm:inline">→</span>
-                </>
-              )}
+              <span className="sm:hidden">Find Next Read</span>
+              <span className="hidden sm:inline">→</span>
             </button>
 
             {/* Refresh button - stable layout version */}
@@ -318,14 +435,8 @@ export const AIPromptInput = () => {
               title="Get fresh recommendations"
               style={{ transitionProperty: 'opacity, transform, background-color' }}
             >
-              {isLoading ? (
-                <div className="loading-pulse">...</div>
-              ) : (
-                <>
-                  <span className="sm:hidden">🔄</span>
-                  <span className="hidden sm:inline">🔄</span>
-                </>
-              )}
+              <span className="sm:hidden">🔄</span>
+              <span className="hidden sm:inline">🔄</span>
             </button>
           </div>
 

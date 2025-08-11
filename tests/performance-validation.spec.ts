@@ -95,7 +95,7 @@ test.describe('Performance Optimization Validation', () => {
           resolve({
             fcp: fcp ? fcp.startTime : null,
             ttfb: ttfb,
-            domContentLoaded: navigationEntry ? navigationEntry.domContentLoadedEventEnd - navigationEntry.navigationStart : null
+            domContentLoaded: navigationEntry ? navigationEntry.domContentLoadedEventEnd - (navigationEntry as any).navigationStart : null
           });
         }, 1000);
       });
