@@ -1,0 +1,198 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Mobile Debug - Stacks</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        padding: 20px;
+        line-height: 1.6;
+      }
+      .button {
+        padding: 12px 24px;
+        margin: 8px;
+        background: #007bff;
+        color: white;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+      }
+      .button:active {
+        background: #0056b3;
+      }
+      .info {
+        background: #f8f9fa;
+        padding: 16px;
+        margin: 16px 0;
+        border-radius: 6px;
+        border: 1px solid #dee2e6;
+      }
+      .success {
+        background: #d4edda;
+        color: #155724;
+      }
+      .error {
+        background: #f8d7da;
+        color: #721c24;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Stacks Mobile Debug</h1>
+
+    <div id="deviceInfo" class="info">
+      <h3>Device Information</h3>
+      <div id="infoContent"></div>
+    </div>
+
+    <h3>Cache & Storage Management</h3>
+    <button class="button" onclick="clearAllCache()">Clear All Cache & Storage</button>
+    <button class="button" onclick="checkLocalStorage()">Check LocalStorage</button>
+    <button class="button" onclick="testNetworkConnection()">Test Network</button>
+
+    <h3>Navigation</h3>
+    <button class="button" onclick="window.location.href='/'">Go to Home Page</button>
+    <button class="button" onclick="window.location.href='/home'">Go to Stacks Home</button>
+
+    <div id="results" class="info" style="margin-top: 20px"></div>
+
+    <script>
+      // Display device information
+      function showDeviceInfo() {
+        const info = {
+          'User Agent': navigator.userAgent,
+          Platform: navigator.platform,
+          'Screen Size': `${screen.width}x${screen.height}`,
+          'Viewport Size': `${window.innerWidth}x${window.innerHeight}`,
+          'Device Pixel Ratio': window.devicePixelRatio,
+          'Online Status': navigator.onLine,
+          'Connection Type': navigator.connection ? navigator.connection.effectiveType : 'Unknown',
+          'Local Storage Available': typeof Storage !== 'undefined',
+          'Service Worker Available': 'serviceWorker' in navigator,
+          'Current URL': window.location.href,
+          Referrer: document.referrer || 'Direct',
+          Timestamp: new Date().toISOString(),
+        };
+
+        let html = '';
+        for (const [key, value] of Object.entries(info)) {
+          html += `<strong>${key}:</strong> ${value}<br>`;
+        }
+        document.getElementById('infoContent').innerHTML = html;
+      }
+
+      // Clear all cache and storage
+      function clearAllCache() {
+        const results = [];
+
+        try {
+          // Clear localStorage
+          const localStorageKeys = Object.keys(localStorage);
+          localStorage.clear();
+          results.push(`✅ Cleared localStorage (${localStorageKeys.length} items)`);
+        } catch (e) {
+          results.push(`❌ localStorage error: ${e.message}`);
+        }
+
+        try {
+          // Clear sessionStorage
+          const sessionStorageKeys = Object.keys(sessionStorage);
+          sessionStorage.clear();
+          results.push(`✅ Cleared sessionStorage (${sessionStorageKeys.length} items)`);
+        } catch (e) {
+          results.push(`❌ sessionStorage error: ${e.message}`);
+        }
+
+        // Clear service worker cache if available
+        if ('caches' in window) {
+          caches
+            .keys()
+            .then((names) => {
+              names.forEach((name) => {
+                caches.delete(name);
+              });
+              results.push(`✅ Cleared ${names.length} cache(s)`);
+              updateResults(results);
+            })
+            .catch((e) => {
+              results.push(`❌ Cache error: ${e.message}`);
+              updateResults(results);
+            });
+        } else {
+          results.push('ℹ️ Cache API not available');
+          updateResults(results);
+        }
+      }
+
+      // Check localStorage contents
+      function checkLocalStorage() {
+        const results = [];
+        const keys = Object.keys(localStorage);
+
+        if (keys.length === 0) {
+          results.push('✅ localStorage is empty');
+        } else {
+          results.push(`📦 Found ${keys.length} localStorage items:`);
+          keys.forEach((key) => {
+            const value = localStorage.getItem(key);
+            const size = new Blob([value]).size;
+            results.push(`- ${key}: ${size} bytes`);
+
+            // Show Stacks-related data
+            if (key.includes('stacks')) {
+              try {
+                const parsed = JSON.parse(value);
+                results.push(`  📊 ${key} data: ${Object.keys(parsed).join(', ')}`);
+              } catch (e) {
+                results.push(`  🔤 ${key}: Text data`);
+              }
+            }
+          });
+        }
+
+        updateResults(results);
+      }
+
+      // Test network connection
+      function testNetworkConnection() {
+        const results = [];
+        const testUrls = ['/home', '/api/health', 'https://www.google.com/favicon.ico'];
+
+        results.push('🔄 Testing network connections...');
+        updateResults(results);
+
+        let completed = 0;
+        testUrls.forEach((url) => {
+          const startTime = Date.now();
+          fetch(url, { method: 'HEAD', mode: 'no-cors' })
+            .then(() => {
+              const duration = Date.now() - startTime;
+              results.push(`✅ ${url}: ${duration}ms`);
+            })
+            .catch((e) => {
+              results.push(`❌ ${url}: ${e.message}`);
+            })
+            .finally(() => {
+              completed++;
+              if (completed === testUrls.length) {
+                updateResults(results);
+              }
+            });
+        });
+      }
+
+      function updateResults(results) {
+        const resultsDiv = document.getElementById('results');
+        resultsDiv.innerHTML = '<h3>Results:</h3>' + results.map((r) => `<div>${r}</div>`).join('');
+      }
+
+      // Initialize on load
+      showDeviceInfo();
+
+      // Auto-refresh device info every 30 seconds
+      setInterval(showDeviceInfo, 30000);
+    </script>
+  </body>
+</html>

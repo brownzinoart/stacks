@@ -470,8 +470,8 @@ class ARService {
       name: 'Durham County Main Library',
       floors: [
         {
-          level: 1,
           name: 'Main Floor',
+          level: 1,
           sections: [
             {
               id: 'fiction-a-m',
@@ -527,6 +527,7 @@ class ARService {
       name: 'Cary Regional Library',
       floors: [
         {
+          name: 'Main Floor',
           level: 1,
           sections: [
             {
@@ -565,6 +566,7 @@ class ARService {
           ],
         },
         {
+          name: 'Second Floor',
           level: 2,
           sections: [
             {
@@ -612,6 +614,7 @@ class ARService {
       name: 'Eva Perry Regional Library',
       floors: [
         {
+          name: 'Main Floor',
           level: 1,
           sections: [
             {

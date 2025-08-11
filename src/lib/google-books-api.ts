@@ -89,7 +89,11 @@ class GoogleBooksAPI {
       const result = await this.searchBooks(title, author, 1);
       
       if (result.items && result.items.length > 0) {
-        const book = result.items[0].volumeInfo;
+        const book = result.items[0]?.volumeInfo;
+        
+        if (!book) {
+          return null;
+        }
         
         // Check if the title is a reasonable match
         const normalizedSearchTitle = this.normalizeTitle(title);
@@ -152,6 +156,7 @@ class GoogleBooksAPI {
     // Check cache for all books first
     for (let i = 0; i < books.length; i++) {
       const book = books[i];
+      if (!book) continue;
       const cached = await apiCache.getCachedBookInfo(book.title, book.author) as GoogleBookInfo | null;
       
       if (cached !== null) {
@@ -217,31 +222,33 @@ class GoogleBooksAPI {
    * Calculate Levenshtein distance between two strings
    */
   private levenshteinDistance(str1: string, str2: string): number {
-    const matrix: number[][] = [];
+    if (str1.length === 0) return str2.length;
+    if (str2.length === 0) return str1.length;
 
+    // Create matrix with proper initialization
+    const matrix: number[][] = Array(str2.length + 1).fill(null).map(() => Array(str1.length + 1).fill(0));
+
+    // Initialize first row and column
     for (let i = 0; i <= str2.length; i++) {
-      matrix[i] = [i];
+      matrix[i]![0] = i;
     }
-
     for (let j = 0; j <= str1.length; j++) {
-      matrix[0][j] = j;
+      matrix[0]![j] = j;
     }
 
+    // Fill in the rest of the matrix
     for (let i = 1; i <= str2.length; i++) {
       for (let j = 1; j <= str1.length; j++) {
-        if (str2.charAt(i - 1) === str1.charAt(j - 1)) {
-          matrix[i][j] = matrix[i - 1][j - 1];
-        } else {
-          matrix[i][j] = Math.min(
-            matrix[i - 1][j - 1] + 1, // substitution
-            matrix[i][j - 1] + 1, // insertion
-            matrix[i - 1][j] + 1 // deletion
-          );
-        }
+        const cost = str2.charAt(i - 1) === str1.charAt(j - 1) ? 0 : 1;
+        matrix[i]![j] = Math.min(
+          matrix[i - 1]![j]! + 1, // deletion
+          matrix[i]![j - 1]! + 1, // insertion
+          matrix[i - 1]![j - 1]! + cost // substitution
+        );
       }
     }
 
-    return matrix[str2.length][str1.length];
+    return matrix[str2.length]![str1.length]!;
   }
 
   /**

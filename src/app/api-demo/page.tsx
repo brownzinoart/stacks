@@ -209,14 +209,14 @@ export default function APIDemoPage() {
                   disabled={loading.availability}
                   className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50"
                 >
-                  Check "The Great Gatsby"
+                  Check &quot;The Great Gatsby&quot;
                 </button>
                 <button
                   onClick={() => handleCheckAvailability('9780451524935')}
                   disabled={loading.availability}
                   className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50"
                 >
-                  Check "1984"
+                  Check &quot;1984&quot;
                 </button>
               </div>
               

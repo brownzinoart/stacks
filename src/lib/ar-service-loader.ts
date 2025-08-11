@@ -67,7 +67,7 @@ export const isARSupported = () => {
   
   return !!(
     navigator.mediaDevices &&
-    navigator.mediaDevices.getUserMedia &&
+    typeof navigator.mediaDevices.getUserMedia === 'function' &&
     'ImageData' in window
   );
 };

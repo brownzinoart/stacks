@@ -88,6 +88,7 @@ const StacksRecommendationsPage = () => {
     if (data) {
       try {
         const parsed = JSON.parse(data);
+        console.log('🎉🎉🎉 RECOMMENDATIONS PAGE v2.0 - COVER FIX ACTIVE 🎉🎉🎉');
         console.log('[Recommendations Debug] Parsed data:', parsed);
         console.log('[Recommendations Debug] Parsed data keys:', Object.keys(parsed));
         setUserInput(parsed.userInput || '');
@@ -97,18 +98,53 @@ const StacksRecommendationsPage = () => {
         if (parsed.categories) {
           console.log('[Recommendations Debug] Using categories format, found', parsed.categories.length, 'categories');
           console.log('[Recommendations Debug] Categories:', parsed.categories);
+          
+          // Log cover status for each book
+          parsed.categories.forEach((cat: any) => {
+            console.log(`📚 Category: ${cat.name}`);
+            cat.books.forEach((book: any, idx: number) => {
+              console.log(`  📖 Book ${idx + 1}: "${book.title}" - Cover: ${book.cover ? book.cover.substring(0, 50) + '...' : 'NO COVER'}`);
+            });
+          });
           setCategories(parsed.categories);
           // Flatten all books for display with category info
-          const allBooks = parsed.categories.flatMap((cat: any, catIdx: number) =>
-            cat.books.map((book: any, bookIdx: number) => ({
-              ...book,
-              category: cat.name,
-              globalIdx: catIdx * 10 + bookIdx, // Unique index across categories
-            }))
+          let cumulativeIndex = 0;
+          const allBooks = parsed.categories.flatMap((cat: any) =>
+            cat.books.map((book: any) => {
+              const bookWithData = {
+                ...book,
+                category: cat.name,
+                globalIdx: cumulativeIndex, // Use cumulative index for proper mapping
+              };
+              cumulativeIndex++;
+              return bookWithData;
+            })
           );
-          console.log('[Recommendations Debug] Setting', allBooks.length, 'books from categories');
-          console.log('[Recommendations Debug] All books:', allBooks);
-          setBooks(allBooks);
+
+          // Deduplicate books by title, author, and ISBN
+          const deduplicateBooks = (books: any[]) => {
+            const seen = new Map<string, any>();
+            const deduplicated = books.filter((book) => {
+              // Create a unique key for each book
+              const key = `${book.title?.toLowerCase().trim()}-${book.author?.toLowerCase().trim()}-${book.isbn || ''}`;
+              
+              if (seen.has(key)) {
+                console.log(`📚 Removing duplicate: "${book.title}" by ${book.author} from ${book.category}`);
+                return false;
+              } 
+              
+              seen.set(key, book);
+              return true;
+            });
+            
+            console.log(`📚 Deduplication: ${books.length} → ${deduplicated.length} books (removed ${books.length - deduplicated.length} duplicates)`);
+            return deduplicated;
+          };
+
+          const uniqueBooks = deduplicateBooks(allBooks);
+          console.log('[Recommendations Debug] Setting', uniqueBooks.length, 'unique books from categories');
+          console.log('[Recommendations Debug] Unique books:', uniqueBooks);
+          setBooks(uniqueBooks);
         } else if (parsed.books) {
           // Fallback for old format
           console.log('[Recommendations Debug] Using fallback format, found', (parsed.books || []).length, 'books');
@@ -420,16 +456,18 @@ const StacksRecommendationsPage = () => {
           {categories.length > 0 && activeCategory === 'all' ? (
             // Show all categories as sections
             <div className="space-y-12">
-              {categories.map((category: any, catIdx: number) => (
-                <div key={catIdx} className="space-y-6">
-                  <div className="mb-4 border-l-4 border-primary-blue pl-4">
-                    <h2 className="mb-2 text-2xl font-black text-text-primary sm:text-3xl">{category.name}</h2>
-                    <p className="text-base text-text-secondary">{category.description}</p>
-                  </div>
-                  <div className="space-y-6">
-                    {category.books.map((book: any, bookIdx: number) => {
-                      const globalIdx = catIdx * 10 + bookIdx;
-                      return (
+              {(() => {
+                let cumulativeIdx = 0;
+                return categories.map((category: any, catIdx: number) => (
+                  <div key={catIdx} className="space-y-6">
+                    <div className="mb-4 border-l-4 border-primary-blue pl-4">
+                      <h2 className="mb-2 text-2xl font-black text-text-primary sm:text-3xl">{category.name}</h2>
+                      <p className="text-base text-text-secondary">{category.description}</p>
+                    </div>
+                    <div className="space-y-6">
+                      {category.books.map((book: any, bookIdx: number) => {
+                        const globalIdx = cumulativeIdx++;
+                        return (
                         <div
                           key={globalIdx}
                           className="outline-bold-thin relative flex flex-col items-center gap-4 rounded-3xl bg-white/90 p-4 shadow-[0_10px_40px_rgb(0,0,0,0.15)] transition-all duration-300 hover:scale-[1.01] sm:flex-row sm:items-start sm:gap-8 sm:p-6"
@@ -443,9 +481,7 @@ const StacksRecommendationsPage = () => {
                               <BookCover
                                 title={book.title}
                                 author={book.author}
-                                coverUrl={
-                                  book.cover && book.cover.startsWith('http') ? book.cover : coverUrls[globalIdx]
-                                }
+                                coverUrl={book.cover || coverUrls[globalIdx]}
                                 className="outline-bold-lg h-56 w-40 border-4 border-primary-blue shadow-[0_8px_30px_rgb(0,0,0,0.25)] sm:h-56 sm:w-40"
                               />
                             </div>
@@ -490,7 +526,8 @@ const StacksRecommendationsPage = () => {
                     })}
                   </div>
                 </div>
-              ))}
+              ));
+            })()}
             </div>
           ) : null}
 
@@ -535,11 +572,7 @@ const StacksRecommendationsPage = () => {
                           <BookCover
                             title={book.title}
                             author={book.author}
-                            coverUrl={
-                              book.cover && book.cover.startsWith('http')
-                                ? book.cover
-                                : coverUrls[book.globalIdx || idx]
-                            }
+                            coverUrl={book.cover || coverUrls[book.globalIdx || idx]}
                             className="outline-bold-lg h-56 w-40 border-4 border-primary-blue shadow-[0_8px_30px_rgb(0,0,0,0.25)] sm:h-56 sm:w-40"
                           />
                         </div>

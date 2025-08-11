@@ -162,8 +162,8 @@ class CriticalResourceManager {
   private getPreloadConfig(path: string): PreloadConfig {
     const baseConfig: PreloadConfig = {
       fonts: [
-        '/_next/static/fonts/inter-var.woff2',
-        '/_next/static/fonts/inter-bold.woff2'
+        // Note: Next.js font optimization handles Inter fonts automatically
+        // Removing manual font preloading to avoid 404s
       ],
       images: [
         '/icon-192.png',
@@ -381,7 +381,8 @@ class CriticalResourceManager {
    */
   private preloadNonCriticalResources(): void {
     const nonCriticalResources = [
-      { href: '/_next/static/chunks/commons.js', as: 'script' },
+      // Note: Specific chunk names vary in development, so we'll skip preloading JS chunks
+      // { href: '/_next/static/chunks/commons.js', as: 'script' }, // Removed - chunk doesn't exist
       { href: '/api/books/trending', as: 'fetch' },
       { href: '/manifest.json', as: 'manifest' }
     ];

@@ -29,9 +29,12 @@ export const withLazyLoading = <P extends object>(
     className: 'animate-pulse bg-gray-200 rounded h-32 w-32'
   });
   
-  return (props: P) => 
+  const WrappedComponent = (props: P) => 
     React.createElement(React.Suspense, {
       fallback: fallback || defaultFallback
     }, React.createElement(LazyComponent, props));
+    
+  WrappedComponent.displayName = `LazyLoader(${LazyComponent.displayName || LazyComponent.name || 'Component'})`;
+  return WrappedComponent;
 };
 

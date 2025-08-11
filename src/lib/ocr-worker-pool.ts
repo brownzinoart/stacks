@@ -3,7 +3,7 @@
  * Prevents memory leaks and improves performance through worker pooling
  */
 
-import { createWorker, Worker } from 'tesseract.js';
+import Tesseract, { createWorker } from 'tesseract.js';
 
 export interface OCRResult {
   text: string;
@@ -29,11 +29,11 @@ export interface ImagePreprocessOptions {
 }
 
 class OCRWorkerPool {
-  private workers: Worker[] = [];
-  private busyWorkers = new Set<Worker>();
-  private availableWorkers: Worker[] = [];
+  private workers: Tesseract.Worker[] = [];
+  private busyWorkers = new Set<Tesseract.Worker>();
+  private availableWorkers: Tesseract.Worker[] = [];
   private maxWorkers: number = 2; // Mobile optimized
-  private initializationPromises = new Map<Worker, Promise<void>>();
+  private initializationPromises = new Map<Tesseract.Worker, Promise<void>>();
   private isShuttingDown = false;
 
   constructor() {
@@ -47,7 +47,7 @@ class OCRWorkerPool {
   /**
    * Get an available worker or create a new one
    */
-  private async getWorker(): Promise<Worker> {
+  private async getWorker(): Promise<Tesseract.Worker> {
     // Return available worker if exists
     if (this.availableWorkers.length > 0) {
       const worker = this.availableWorkers.pop()!;
@@ -80,23 +80,20 @@ class OCRWorkerPool {
   /**
    * Create and initialize a new worker
    */
-  private async createNewWorker(): Promise<Worker> {
-    const worker = await createWorker('eng', 1, {
-      logger: (m: any) => {
-        if (m.status === 'recognizing text') {
-          console.log(`OCR Worker ${this.workers.length}: ${Math.round(m.progress * 100)}%`);
-        }
-      },
-    });
+  private async createNewWorker(): Promise<Tesseract.Worker> {
+    const worker = await createWorker();
+    
+    await (worker as any).loadLanguage('eng');
+    await (worker as any).initialize('eng');
 
-    this.workers.push(worker);
-    return worker;
+    this.workers.push(worker as any);
+    return worker as any;
   }
 
   /**
    * Return worker to available pool
    */
-  private releaseWorker(worker: Worker): void {
+  private releaseWorker(worker: Tesseract.Worker): void {
     this.busyWorkers.delete(worker);
     if (!this.isShuttingDown) {
       this.availableWorkers.push(worker);
@@ -185,8 +182,8 @@ class OCRWorkerPool {
       return {
         text: data.text,
         confidence: data.confidence,
-        words: data.words?.filter(w => w.bbox) || [],
-        lines: data.lines?.filter(l => l.bbox) || [],
+        words: (data as any).words?.filter((w: any) => w.bbox) || [],
+        lines: (data as any).lines?.filter((l: any) => l.bbox) || [],
       };
     } finally {
       this.releaseWorker(worker);

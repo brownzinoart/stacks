@@ -8,7 +8,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { aiRecommendationService } from '@/lib/ai-recommendation-service';
-import { ProgressiveLoadingIndicator, BOOK_RECOMMENDATION_STAGES } from '@/components/progressive-loading-indicator';
+import FullTakeoverLoader, { ENHANCED_LOADING_STAGES } from '@/components/full-takeover-loader';
 import { formatFallbackRecommendations } from '@/lib/emergency-fallback';
 
 // Simplified mood options for better UX
@@ -63,6 +63,11 @@ export const AIPromptInput = () => {
   const [costSavings, setCostSavings] = useState<string>('~65%');
   const [userQuery, setUserQuery] = useState('');
   const router = useRouter();
+  
+  // DEBUG: Version indicator
+  console.log('🚀🚀🚀 AI PROMPT INPUT v2.0 - ENHANCED LOADING STAGES ACTIVE 🚀🚀🚀');
+  console.log('📊 Loading stages available:', ENHANCED_LOADING_STAGES.length, 'stages');
+  console.log('📊 Stages:', ENHANCED_LOADING_STAGES.map(s => s.title).join(' → '));
 
   // Cleanup function to cancel requests
   const cleanup = useCallback(() => {
@@ -89,6 +94,7 @@ export const AIPromptInput = () => {
 
   // Progress callback for loading stages with progress percentage
   const handleProgress = useCallback((stage: number, progressPercent: number = 0) => {
+    console.log(`🎯 PROGRESS UPDATE: Stage ${stage} - ${progressPercent}% - ${ENHANCED_LOADING_STAGES[stage]?.title || 'Unknown'}`);
     setCurrentStage(stage);
     setProgress(progressPercent);
     
@@ -147,6 +153,12 @@ export const AIPromptInput = () => {
     const userInput = inputValue || selectedMood || '';
     setUserQuery(userInput); // Store for display in full takeover loader
     const inputType = detectInputType(userInput);
+    
+    console.log('🔥🔥🔥 SEARCH STARTED 🔥🔥🔥');
+    console.log('📝 User input:', userInput);
+    console.log('🎬 Loading overlay should be visible now!');
+    console.log('🎬 IsLoading:', true);
+    console.log('🎬 Stages passed to loader:', ENHANCED_LOADING_STAGES);
 
     // Set up overall timeout protection (120 seconds total for mobile)
     const overallTimeout = setTimeout(() => {
@@ -175,7 +187,7 @@ export const AIPromptInput = () => {
       setCostSavings(`Optimized routing saved ~${savings}% vs single model`);
 
       // Final progress update
-      setCurrentStage(2);
+      setCurrentStage(3);
       setProgress(100);
       
       // Small delay to show completion
@@ -251,104 +263,23 @@ export const AIPromptInput = () => {
 
   return (
     <div className="relative space-y-6 sm:space-y-8">
-      {/* Progressive Loading State - Replaces the main content */}
-      {isLoading ? (
-        <div className="space-y-8 sm:space-y-10">
-          {/* Loading Content with backdrop for better visibility */}
-          <div className="relative">
-            {/* Background overlay for text legibility */}
-            <div className="absolute inset-0 bg-black/60 backdrop-blur-sm rounded-3xl -m-4 sm:-m-6"></div>
-            
-            <div className="relative z-10 text-center space-y-6 p-4 sm:p-6">
-              {userQuery && (
-                <div className="mb-6">
-                  <p className="text-sm text-white/70 mb-2">Searching for:</p>
-                  <p className="text-white font-bold text-xl">&quot;{userQuery}&quot;</p>
-                </div>
-              )}
+      {/* DEBUG VERSION INDICATOR */}
+      <div className="fixed top-0 left-0 z-[10000] bg-red-600 text-white px-3 py-1 text-xs font-bold">
+        v2.0 DEBUG | Stages: {ENHANCED_LOADING_STAGES.length} | Loading: {isLoading ? 'YES' : 'NO'} | Stage: {currentStage}
+      </div>
+      
+      {/* Full Takeover Loading State with Icons */}
+      <FullTakeoverLoader
+        isVisible={isLoading}
+        currentStage={currentStage}
+        stages={ENHANCED_LOADING_STAGES}
+        progress={progress}
+        costSavings={costSavings}
+        onCancel={handleCancel}
+        userQuery={userQuery}
+      />
 
-              {/* Progressive Loading Interface */}
-              <div className="w-full space-y-8 max-w-lg mx-auto">
-                {/* Progress Bar */}
-                <div className="relative">
-                  <div className="h-3 w-full overflow-hidden rounded-full bg-white/20">
-                    <div
-                      className="h-full rounded-full bg-gradient-to-r from-primary-blue to-primary-teal transition-all duration-500"
-                      style={{ width: `${progress}%` }}
-                    />
-                  </div>
-                  <div className="mt-3 text-center">
-                    <span className="text-sm font-bold text-white/80">
-                      {Math.round(progress)}% Complete
-                    </span>
-                  </div>
-                </div>
-
-                {/* Current Stage Display */}
-                <div className="text-center space-y-3">
-                  <h2 className="text-2xl font-black text-white">
-                    {currentStage === 0 ? '🧠 Analyzing Request' : 
-                     currentStage === 1 ? '🔍 Enriching Context' : 
-                     '📚 Finding Perfect Matches'}
-                  </h2>
-                  <p className="text-white/80">
-                    {currentStage === 0 ? 'Understanding your mood and preferences...' : 
-                     currentStage === 1 ? 'Gathering additional context and references...' : 
-                     'AI is curating personalized book recommendations...'}
-                  </p>
-                </div>
-
-                {/* Stage Timeline */}
-                <div className="flex justify-center">
-                  <div className="flex items-center space-x-3">
-                    {[0, 1, 2].map((stageIndex) => (
-                      <div key={stageIndex} className="flex items-center">
-                        <div
-                          className={`flex h-10 w-10 items-center justify-center rounded-full text-sm font-bold transition-all duration-300 ${
-                            stageIndex < currentStage
-                              ? 'bg-primary-green text-white scale-110'
-                              : stageIndex === currentStage
-                                ? 'bg-primary-blue text-white animate-pulse scale-110'
-                                : 'bg-white/20 text-white/50'
-                          }`}
-                        >
-                          {stageIndex < currentStage ? '✓' : stageIndex + 1}
-                        </div>
-                        {stageIndex < 2 && (
-                          <div
-                            className={`h-1 w-8 transition-all duration-300 ${
-                              stageIndex < currentStage ? 'bg-primary-green' : 'bg-white/20'
-                            }`}
-                          />
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Time Estimate */}
-                <div className="text-center text-sm text-white/70">
-                  {progress > 0 ? (
-                    <>~{Math.max(15 - Math.floor(progress * 0.15), 0)}s remaining</>
-                  ) : (
-                    'Starting analysis...'
-                  )}
-                </div>
-
-                {/* Cancel button */}
-                <div className="text-center">
-                  <button
-                    onClick={handleCancel}
-                    className="text-sm text-white/70 hover:text-white transition-colors underline"
-                  >
-                    Cancel search
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      ) : (
+      {!isLoading && (
         <>
           {/* Content Layer */}
           <div className="relative z-10">

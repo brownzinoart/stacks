@@ -103,7 +103,7 @@ class AIModelRouter {
   }
 
   /**
-   * Call OpenAI GPT-4o
+   * Call OpenAI GPT-4o with timeout handling
    */
   private async callOpenAI(request: AIRequest) {
     const payload = {
@@ -122,15 +122,20 @@ class AIModelRouter {
       temperature: 0.7,
     };
 
-    const response = await callAIAPI('openai', payload);
-    return {
-      content: response.choices[0].message.content,
-      tokensUsed: response.usage?.total_tokens,
-    };
+    try {
+      const response = await callAIAPI('openai', payload);
+      return {
+        content: response.choices[0].message.content,
+        tokensUsed: response.usage?.total_tokens,
+      };
+    } catch (error) {
+      console.error('[AI Router] OpenAI call failed:', error);
+      throw error;
+    }
   }
 
   /**
-   * Call Anthropic Claude
+   * Call Anthropic Claude with timeout handling
    */
   private async callClaude(request: AIRequest) {
     const payload = {
@@ -146,15 +151,20 @@ class AIModelRouter {
       ],
     };
 
-    const response = await callAIAPI('anthropic', payload);
-    return {
-      content: response.content[0].text,
-      tokensUsed: response.usage?.input_tokens + response.usage?.output_tokens,
-    };
+    try {
+      const response = await callAIAPI('anthropic', payload);
+      return {
+        content: response.content[0].text,
+        tokensUsed: response.usage?.input_tokens + response.usage?.output_tokens,
+      };
+    } catch (error) {
+      console.error('[AI Router] Claude call failed:', error);
+      throw error;
+    }
   }
 
   /**
-   * Call Google Vertex AI Gemini
+   * Call Google Vertex AI Gemini with timeout handling
    */
   private async callGemini(request: AIRequest) {
     const payload = {
@@ -175,11 +185,16 @@ class AIModelRouter {
       },
     };
 
-    const response = await callAIAPI('vertex', payload);
-    return {
-      content: response.candidates[0].content.parts[0].text,
-      tokensUsed: response.usageMetadata?.totalTokenCount,
-    };
+    try {
+      const response = await callAIAPI('vertex', payload);
+      return {
+        content: response.candidates[0].content.parts[0].text,
+        tokensUsed: response.usageMetadata?.totalTokenCount,
+      };
+    } catch (error) {
+      console.error('[AI Router] Gemini call failed:', error);
+      throw error;
+    }
   }
 
   /**

@@ -25,7 +25,7 @@ export const getApiUrl = () => {
   return '';
 };
 
-// Mobile-safe fetch wrapper
+// Mobile-safe fetch wrapper with enhanced error handling
 export const mobileFetch = async (url: string, options?: RequestInit): Promise<Response> => {
   if (!isCapacitor()) {
     // Use regular fetch for web
@@ -37,9 +37,27 @@ export const mobileFetch = async (url: string, options?: RequestInit): Promise<R
   const fullUrl = url.startsWith('http') ? url : `${getApiUrl()}${url}`;
 
   try {
-    return fetch(fullUrl, options);
-  } catch (error) {
-    console.error('Mobile API request failed:', error);
+    const response = await fetch(fullUrl, {
+      ...options,
+      // Add mobile-specific headers
+      headers: {
+        ...options?.headers,
+        'User-Agent': 'StacksMobileApp/1.0',
+      }
+    });
+    
+    return response;
+  } catch (error: unknown) {
+    console.error('[Mobile Fetch] API request failed:', error);
+    
+    // Enhanced error messages for mobile users
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    if (errorMessage.includes('network')) {
+      throw new Error('Network error. Please check your internet connection.');
+    } else if (errorMessage.includes('timeout')) {
+      throw new Error('Request timed out. Please try again.');
+    }
+    
     throw error;
   }
 };

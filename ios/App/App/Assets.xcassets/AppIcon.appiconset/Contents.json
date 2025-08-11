@@ -64,6 +64,13 @@
       "scale": "3x"
     },
     {
+      "filename": "AppIcon-60@1x.png",
+      "idiom": "iphone",
+      "platform": "ios",
+      "size": "60x60",
+      "scale": "1x"
+    },
+    {
       "filename": "AppIcon-60@2x.png",
       "idiom": "iphone",
       "platform": "ios",

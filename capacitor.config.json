@@ -3,13 +3,6 @@
   "appName": "Stacks",
   "webDir": "out",
   "bundledWebRuntime": false,
-  "server": {
-    "androidScheme": "https",
-    "iosScheme": "capacitor",
-    "hostname": "localhost",
-    "cleartext": true,
-    "allowNavigation": ["capacitor://localhost", "https://localhost", "http://localhost:*", "http://192.168.*.*:*"]
-  },
   "ios": {
     "preferredContentMode": "mobile",
     "backgroundColor": "#FBF7F4",
@@ -19,7 +12,7 @@
     "webContentsDebuggingEnabled": true,
     "allowsLinkPreview": false,
     "handleApplicationNotifications": false,
-    "limitsNavigationsToAppBoundDomains": true,
+    "limitsNavigationsToAppBoundDomains": false,
     "contentInset": "automatic"
   },
   "android": {

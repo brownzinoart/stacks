@@ -5,8 +5,8 @@
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // Enable for Capacitor/mobile deployment
-  output: 'export',
+  // Enable static export only for production builds (Capacitor/mobile deployment)
+  ...(process.env.NODE_ENV === 'production' && { output: 'export' }),
   // Disable image optimization for static export
   images: {
     unoptimized: true,
@@ -96,6 +96,35 @@ const nextConfig = {
           '.svg': ['@svgr/webpack'],
         },
       },
+    },
+    // Proxy API requests to backend server in development
+    async rewrites() {
+      return [
+        {
+          source: '/api/books/:path*',
+          destination: 'http://localhost:3001/api/books/:path*',
+        },
+        {
+          source: '/api/user/:path*',
+          destination: 'http://localhost:3001/api/user/:path*',
+        },
+        {
+          source: '/api/library/:path*',
+          destination: 'http://localhost:3001/api/library/:path*',
+        },
+        {
+          source: '/api/community/:path*',
+          destination: 'http://localhost:3001/api/community/:path*',
+        },
+        {
+          source: '/api/availability/:path*',
+          destination: 'http://localhost:3001/api/availability/:path*',
+        },
+        {
+          source: '/api/queue',
+          destination: 'http://localhost:3001/api/queue',
+        },
+      ];
     },
   }),
 };

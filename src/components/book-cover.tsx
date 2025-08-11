@@ -6,12 +6,13 @@
 
 import { bookCoverService } from '@/lib/book-cover-service';
 import { useState, useEffect, memo } from 'react';
-import Image from 'next/image';
+import NextImage from 'next/image';
 
 interface BookCoverProps {
   title: string;
   author: string;
   isbn?: string;
+  coverUrl?: string;
   className?: string;
   showSource?: boolean; // For debugging
 }
@@ -23,12 +24,15 @@ interface CoverState {
   quality?: string;
   isLoading: boolean;
   error?: string;
+  retryCount?: number;
+  loadSuccess?: boolean;
 }
 
 const BookCover = memo(({ 
   title, 
   author, 
   isbn,
+  coverUrl,
   className = 'w-16 h-20',
   showSource = false 
 }: BookCoverProps) => {
@@ -36,13 +40,41 @@ const BookCover = memo(({
     url: '',
     source: 'loading',
     confidence: 0,
-    isLoading: true
+    isLoading: true,
+    retryCount: 0,
+    loadSuccess: false
   });
 
   useEffect(() => {
-    const fetchCover = async () => {
+    // If coverUrl is provided, validate it first
+    if (coverUrl) {
+      setCoverState(prev => ({ ...prev, isLoading: true }));
+      
+      // Test if provided URL works
+      const img = new Image();
+      img.onload = () => {
+        setCoverState({
+          url: coverUrl,
+          source: 'provided',
+          confidence: 100,
+          isLoading: false,
+          loadSuccess: true,
+          retryCount: 0
+        });
+      };
+      img.onerror = () => {
+        console.warn('Provided cover URL failed, falling back to search:', coverUrl);
+        // Fall back to search if provided URL fails
+        setCoverState(prev => ({ ...prev, isLoading: true }));
+        fetchCover();
+      };
+      img.src = coverUrl;
+      return;
+    }
+
+    const fetchCover = async (retryAttempt = 0) => {
       try {
-        setCoverState(prev => ({ ...prev, isLoading: true, error: undefined }));
+        setCoverState(prev => ({ ...prev, isLoading: true, error: undefined, retryCount: retryAttempt }));
         
         const result = await bookCoverService.getCover({
           title,
@@ -50,27 +82,83 @@ const BookCover = memo(({
           isbn
         });
         
+        // If it's a real image URL, validate it before setting
+        if (result.url.startsWith('http')) {
+          const isValid = await validateImageLoad(result.url);
+          if (!isValid && retryAttempt < 2) {
+            console.warn(`Cover URL validation failed, retrying (${retryAttempt + 1}/2):`, result.url);
+            // Mark this specific URL as failed and clear cache only if it matches
+            bookCoverService.markUrlAsFailed(result.url);
+            bookCoverService.clearCacheIfNeeded({ title, author, isbn }, result.url);
+            return fetchCover(retryAttempt + 1);
+          }
+        }
+        
         setCoverState({
           url: result.url,
           source: result.source,
           confidence: result.confidence,
           quality: result.quality,
-          isLoading: false
+          isLoading: false,
+          loadSuccess: true,
+          retryCount: retryAttempt
         });
       } catch (error) {
         console.error('Cover fetch failed:', error);
-        setCoverState(prev => ({
-          ...prev,
-          isLoading: false,
-          error: error instanceof Error ? error.message : 'Failed to load cover'
-        }));
+        
+        // If this was a retry attempt, give up and use fallback
+        if (retryAttempt >= 2) {
+          setCoverState(prev => ({
+            ...prev,
+            url: generateEmergencyFallback(),
+            source: 'emergency_fallback',
+            confidence: 100,
+            isLoading: false,
+            error: 'All attempts failed, using emergency fallback',
+            retryCount: retryAttempt
+          }));
+        } else {
+          // Retry once
+          console.log(`Retrying cover fetch (${retryAttempt + 1}/2)`);
+          setTimeout(() => fetchCover(retryAttempt + 1), 1000);
+        }
       }
+    };
+
+    const validateImageLoad = (url: string): Promise<boolean> => {
+      return new Promise((resolve) => {
+        const img = new Image();
+        img.onload = () => resolve(true);
+        img.onerror = () => resolve(false);
+        img.src = url;
+        // Timeout after 5 seconds
+        setTimeout(() => resolve(false), 5000);
+      });
+    };
+
+    const generateEmergencyFallback = (): string => {
+      // Generate a hash-based color for consistent fallback
+      const hash = (title + author).split('').reduce((acc, char) => {
+        return (acc << 5) - acc + char.charCodeAt(0);
+      }, 0);
+      
+      const colors = [
+        ['#FF6B6B', '#4ECDC4'], // Red to teal
+        ['#45B7D1', '#F39C12'], // Blue to orange  
+        ['#96CEB4', '#FECA57'], // Green to yellow
+        ['#6C5CE7', '#FD79A8'], // Purple to pink
+        ['#00B894', '#00CEC9'], // Green to cyan
+        ['#E17055', '#FDCB6E'], // Orange gradient
+      ];
+      
+      const colorPair = colors[Math.abs(hash) % colors.length] || colors[0]!;
+      return `gradient:${colorPair[0]}:${colorPair[1]}:${encodeURIComponent(title)}:${encodeURIComponent(author)}`;
     };
 
     if (title && author) {
       fetchCover();
     }
-  }, [title, author, isbn]);
+  }, [title, author, isbn, coverUrl]);
 
   // Determine cover type
   const isRealCover = coverState.url.startsWith('http');
@@ -81,8 +169,13 @@ const BookCover = memo(({
   const renderCover = () => {
     if (coverState.isLoading) {
       return (
-        <div className="h-full w-full bg-gradient-to-br from-gray-300 to-gray-400 flex items-center justify-center">
-          <div className="animate-pulse text-white/60">📚</div>
+        <div className="h-full w-full bg-gradient-to-br from-gray-300 to-gray-400 flex items-center justify-center relative">
+          <div className="animate-pulse text-white/60 text-2xl">📚</div>
+          {coverState.retryCount! > 0 && (
+            <div className="absolute bottom-1 right-1 text-xs text-white/50">
+              Retry {coverState.retryCount}
+            </div>
+          )}
         </div>
       );
     }
@@ -91,7 +184,7 @@ const BookCover = memo(({
       // Real book cover from Google Books or Open Library
       return (
         <>
-          <Image
+          <NextImage
             src={coverState.url}
             alt={`${title} by ${author}`}
             fill
@@ -99,10 +192,74 @@ const BookCover = memo(({
             sizes="(max-width: 768px) 25vw, (max-width: 1200px) 16vw, 12vw"
             priority={false}
             onError={(e) => {
-              // Auto-fallback if image fails
+              console.error('Image load error for:', coverState.url);
               const target = e.target as HTMLImageElement;
               target.style.display = 'none';
-              setCoverState(prev => ({ ...prev, error: 'Image failed to load' }));
+              
+              // Trigger fallback mechanism
+              if (coverState.retryCount! < 2) {
+                console.log('Image failed, triggering retry mechanism');
+                // Mark the current URL as failed and only clear if it's the cached one
+                bookCoverService.markUrlAsFailed(coverState.url);
+                bookCoverService.clearCacheIfNeeded({ title, author, isbn }, coverState.url);
+                // fetchCover is not available in this scope, so create a new fallback URL
+                const fallbackUrl = (() => {
+                  const hash = (title + author).split('').reduce((acc, char) => {
+                    return (acc << 5) - acc + char.charCodeAt(0);
+                  }, 0);
+                  
+                  const colors = [
+                    ['#FF6B6B', '#4ECDC4'], // Red to teal
+                    ['#45B7D1', '#F39C12'], // Blue to orange  
+                    ['#96CEB4', '#FECA57'], // Green to yellow
+                    ['#6C5CE7', '#FD79A8'], // Purple to pink
+                    ['#00B894', '#00CEC9'], // Green to cyan
+                    ['#E17055', '#FDCB6E'], // Orange gradient
+                  ];
+                  
+                  const colorPair = colors[Math.abs(hash) % colors.length] || colors[0]!;
+                  return `gradient:${colorPair[0]}:${colorPair[1]}:${encodeURIComponent(title)}:${encodeURIComponent(author)}`;
+                })();
+                
+                setCoverState(prev => ({
+                  ...prev,
+                  url: fallbackUrl,
+                  source: 'emergency_fallback',
+                  confidence: 100,
+                  error: 'Image load failed, using fallback'
+                }));
+              } else {
+                // Final fallback
+                console.log('All retries exhausted, using emergency fallback');
+                const finalFallbackUrl = (() => {
+                  const hash = (title + author).split('').reduce((acc, char) => {
+                    return (acc << 5) - acc + char.charCodeAt(0);
+                  }, 0);
+                  
+                  const colors = [
+                    ['#FF6B6B', '#4ECDC4'], // Red to teal
+                    ['#45B7D1', '#F39C12'], // Blue to orange  
+                    ['#96CEB4', '#FECA57'], // Green to yellow
+                    ['#6C5CE7', '#FD79A8'], // Purple to pink
+                    ['#00B894', '#00CEC9'], // Green to cyan
+                    ['#E17055', '#FDCB6E'], // Orange gradient
+                  ];
+                  
+                  const colorPair = colors[Math.abs(hash) % colors.length] || colors[0]!;
+                  return `gradient:${colorPair[0]}:${colorPair[1]}:${encodeURIComponent(title)}:${encodeURIComponent(author)}`;
+                })();
+                
+                setCoverState(prev => ({
+                  ...prev,
+                  url: finalFallbackUrl,
+                  source: 'emergency_fallback',
+                  confidence: 100,
+                  error: 'Image load failed after retries'
+                }));
+              }
+            }}
+            onLoad={() => {
+              setCoverState(prev => ({ ...prev, loadSuccess: true, error: undefined }));
             }}
           />
           <div className="absolute inset-0 bg-gradient-to-br from-transparent via-transparent to-black/20" />
@@ -173,10 +330,19 @@ const BookCover = memo(({
     <div className={`${className} relative flex-shrink-0 overflow-hidden rounded-lg shadow-lg transition-all duration-300 hover:shadow-xl group`}>
       {renderCover()}
       
-      {/* Optional source indicator for debugging */}
+      {/* Enhanced debugging info */}
       {showSource && !coverState.isLoading && (
-        <div className="absolute bottom-0 left-0 bg-black/70 text-white text-xs px-1 py-0.5 rounded-tr">
-          {coverState.source} ({coverState.confidence}%)
+        <div className="absolute bottom-0 left-0 bg-black/80 text-white text-xs px-2 py-1 rounded-tr space-y-1">
+          <div>{coverState.source} ({coverState.confidence}%)</div>
+          {coverState.retryCount! > 0 && (
+            <div className="text-yellow-300">Retries: {coverState.retryCount}</div>
+          )}
+          {coverState.loadSuccess && (
+            <div className="text-green-300">✓</div>
+          )}
+          {coverState.error && (
+            <div className="text-red-300">⚠️</div>
+          )}
         </div>
       )}
       

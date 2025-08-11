@@ -4,12 +4,12 @@ const config: CapacitorConfig = {
   appId: 'com.stacks.library',
   appName: 'Stacks',
   webDir: '../out',
-  // Using static files - comment out server config for production-like testing
+  // Static files only - no live reload (fixes RSC data issue)
   // server: {
   //   androidScheme: 'http',
   //   iosScheme: 'http',
-  //   url: 'http://localhost:3000',
-  //   cleartext: true
+  //   url: 'http://192.168.86.190:3000',
+  //   cleartext: true,
   // },
   ios: {
     preferredContentMode: 'mobile',

@@ -46,6 +46,14 @@ const ENHANCED_LOADING_STAGES: LoadingStage[] = [
     duration: 8,
     color: 'from-green-500 to-yellow-500',
     icon: '📚'
+  },
+  {
+    id: 'fetching_covers',
+    title: 'FETCHING BOOK COVERS',
+    description: 'Loading beautiful cover images for all recommendations...',
+    duration: 3,
+    color: 'from-orange-500 to-red-500',
+    icon: '🎨'
   }
 ]
 
@@ -101,27 +109,27 @@ export default function FullTakeoverLoader({
         {/* Current Stage Icon & Title */}
         <div className="space-y-4">
           <div className={`text-6xl ${showPulse ? 'animate-pulse' : ''} transition-all duration-500`}>
-            {currentStageData.icon}
+            {currentStageData?.icon}
           </div>
           
           <h2 
             id="loading-title"
             className="text-2xl md:text-3xl font-bold text-white tracking-tight"
           >
-            {currentStageData.title}
+            {currentStageData?.title}
           </h2>
           
           <p 
             id="loading-description"
             className="text-lg text-white/80 leading-relaxed"
           >
-            {currentStageData.description}
+            {currentStageData?.description}
           </p>
 
           {userQuery && (
             <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 mt-6">
               <p className="text-sm text-white/70 mb-1">Searching for:</p>
-              <p className="text-white font-medium">"{userQuery}"</p>
+              <p className="text-white font-medium">&quot;{userQuery}&quot;</p>
             </div>
           )}
         </div>
@@ -137,7 +145,7 @@ export default function FullTakeoverLoader({
             aria-label={`Loading progress: ${progress}% complete`}
           >
             <div 
-              className={`h-full bg-gradient-to-r ${currentStageData.color} rounded-full transition-all duration-300 ease-out relative`}
+              className={`h-full bg-gradient-to-r ${currentStageData?.color || 'from-blue-400 to-blue-600'} rounded-full transition-all duration-300 ease-out relative`}
               style={{ width: `${progress}%` }}
             >
               <div className="absolute inset-0 bg-white/30 animate-pulse rounded-full"></div>

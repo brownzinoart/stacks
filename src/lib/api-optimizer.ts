@@ -96,7 +96,7 @@ class APIOptimizer {
       5 // Max 5 concurrent requests
     );
     
-    return results;
+    return results as OptimizedResponse<T>[];
   }
 
   /**

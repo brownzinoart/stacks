@@ -4,6 +4,7 @@
  */
 
 import { aiRouter, type AITask } from './ai-model-router';
+import { bookCoverService } from './book-cover-service';
 import { createHash } from 'crypto';
 
 export interface RecommendationRequest {
@@ -89,6 +90,8 @@ export class AIRecommendationService {
   private abortController: AbortController | null = null;
   private cache = new Map<string, { data: RecommendationResponse; timestamp: number }>();
   private readonly CACHE_DURATION = 24 * 60 * 60 * 1000; // 24 hours
+  private readonly MOBILE_TIMEOUT = 60000; // 60 seconds for mobile
+  private readonly WEB_TIMEOUT = 30000; // 30 seconds for web
 
   /**
    * Get smart book recommendations with optimized AI routing
@@ -119,18 +122,31 @@ export class AIRecommendationService {
       onProgress?.(0, 5);
       console.log('[AI Service] Stage 1: Analyzing user intent');
       
-      const analysisResponse = await aiRouter.routeRequest({
+      // Set timeout based on environment - server-side safe mobile detection
+      const isMobile = this.isMobileDevice();
+      const timeout = isMobile ? this.MOBILE_TIMEOUT : this.WEB_TIMEOUT;
+      
+      console.log(`[AI Service] Mobile detected: ${isMobile}, using ${timeout}ms timeout`);
+      
+      // Create timeout promise
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error('Request timeout')), timeout);
+      });
+      
+      const analysisPromise = aiRouter.routeRequest({
         task: 'search_query' as AITask,
         prompt: this.buildAnalysisPrompt(userInput),
         maxTokens: 200,
       });
       
-      totalCost += analysisResponse.cost;
-      modelsUsed.push(analysisResponse.model);
+      const analysisResponse = await Promise.race([analysisPromise, timeoutPromise]);
+      
+      totalCost += (analysisResponse as any).cost;
+      modelsUsed.push((analysisResponse as any).model);
       
       let analysis: UserAnalysis;
       try {
-        const content = analysisResponse.content;
+        const content = (analysisResponse as any).content;
         const jsonMatch = content.match(/\{[\s\S]*\}/);
         if (jsonMatch) {
           analysis = JSON.parse(jsonMatch[0]);
@@ -161,19 +177,27 @@ export class AIRecommendationService {
       onProgress?.(2, 65);
       console.log('[AI Service] Stage 3: Generating recommendations');
       
-      const recommendationResponse = await aiRouter.routeRequest({
+      // Create new timeout for recommendations (longer because it's more complex)
+      const recTimeout = isMobile ? timeout * 1.5 : timeout * 2; // More generous for mobile
+      const recTimeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error('Recommendation timeout')), recTimeout);
+      });
+      
+      const recommendationPromise = aiRouter.routeRequest({
         task: 'mood_recommendation' as AITask,
         prompt: this.buildRecommendationPrompt(userInput, enrichedContext),
         context: enrichedContext,
         maxTokens: 1500,
       });
       
-      totalCost += recommendationResponse.cost;
-      modelsUsed.push(recommendationResponse.model);
+      const recommendationResponse = await Promise.race([recommendationPromise, recTimeoutPromise]);
+      
+      totalCost += (recommendationResponse as any).cost;
+      modelsUsed.push((recommendationResponse as any).model);
 
       let recommendations;
       try {
-        const content = recommendationResponse.content;
+        const content = (recommendationResponse as any).content;
         const jsonMatch = content.match(/\{[\s\S]*\}/);
         if (jsonMatch) {
           recommendations = JSON.parse(jsonMatch[0]);
@@ -183,6 +207,58 @@ export class AIRecommendationService {
       } catch (parseError) {
         console.error('[AI Service] Failed to parse recommendations:', parseError);
         throw new Error('Failed to parse AI response');
+      }
+
+      // Stage 4: Pre-fetch book covers for all recommendations
+      onProgress?.(3, 85);
+      console.log('[AI Service] Stage 4: Fetching book covers');
+      
+      const allBooks: BookRecommendation[] = [];
+      for (const category of recommendations.categories) {
+        allBooks.push(...category.books);
+      }
+
+      console.log(`[AI Service] Pre-fetching covers for ${allBooks.length} books across ${recommendations.categories.length} categories`);
+      console.log('[AI Service] Categories:', recommendations.categories.map((c: any) => `${c.name} (${c.books.length} books)`).join(', '));
+      
+      try {
+        const coverResults = await bookCoverService.getBatchCovers(allBooks);
+        console.log(`[AI Service] Cover service returned ${coverResults.size} results`);
+        
+        // Apply covers to the books with detailed logging
+        let bookIndex = 0;
+        let coversAttached = 0;
+        for (const category of recommendations.categories) {
+          console.log(`[AI Service] Processing category: ${category.name} with ${category.books.length} books`);
+          for (const book of category.books) {
+            const coverResult = coverResults.get(bookIndex);
+            if (coverResult && coverResult.url) {
+              book.cover = coverResult.url;
+              coversAttached++;
+              console.log(`[AI Service] ✅ Cover attached for "${book.title}" (${category.name}): ${coverResult.source} - ${coverResult.url.substring(0, 50)}...`);
+            } else {
+              console.warn(`[AI Service] ⚠️ No cover found for "${book.title}" by ${book.author} (${category.name}) at index ${bookIndex}`);
+              // Generate a fallback cover if none was found
+              const fallbackCover = this.generateFallbackCover(book.title, book.author);
+              book.cover = fallbackCover;
+              console.log(`[AI Service] 🎨 Generated fallback cover for "${book.title}"`);
+            }
+            bookIndex++;
+          }
+        }
+
+        console.log(`[AI Service] Successfully attached ${coversAttached} covers out of ${allBooks.length} books`);
+      } catch (coverError) {
+        console.error('[AI Service] Cover pre-fetching failed:', coverError);
+        // Add fallback covers for all books if batch fetch fails
+        for (const category of recommendations.categories) {
+          for (const book of category.books) {
+            if (!book.cover) {
+              book.cover = this.generateFallbackCover(book.title, book.author);
+            }
+          }
+        }
+        console.log('[AI Service] Applied fallback covers due to fetch failure');
       }
 
       const result: RecommendationResponse = {
@@ -196,18 +272,28 @@ export class AIRecommendationService {
       // Cache the result
       this.setCache(cacheKey, result);
       
-      onProgress?.(2, 100);
+      onProgress?.(3, 100);
       console.log(`[AI Service] Recommendations complete! Cost: $${totalCost.toFixed(4)}, Models: ${modelsUsed.join(', ')}`);
       return result;
 
     } catch (error: any) {
       console.error('[AI Service] Error generating recommendations:', error);
       
-      // Enhanced error handling with specific error types
+      // Enhanced error handling with mobile-specific messages
       if (error.name === 'AbortError') {
         throw new Error('Request was cancelled');
+      } else if (error.message?.includes('timeout')) {
+        const isMobile = this.isMobileDevice();
+        const msg = isMobile 
+          ? 'Request timed out. Mobile networks can be slower - please try again or connect to WiFi.'
+          : 'Request timed out. Please check your internet connection and try again.';
+        throw new Error(msg);
       } else if (error.message?.includes('fetch') || error.message?.includes('Network')) {
         throw new Error('Network error. Please check your internet connection.');
+      } else if (error.message?.includes('Failed to parse')) {
+        // Retry once with a simpler prompt
+        console.log('[AI Service] Retrying with fallback prompt...');
+        return this.getSmartRecommendationsWithFallback(userInput, onProgress);
       } else {
         throw new Error('Failed to generate recommendations. Please try again.');
       }
@@ -336,6 +422,154 @@ Include 2-3 books per category with rich, detailed "whyYoullLikeIt" descriptions
         console.warn('[AI Service] Failed to persist cache to localStorage:', e);
       }
     }
+  }
+
+  /**
+   * Fallback method with simpler prompts for better reliability
+   */
+  private async getSmartRecommendationsWithFallback(
+    userInput: string, 
+    onProgress?: (stage: number, progress?: number) => void
+  ): Promise<RecommendationResponse> {
+    console.log('[AI Service] Using fallback recommendation method');
+    
+    try {
+      onProgress?.(2, 70);
+      
+      // Simple, reliable prompt that's less likely to cause parsing issues
+      const fallbackResponse = await aiRouter.routeRequest({
+        task: 'mood_recommendation' as AITask,
+        prompt: `Give me 6 book recommendations for someone who wants "${userInput}". 
+        
+        Return ONLY this JSON format:
+        {
+          "overallTheme": "Brief theme description",
+          "categories": [
+            {
+              "name": "Category 1",
+              "description": "Why these books fit",
+              "books": [
+                {
+                  "title": "Book Title",
+                  "author": "Author Name",
+                  "whyYoullLikeIt": "Simple reason why you'll like it",
+                  "summary": "Brief plot summary"
+                }
+              ]
+            }
+          ]
+        }
+        
+        No other text, just valid JSON.`,
+        maxTokens: 1000,
+      });
+      
+      const content = fallbackResponse.content;
+      const jsonMatch = content.match(/\{[\s\S]*\}/);
+      if (!jsonMatch) {
+        throw new Error('No JSON found in fallback response');
+      }
+      
+      const recommendations = JSON.parse(jsonMatch[0]);
+      
+      // Pre-fetch covers for fallback recommendations too
+      const allBooks: BookRecommendation[] = [];
+      for (const category of recommendations.categories) {
+        allBooks.push(...category.books);
+      }
+
+      console.log(`[AI Service] Pre-fetching covers for ${allBooks.length} fallback books`);
+      
+      try {
+        const coverResults = await bookCoverService.getBatchCovers(allBooks);
+        console.log(`[AI Service] Fallback cover service returned ${coverResults.size} results`);
+        
+        // Apply covers to the books with detailed logging
+        let bookIndex = 0;
+        let coversAttached = 0;
+        for (const category of recommendations.categories) {
+          for (const book of category.books) {
+            const coverResult = coverResults.get(bookIndex);
+            if (coverResult && coverResult.url) {
+              book.cover = coverResult.url;
+              coversAttached++;
+              console.log(`[AI Service] ✅ Fallback cover attached for "${book.title}": ${coverResult.source}`);
+            } else {
+              // Generate a fallback cover if none was found
+              const fallbackCover = this.generateFallbackCover(book.title, book.author);
+              book.cover = fallbackCover;
+              console.log(`[AI Service] 🎨 Generated gradient fallback for "${book.title}"`);
+            }
+            bookIndex++;
+          }
+        }
+
+        console.log(`[AI Service] Fallback: attached ${coversAttached} covers out of ${allBooks.length} books`);
+      } catch (coverError) {
+        console.error('[AI Service] Fallback cover pre-fetching failed:', coverError);
+        // Add gradient covers for all books if batch fetch fails
+        for (const category of recommendations.categories) {
+          for (const book of category.books) {
+            if (!book.cover) {
+              book.cover = this.generateFallbackCover(book.title, book.author);
+            }
+          }
+        }
+        console.log('[AI Service] Applied gradient covers due to fallback fetch failure');
+      }
+      
+      return {
+        ...recommendations,
+        userInput,
+        timestamp: new Date().toISOString(),
+        cost: fallbackResponse.cost,
+        models: [fallbackResponse.model],
+      };
+      
+    } catch (fallbackError) {
+      console.error('[AI Service] Fallback also failed:', fallbackError);
+      throw new Error('Unable to generate recommendations. Please try a different search.');
+    }
+  }
+
+  /**
+   * Mobile device detection (server-side safe)
+   */
+  private isMobileDevice(): boolean {
+    if (typeof window === 'undefined') return false;
+    
+    try {
+      const userAgent = navigator.userAgent || '';
+      const isMobile = /Mobi|Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(userAgent);
+      const hasTouch = 'ontouchstart' in window;
+      const smallScreen = window.innerWidth <= 768;
+      
+      return isMobile || (hasTouch && smallScreen);
+    } catch (e) {
+      console.warn('[AI Service] Mobile detection failed:', e);
+      return false;
+    }
+  }
+
+  /**
+   * Generate a fallback gradient cover for a book
+   */
+  private generateFallbackCover(title: string, author: string): string {
+    const hash = (title + author).split('').reduce((acc, char) => {
+      return (acc << 5) - acc + char.charCodeAt(0);
+    }, 0);
+    
+    const colors = [
+      ['#FF6B6B', '#4ECDC4'], // Red to teal
+      ['#45B7D1', '#F39C12'], // Blue to orange  
+      ['#96CEB4', '#FECA57'], // Green to yellow
+      ['#6C5CE7', '#FD79A8'], // Purple to pink
+      ['#00B894', '#00CEC9'], // Green to cyan
+      ['#E17055', '#FDCB6E'], // Orange gradient
+    ];
+    
+    const colorPair = colors[Math.abs(hash) % colors.length] || colors[0]!;
+    return `gradient:${colorPair[0]}:${colorPair[1]}:${encodeURIComponent(title)}:${encodeURIComponent(author)}`;
   }
 
   /**
