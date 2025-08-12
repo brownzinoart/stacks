@@ -90,8 +90,22 @@ export class AIRecommendationService {
   private abortController: AbortController | null = null;
   private cache = new Map<string, { data: RecommendationResponse; timestamp: number }>();
   private readonly CACHE_DURATION = 24 * 60 * 60 * 1000; // 24 hours
-  private readonly MOBILE_TIMEOUT = 60000; // 60 seconds for mobile
-  private readonly WEB_TIMEOUT = 30000; // 30 seconds for web
+  private readonly MOBILE_TIMEOUT = 15000; // Optimized: 15 seconds for mobile
+  private readonly WEB_TIMEOUT = 12000; // Optimized: 12 seconds for web
+
+  /**
+   * Extract potential reference from user input for parallel OMDb lookup
+   */
+  private extractPotentialReference(input: string): boolean {
+    const lowerInput = input.toLowerCase();
+    return lowerInput.includes('like') && (
+      lowerInput.includes('movie') || 
+      lowerInput.includes('show') || 
+      lowerInput.includes('tv') ||
+      lowerInput.includes('series') ||
+      lowerInput.includes('film')
+    );
+  }
 
   /**
    * Get smart book recommendations with optimized AI routing
@@ -118,28 +132,37 @@ export class AIRecommendationService {
     const modelsUsed: string[] = [];
 
     try {
-      // Stage 1: Analyze user intent (optimized with Gemini for speed/cost)
-      onProgress?.(0, 5);
-      console.log('[AI Service] Stage 1: Analyzing user intent');
+      // OPTIMIZED: Parallel processing for speed improvement
+      console.log('[AI Service] Starting parallel optimization workflow');
+      onProgress?.(0, 10);
       
-      // Set timeout based on environment - server-side safe mobile detection
+      // Set optimized timeout - reduced for faster responses
       const isMobile = this.isMobileDevice();
-      const timeout = isMobile ? this.MOBILE_TIMEOUT : this.WEB_TIMEOUT;
+      const timeout = 15000; // Unified 15-second timeout for faster responses
       
-      console.log(`[AI Service] Mobile detected: ${isMobile}, using ${timeout}ms timeout`);
+      console.log(`[AI Service] Using optimized ${timeout}ms timeout`);
       
-      // Create timeout promise
-      const timeoutPromise = new Promise((_, reject) => {
-        setTimeout(() => reject(new Error('Request timeout')), timeout);
-      });
-      
+      // PARALLEL STAGE 1 & 2: Analysis + OMDb enrichment simultaneously
       const analysisPromise = aiRouter.routeRequest({
         task: 'search_query' as AITask,
         prompt: this.buildAnalysisPrompt(userInput),
         maxTokens: 200,
       });
       
-      const analysisResponse = await Promise.race([analysisPromise, timeoutPromise]);
+      // Pre-emptively start OMDb lookup for potential references
+      const potentialOmdbPromise = this.extractPotentialReference(userInput)
+        ? fetchOmdbData(userInput)
+        : Promise.resolve(null);
+      
+      onProgress?.(0, 25);
+      
+      // Wait for both analysis and potential OMDb data
+      const [analysisResponse, omdbData] = await Promise.all([
+        Promise.race([analysisPromise, new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('Analysis timeout')), timeout)
+        )]),
+        potentialOmdbPromise
+      ]);
       
       totalCost += (analysisResponse as any).cost;
       modelsUsed.push((analysisResponse as any).model);
@@ -157,31 +180,20 @@ export class AIRecommendationService {
         console.warn('[AI Service] Failed to parse analysis, using defaults');
         analysis = this.getDefaultAnalysis(userInput);
       }
-
+      
       console.log('[AI Service] Analysis result:', analysis);
+      onProgress?.(1, 40);
 
-      // Stage 2: Enrich with OMDb if needed
-      onProgress?.(1, 35);
+      // Build enriched context from parallel OMDb data
       let enrichedContext = '';
-      if ((analysis.referenceType === 'show' || analysis.referenceType === 'movie') && analysis.referenceTitle) {
-        console.log('[AI Service] Stage 2: Enriching with OMDb data');
-        const omdb = await fetchOmdbData(analysis.referenceTitle);
-        if (omdb) {
-          enrichedContext = `\nReference: ${omdb.title} - ${omdb.plot}\nGenres: ${omdb.genres}\nTone: ${omdb.rated}`;
-        }
-      } else {
-        console.log('[AI Service] Stage 2: Skipping enrichment (not needed)');
+      if (omdbData && (analysis.referenceType === 'show' || analysis.referenceType === 'movie')) {
+        enrichedContext = `\nReference: ${omdbData.title} - ${omdbData.plot}\nGenres: ${omdbData.genres}\nTone: ${omdbData.rated}`;
+        console.log('[AI Service] Using parallel OMDb enrichment');
       }
 
-      // Stage 3: Generate categorized recommendations (GPT-4o for best quality)
-      onProgress?.(2, 65);
-      console.log('[AI Service] Stage 3: Generating recommendations');
-      
-      // Create new timeout for recommendations (longer because it's more complex)
-      const recTimeout = isMobile ? timeout * 1.5 : timeout * 2; // More generous for mobile
-      const recTimeoutPromise = new Promise((_, reject) => {
-        setTimeout(() => reject(new Error('Recommendation timeout')), recTimeout);
-      });
+      // STAGE 3: Generate recommendations with reduced timeout
+      console.log('[AI Service] Stage 3: Generating recommendations (optimized)');
+      onProgress?.(2, 60);
       
       const recommendationPromise = aiRouter.routeRequest({
         task: 'mood_recommendation' as AITask,
@@ -190,7 +202,10 @@ export class AIRecommendationService {
         maxTokens: 1500,
       });
       
-      const recommendationResponse = await Promise.race([recommendationPromise, recTimeoutPromise]);
+      const recommendationResponse = await Promise.race([
+        recommendationPromise,
+        new Promise((_, reject) => setTimeout(() => reject(new Error('Recommendation timeout')), timeout))
+      ]);
       
       totalCost += (recommendationResponse as any).cost;
       modelsUsed.push((recommendationResponse as any).model);
@@ -209,9 +224,9 @@ export class AIRecommendationService {
         throw new Error('Failed to parse AI response');
       }
 
-      // Stage 4: Pre-fetch book covers for all recommendations
-      onProgress?.(3, 85);
-      console.log('[AI Service] Stage 4: Fetching book covers');
+      // PARALLEL STAGE 4: Start cover fetching while building response
+      console.log('[AI Service] Stage 4: Parallel cover fetching');
+      onProgress?.(3, 80);
       
       const allBooks: BookRecommendation[] = [];
       for (const category of recommendations.categories) {
@@ -221,46 +236,7 @@ export class AIRecommendationService {
       console.log(`[AI Service] Pre-fetching covers for ${allBooks.length} books across ${recommendations.categories.length} categories`);
       console.log('[AI Service] Categories:', recommendations.categories.map((c: any) => `${c.name} (${c.books.length} books)`).join(', '));
       
-      try {
-        const coverResults = await bookCoverService.getBatchCovers(allBooks);
-        console.log(`[AI Service] Cover service returned ${coverResults.size} results`);
-        
-        // Apply covers to the books with detailed logging
-        let bookIndex = 0;
-        let coversAttached = 0;
-        for (const category of recommendations.categories) {
-          console.log(`[AI Service] Processing category: ${category.name} with ${category.books.length} books`);
-          for (const book of category.books) {
-            const coverResult = coverResults.get(bookIndex);
-            if (coverResult && coverResult.url) {
-              book.cover = coverResult.url;
-              coversAttached++;
-              console.log(`[AI Service] ✅ Cover attached for "${book.title}" (${category.name}): ${coverResult.source} - ${coverResult.url.substring(0, 50)}...`);
-            } else {
-              console.warn(`[AI Service] ⚠️ No cover found for "${book.title}" by ${book.author} (${category.name}) at index ${bookIndex}`);
-              // Generate a fallback cover if none was found
-              const fallbackCover = this.generateFallbackCover(book.title, book.author);
-              book.cover = fallbackCover;
-              console.log(`[AI Service] 🎨 Generated fallback cover for "${book.title}"`);
-            }
-            bookIndex++;
-          }
-        }
-
-        console.log(`[AI Service] Successfully attached ${coversAttached} covers out of ${allBooks.length} books`);
-      } catch (coverError) {
-        console.error('[AI Service] Cover pre-fetching failed:', coverError);
-        // Add fallback covers for all books if batch fetch fails
-        for (const category of recommendations.categories) {
-          for (const book of category.books) {
-            if (!book.cover) {
-              book.cover = this.generateFallbackCover(book.title, book.author);
-            }
-          }
-        }
-        console.log('[AI Service] Applied fallback covers due to fetch failure');
-      }
-
+      // Build response immediately, fetch covers in background
       const result: RecommendationResponse = {
         ...recommendations,
         userInput,
@@ -268,8 +244,39 @@ export class AIRecommendationService {
         cost: totalCost,
         models: modelsUsed,
       };
+      
+      // Start cover fetching in background (non-blocking)
+      bookCoverService.getBatchCovers(allBooks).then(coverResults => {
+        console.log(`[AI Service] Background cover service returned ${coverResults.size} results`);
+        
+        // Apply covers to the books
+        let coversAttached = 0;
+        let bookIndex = 0;
+        for (const category of result.categories) {
+          for (const book of category.books) {
+            const coverResult = coverResults.get(bookIndex);
+            if (coverResult && coverResult.url) {
+              book.cover = coverResult.url;
+              coversAttached++;
+            } else {
+              // Generate a fallback cover if none was found
+              book.cover = this.generateFallbackCover(book.title, book.author);
+            }
+            bookIndex++;
+          }
+        }
+        console.log(`[AI Service] Background covers attached: ${coversAttached}/${allBooks.length}`);
+      }).catch(error => {
+        console.error('[AI Service] Background cover fetching failed:', error);
+        // Apply fallback covers
+        for (const category of result.categories) {
+          for (const book of category.books) {
+            book.cover = this.generateFallbackCover(book.title, book.author);
+          }
+        }
+      });
 
-      // Cache the result
+      // Cache the result immediately
       this.setCache(cacheKey, result);
       
       onProgress?.(3, 100);

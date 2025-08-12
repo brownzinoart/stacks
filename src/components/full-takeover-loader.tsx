@@ -27,7 +27,7 @@ const ENHANCED_LOADING_STAGES: LoadingStage[] = [
     id: 'analyzing',
     title: 'ANALYZING REQUEST',
     description: 'Understanding your mood and preferences...',
-    duration: 4,
+    duration: 1, // Optimized: reduced from 4s to 1s
     color: 'from-blue-500 to-teal-500',
     icon: '🧠'
   },
@@ -35,7 +35,7 @@ const ENHANCED_LOADING_STAGES: LoadingStage[] = [
     id: 'enriching',
     title: 'ENRICHING CONTEXT', 
     description: 'Gathering additional context and references...',
-    duration: 3,
+    duration: 1, // Optimized: reduced from 3s to 1s
     color: 'from-purple-500 to-pink-500',
     icon: '🔍'
   },
@@ -43,15 +43,15 @@ const ENHANCED_LOADING_STAGES: LoadingStage[] = [
     id: 'matching',
     title: 'FINDING PERFECT MATCHES',
     description: 'AI is curating personalized recommendations...',
-    duration: 8,
+    duration: 2, // Optimized: reduced from 8s to 2s
     color: 'from-green-500 to-yellow-500',
     icon: '📚'
   },
   {
     id: 'fetching_covers',
-    title: 'FETCHING BOOK COVERS',
-    description: 'Loading beautiful cover images for all recommendations...',
-    duration: 3,
+    title: 'OPTIMIZING RESULTS',
+    description: 'Finalizing your personalized recommendations...',
+    duration: 1, // Optimized: reduced from 3s to 1s, covers now load in background
     color: 'from-orange-500 to-red-500',
     icon: '🎨'
   }
@@ -67,8 +67,11 @@ export default function FullTakeoverLoader({
 }: FullTakeoverLoaderProps) {
   const [mounted, setMounted] = useState(false)
   const [showPulse, setShowPulse] = useState(true)
+  
+  console.log('🎬 [LOADER] FullTakeoverLoader rendered - isVisible:', isVisible, 'mounted:', mounted, 'currentStage:', currentStage)
 
   useEffect(() => {
+    console.log('🎬 [LOADER] Mounting FullTakeoverLoader');
     setMounted(true)
     return () => setMounted(false)
   }, [])
@@ -93,51 +96,60 @@ export default function FullTakeoverLoader({
 
   const currentStageData = ENHANCED_LOADING_STAGES[currentStage] ?? ENHANCED_LOADING_STAGES[0]
 
+  console.log('🎬 [LOADER] Render check - mounted:', mounted, 'isVisible:', isVisible, 'will render:', mounted && isVisible)
+  
   if (!mounted || !isVisible) return null
 
   const LoaderContent = (
     <div 
-      className="fixed inset-0 z-[9999] bg-black/95 backdrop-blur-sm flex items-center justify-center p-4"
+      className="fixed inset-0 z-[9999] bg-black/95 backdrop-blur-md flex items-center justify-center p-4"
       role="dialog"
       aria-modal="true"
       aria-labelledby="loading-title"
       aria-describedby="loading-description"
+      style={{ animation: 'backdropPulse 3s ease-in-out infinite' }}
     >
       {/* Main Loading Container */}
       <div className="w-full max-w-md mx-auto text-center space-y-8">
         
-        {/* Current Stage Icon & Title */}
+        {/* Enhanced Stage Icon & Title */}
         <div className="space-y-4">
-          <div className={`text-6xl ${showPulse ? 'animate-pulse' : ''} transition-all duration-500`}>
-            {currentStageData?.icon}
+          <div className="relative">
+            <div className={`text-7xl ${showPulse ? 'animate-pulse' : ''} transition-all duration-500 relative z-10`}>
+              {currentStageData?.icon}
+            </div>
+            {/* Glow effect behind icon */}
+            <div className={`absolute inset-0 text-7xl blur-xl opacity-30 ${currentStageData?.color ? `text-gradient bg-gradient-to-r ${currentStageData.color}` : ''} transition-all duration-500`}>
+              {currentStageData?.icon}
+            </div>
           </div>
           
           <h2 
             id="loading-title"
-            className="text-2xl md:text-3xl font-bold text-white tracking-tight"
+            className="text-2xl md:text-3xl font-black text-white tracking-tight animate-fade-in-up"
           >
             {currentStageData?.title}
           </h2>
           
           <p 
             id="loading-description"
-            className="text-lg text-white/80 leading-relaxed"
+            className="text-lg text-white/90 leading-relaxed font-medium animate-fade-in-up animation-delay-200"
           >
             {currentStageData?.description}
           </p>
 
           {userQuery && (
-            <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 mt-6">
-              <p className="text-sm text-white/70 mb-1">Searching for:</p>
-              <p className="text-white font-medium">&quot;{userQuery}&quot;</p>
+            <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 mt-6 border border-white/20 animate-fade-in-up animation-delay-400">
+              <p className="text-sm text-white/70 mb-2 font-medium">Searching for:</p>
+              <p className="text-white font-bold text-base">&quot;{userQuery}&quot;</p>
             </div>
           )}
         </div>
 
-        {/* Progress Bar */}
+        {/* Enhanced Progress Bar */}
         <div className="space-y-3">
           <div 
-            className="h-3 bg-white/20 rounded-full overflow-hidden"
+            className="h-4 bg-white/20 rounded-full overflow-hidden relative border border-white/30"
             role="progressbar"
             aria-valuenow={progress}
             aria-valuemin={0}
@@ -145,42 +157,91 @@ export default function FullTakeoverLoader({
             aria-label={`Loading progress: ${progress}% complete`}
           >
             <div 
-              className={`h-full bg-gradient-to-r ${currentStageData?.color || 'from-blue-400 to-blue-600'} rounded-full transition-all duration-300 ease-out relative`}
+              className={`h-full bg-gradient-to-r ${currentStageData?.color || 'from-blue-400 to-blue-600'} rounded-full transition-all duration-500 ease-out relative overflow-hidden`}
               style={{ width: `${progress}%` }}
             >
-              <div className="absolute inset-0 bg-white/30 animate-pulse rounded-full"></div>
+              {/* Shimmer effect */}
+              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent animate-pulse rounded-full"></div>
+              {/* Moving highlight */}
+              <div 
+                className="absolute inset-0 bg-gradient-to-r from-transparent via-white/50 to-transparent rounded-full"
+                style={{
+                  animation: 'progressShine 2s ease-in-out infinite',
+                  backgroundSize: '200% 100%'
+                }}
+              ></div>
             </div>
+            {/* Glow effect */}
+            <div 
+              className={`absolute top-0 left-0 h-full bg-gradient-to-r ${currentStageData?.color || 'from-blue-400 to-blue-600'} rounded-full opacity-50 blur-sm transition-all duration-500`}
+              style={{ width: `${progress}%` }}
+            ></div>
           </div>
           
           <div className="flex justify-between items-center text-sm">
-            <span className="text-white/60">{progress}% Complete</span>
+            <span className="text-white/80 font-medium">{progress}% Complete</span>
             <span className="text-white/60">~{Math.max(15 - Math.floor(progress * 0.15), 0)}s remaining</span>
           </div>
         </div>
 
-        {/* Stage Progress Indicators */}
-        <div className="flex items-center justify-center space-x-4">
+        {/* Enhanced Stage Progress Indicators */}
+        <div className="flex items-center justify-center space-x-3 sm:space-x-4">
           {ENHANCED_LOADING_STAGES.map((stage, index) => (
             <div key={stage.id} className="flex items-center">
               <div 
                 className={`
-                  w-10 h-10 rounded-full border-2 flex items-center justify-center text-sm font-bold transition-all duration-300
+                  relative w-12 h-12 rounded-full border-2 flex items-center justify-center text-sm font-bold transition-all duration-500 ease-out
                   ${index < currentStage 
-                    ? 'bg-green-500 border-green-500 text-white' 
+                    ? 'bg-green-500 border-green-400 text-white scale-110' 
                     : index === currentStage 
-                      ? `bg-gradient-to-r ${stage.color} border-white text-white animate-pulse`
-                      : 'bg-white/10 border-white/30 text-white/50'
+                      ? `bg-gradient-to-r ${stage.color} border-white text-white scale-125 shadow-lg`
+                      : 'bg-white/10 border-white/30 text-white/50 scale-100'
                   }
                 `}
                 aria-label={`Stage ${index + 1}: ${stage.title} ${index < currentStage ? 'completed' : index === currentStage ? 'in progress' : 'pending'}`}
               >
-                {index < currentStage ? '✓' : index + 1}
+                {/* Completion checkmark */}
+                {index < currentStage && (
+                  <span className="text-lg animate-bounce">✓</span>
+                )}
+                
+                {/* Current stage with pulsing ring */}
+                {index === currentStage && (
+                  <>
+                    <span className="text-base font-black">{index + 1}</span>
+                    <div className="absolute inset-0 rounded-full border-2 border-white/50 animate-ping"></div>
+                  </>
+                )}
+                
+                {/* Future stages */}
+                {index > currentStage && (
+                  <span className="text-sm">{index + 1}</span>
+                )}
               </div>
               
+              {/* Enhanced connectors */}
               {index < ENHANCED_LOADING_STAGES.length - 1 && (
-                <div className={`w-8 h-0.5 mx-2 transition-colors duration-300 ${
-                  index < currentStage ? 'bg-green-500' : 'bg-white/20'
-                }`} />
+                <div className="flex items-center mx-2">
+                  <div 
+                    className={`w-6 h-1 rounded-full transition-all duration-500 ${
+                      index < currentStage 
+                        ? 'bg-green-500 shadow-md' 
+                        : index === currentStage - 1
+                          ? `bg-gradient-to-r ${ENHANCED_LOADING_STAGES[index + 1]?.color || 'from-blue-400 to-blue-600'}`
+                          : 'bg-white/20'
+                    }`} 
+                  />
+                  {/* Flow animation for active connector */}
+                  {index === currentStage - 1 && (
+                    <div 
+                      className="absolute w-2 h-1 bg-white rounded-full opacity-80"
+                      style={{
+                        animation: 'flowRight 1.5s ease-in-out infinite',
+                        marginLeft: '-12px'
+                      }}
+                    />
+                  )}
+                </div>
               )}
             </div>
           ))}
@@ -198,12 +259,13 @@ export default function FullTakeoverLoader({
           </div>
         )}
 
-        {/* Cancel Button */}
+        {/* Cancel Button - Enhanced visibility and accessibility */}
         <button
           onClick={onCancel}
-          className="text-white/60 hover:text-white/80 text-sm font-medium transition-colors duration-200 underline-offset-4 hover:underline focus:outline-none focus:ring-2 focus:ring-white/50 focus:rounded px-2 py-1"
+          className="mt-4 flex items-center justify-center gap-2 text-white/80 hover:text-white text-sm font-bold transition-all duration-200 underline-offset-4 hover:underline focus:outline-none focus:ring-4 focus:ring-white/30 focus:rounded-lg px-4 py-3 rounded-lg bg-white/10 hover:bg-white/20 backdrop-blur-sm border border-white/20"
           aria-label="Cancel book recommendation request"
         >
+          <span className="text-lg">✕</span>
           Cancel Request
         </button>
       </div>
