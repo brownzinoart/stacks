@@ -1,10 +1,11 @@
 'use client'
 
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { aiRecommendationService } from '@/lib/ai-recommendation-service'
 import FullTakeoverLoader, { ENHANCED_LOADING_STAGES } from '@/components/full-takeover-loader'
 import { hapticFeedback, isMobile } from '@/lib/mobile-utils'
+import AnimatedPlaceholder from '@/components/animated-placeholder'
 
 const MOOD_OPTIONS = [
   { mood: 'adventurous', label: '🗺️ Adventurous', color: 'bg-primary-orange' },
@@ -12,7 +13,20 @@ const MOOD_OPTIONS = [
   { mood: 'mysterious', label: '🔍 Mysterious', color: 'bg-primary-purple' },
   { mood: 'funny', label: '😂 Funny', color: 'bg-primary-yellow' },
   { mood: 'inspiring', label: '✨ Inspiring', color: 'bg-primary-teal' },
-  { mood: 'thrilling', label: '⚡ Thrilling', color: 'bg-primary-blue' },
+  { mood: 'surprise', label: '🎲 Surprise Me', color: 'bg-gradient-to-r from-primary-blue to-primary-purple' },
+]
+
+const PLACEHOLDER_EXAMPLES = [
+  "What's your vibe? ✨ (drop any book mood, genre, or random thought)",
+  "Fantasy books with strong female leads",
+  "Sci-fi like Dune but shorter",
+  "Something funny for my commute",
+  "Books that will make me cry",
+  "Non-fiction about productivity",
+  "Mysteries set in small towns",
+  "Romance without the drama",
+  "Historical fiction during WWII",
+  "Self-help for entrepreneurs"
 ]
 
 export default function AIPromptInput() {
@@ -23,8 +37,12 @@ export default function AIPromptInput() {
   const [currentStage, setCurrentStage] = useState(0)
   const [progress, setProgress] = useState(0)
   const [error, setError] = useState<string | null>(null)
+  const [isFocused, setIsFocused] = useState(false)
   
   const router = useRouter()
+
+  // Determine if animated placeholder should be active
+  const isPlaceholderActive = !isFocused && !inputValue.trim() && !isLoading
 
   // Clear error when user interacts
   const clearError = useCallback(() => {
@@ -37,8 +55,13 @@ export default function AIPromptInput() {
     setSelectedMood(mood)
     if (isMobile()) await hapticFeedback('medium')
     
-    // Automatically start search when mood is selected
-    startSearch(mood)
+    // Handle surprise me differently
+    if (mood === 'surprise') {
+      startSearch('Surprise me with a great book recommendation')
+    } else {
+      // Automatically start search when mood is selected
+      startSearch(`I'm feeling ${mood} today, recommend me some books`)
+    }
   }, [clearError])
 
   // Handle form submission
@@ -142,7 +165,7 @@ export default function AIPromptInput() {
       />
 
       {/* Main Input Interface */}
-      <div className="w-full max-w-2xl space-y-6">
+      <div className="w-full space-y-6">
         {/* Error Display */}
         {error && (
           <div className="rounded-3xl bg-primary-orange/10 border border-primary-orange/20 p-6 text-center shadow-[0_8px_25px_rgb(0,0,0,0.1)]">
@@ -158,7 +181,7 @@ export default function AIPromptInput() {
 
         {/* Text Input */}
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
+          <div className="relative">
             <input
               type="text"
               value={inputValue}
@@ -166,16 +189,23 @@ export default function AIPromptInput() {
                 setInputValue(e.target.value)
                 clearError()
               }}
-              placeholder="What books are you in the mood for? (e.g., 'books like Harry Potter' or 'mystery novels set in Japan')"
-              className="w-full rounded-3xl border-2 border-gray-200 px-8 py-6 text-xl font-bold placeholder-gray-400 focus:border-primary-blue focus:outline-none focus:ring-4 focus:ring-primary-blue/20 transition-all shadow-[0_4px_15px_rgb(0,0,0,0.05)] focus:shadow-[0_8px_25px_rgb(0,0,0,0.1)]"
+              onFocus={() => setIsFocused(true)}
+              onBlur={() => setIsFocused(false)}
+              placeholder="" // Handled by AnimatedPlaceholder
+              className="w-full rounded-3xl border-2 border-white/30 bg-white/95 backdrop-blur-xl px-8 py-6 text-xl font-bold placeholder-gray-500 focus:border-white focus:outline-none focus:ring-4 focus:ring-white/30 transition-all duration-300 shadow-[0_8px_32px_rgba(0,0,0,0.1),inset_0_1px_0_rgba(255,255,255,0.6)] focus:shadow-[0_20px_40px_rgba(59,130,246,0.3),inset_0_1px_0_rgba(255,255,255,0.8),0_0_0_4px_rgba(59,130,246,0.2)] focus:bg-white/98 focus:scale-[1.02] text-text-primary"
               disabled={isLoading}
+            />
+            <AnimatedPlaceholder
+              examples={PLACEHOLDER_EXAMPLES}
+              isActive={isPlaceholderActive}
+              className="absolute inset-0"
             />
           </div>
           
           <button
             type="submit"
             disabled={!inputValue.trim() || isLoading}
-            className="w-full rounded-3xl bg-primary-blue px-8 py-6 text-xl font-black text-white transition-all hover:bg-blue-600 hover:scale-[1.02] disabled:bg-gray-300 disabled:cursor-not-allowed focus:outline-none focus:ring-4 focus:ring-primary-blue/20 shadow-[0_10px_40px_rgb(0,0,0,0.2)] hover:shadow-[0_8px_30px_rgb(0,0,0,0.25)] disabled:shadow-none"
+            className="w-full rounded-3xl bg-gradient-to-r from-primary-blue via-primary-purple to-primary-pink bg-size-200 px-8 py-6 text-xl font-black text-white transition-all duration-300 hover:scale-[1.02] hover:shadow-[0_20px_40px_rgba(102,126,234,0.4),0_0_40px_rgba(102,126,234,0.3)] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-4 focus:ring-white/30 shadow-[0_8px_30px_rgba(0,0,0,0.3)] animate-pulse-slow"
           >
             {isLoading ? 'Searching...' : 'Find My Next Read'}
           </button>
@@ -183,9 +213,9 @@ export default function AIPromptInput() {
 
         {/* Divider */}
         <div className="relative flex items-center">
-          <div className="flex-grow border-t-2 border-text-primary/20" />
-          <span className="mx-6 text-base font-black text-text-primary bg-bg-light px-4">OR CHOOSE A MOOD</span>
-          <div className="flex-grow border-t-2 border-text-primary/20" />
+          <div className="flex-grow border-t-2 border-white/30" />
+          <span className="mx-6 text-base font-black text-white px-4">OR CHOOSE A MOOD</span>
+          <div className="flex-grow border-t-2 border-white/30" />
         </div>
 
         {/* Mood Buttons */}
@@ -193,9 +223,9 @@ export default function AIPromptInput() {
           {MOOD_OPTIONS.map(({ mood, label, color }) => (
             <button
               key={mood}
-              onClick={() => handleMoodClick(`I'm feeling ${mood} today, recommend me some books`)}
+              onClick={() => handleMoodClick(mood)}
               disabled={isLoading}
-              className={`${color} rounded-2xl px-6 py-4 text-base font-black text-white transition-all hover:scale-[1.02] active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-4 focus:ring-offset-2 focus:ring-current/20 shadow-[0_8px_25px_rgb(0,0,0,0.15)] hover:shadow-[0_6px_20px_rgb(0,0,0,0.2)]`}
+              className={`${color} rounded-2xl px-6 py-4 text-base font-black text-white transition-all duration-300 hover:scale-[1.05] hover:shadow-[0_12px_30px_rgba(0,0,0,0.3)] active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-4 focus:ring-white/30 shadow-[0_8px_25px_rgba(0,0,0,0.2)] backdrop-blur-sm border-2 border-white/20 hover:border-white/40`}
             >
               {label}
             </button>

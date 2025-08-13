@@ -130,6 +130,13 @@ NEXT_PUBLIC_DEV_SERVER_IP=192.168.86.174  # Your local IP for mobile testing
 - Feature-based organization matching route structure
 - Shared components in `src/components/`
 
+### Planning & Execution Protocol
+
+- **ALWAYS** consult with `/mydawgs` team when planning new features or major changes
+- Use Task tool with appropriate specialized agents (ux-ui, dev, etc.) before implementation
+- Get team consensus on approach before execution
+- Collaborate with mydawgs for design, architecture, and implementation decisions
+
 ## Testing Strategy
 
 Playwright E2E testing with comprehensive coverage:

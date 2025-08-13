@@ -12,12 +12,6 @@ export const MoreWaysToDiscover = () => {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState<string | null>(null);
 
-  const handleSurpriseMe = async () => {
-    setIsLoading('surprise');
-    // Navigate to stacks-recommendations with surprise parameter
-    router.push('/stacks-recommendations?surprise=true');
-  };
-
   const handleBrowseTopics = async () => {
     setIsLoading('topics');
     // Navigate to discovery page for topic exploration
@@ -41,22 +35,7 @@ export const MoreWaysToDiscover = () => {
           </h2>
         </div>
 
-        <div className="grid gap-4 sm:gap-6 lg:grid-cols-3">
-          {/* Surprise Me */}
-          <button
-            onClick={handleSurpriseMe}
-            disabled={isLoading === 'surprise'}
-            className="outline-bold-thin touch-feedback mobile-touch rounded-2xl bg-white/20 p-6 backdrop-blur-sm transition-all duration-300 hover:scale-[1.02] hover:bg-white/30 hover:shadow-[0_8px_30px_rgb(0,0,0,0.2)] disabled:opacity-70 sm:p-8"
-          >
-            <div className="text-center">
-              <div className="mb-4 text-4xl sm:text-5xl">{isLoading === 'surprise' ? '⏳' : '🎲'}</div>
-              <h3 className="mb-2 text-lg font-black text-white sm:text-xl">
-                {isLoading === 'surprise' ? 'LOADING...' : 'SURPRISE ME'}
-              </h3>
-              <p className="text-sm font-bold text-white/80 sm:text-base">Random book magic!</p>
-            </div>
-          </button>
-
+        <div className="grid gap-4 sm:gap-6 lg:grid-cols-2">
           {/* Browse Topics */}
           <button
             onClick={handleBrowseTopics}
