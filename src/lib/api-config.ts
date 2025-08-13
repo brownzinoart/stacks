@@ -65,8 +65,8 @@ export async function apiCall(endpoint: string, options: RequestInit = {}) {
         'X-Requested-With': 'XMLHttpRequest', // Help with CORS
         ...options.headers,
       },
-      // Add timeout for mobile networks
-      signal: AbortSignal.timeout(30000), // 30 second timeout
+      // Add timeout for mobile networks - increased for AI response times
+      signal: AbortSignal.timeout(90000), // 90 second timeout (AI needs 18-22s + network overhead)
     });
 
     if (!response.ok) {

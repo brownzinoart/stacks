@@ -61,6 +61,31 @@ const bookMappings: Record<string, FallbackBook[]> = {
     { title: 'The Girl with the Dragon Tattoo', author: 'Stieg Larsson', why: 'Dark mystery investigation' },
     { title: 'Big Little Lies', author: 'Liane Moriarty', why: 'Mystery with complex characters' },
   ],
+  'die hard|action|explosion|hostage|heist': [
+    { title: 'The Bourne Identity', author: 'Robert Ludlum', why: 'Non-stop action thriller like Die Hard' },
+    { title: 'Without Remorse', author: 'Tom Clancy', why: 'Military action with high stakes' },
+    { title: 'The Gray Man', author: 'Mark Greaney', why: 'Elite operative against impossible odds' },
+  ],
+  'terminator|robot|ai|skynet|cyborg': [
+    { title: 'Robopocalypse', author: 'Daniel H. Wilson', why: 'AI uprising like Terminator' },
+    { title: 'Do Androids Dream of Electric Sheep?', author: 'Philip K. Dick', why: 'Classic android hunter story' },
+    { title: 'The Machine Stops', author: 'E.M. Forster', why: 'Humanity dependent on machines' },
+  ],
+  'matrix|simulation|virtual reality|red pill': [
+    { title: 'Neuromancer', author: 'William Gibson', why: 'Cyberpunk reality-bending like The Matrix' },
+    { title: 'Snow Crash', author: 'Neal Stephenson', why: 'Virtual reality metaverse adventure' },
+    { title: 'Ready Player One', author: 'Ernest Cline', why: 'Virtual world becomes reality' },
+  ],
+  'john wick|assassin|hitman|revenge': [
+    { title: 'The Killer', author: 'Luc Jacamon', why: 'Professional assassin like John Wick' },
+    { title: 'The Day of the Jackal', author: 'Frederick Forsyth', why: 'Master assassin thriller' },
+    { title: 'Point of Impact', author: 'Stephen Hunter', why: 'Sniper seeking revenge' },
+  ],
+  'mission impossible|spy|espionage|covert': [
+    { title: 'The Spy Who Came in from the Cold', author: 'John le Carré', why: 'Classic espionage thriller' },
+    { title: 'Red Sparrow', author: 'Jason Matthews', why: 'Modern spy thriller with double agents' },
+    { title: 'I Am Pilgrim', author: 'Terry Hayes', why: 'Epic spy thriller across continents' },
+  ],
 };
 
 // Default fallback for unmatched queries
@@ -93,16 +118,110 @@ export function getEmergencyFallbackBooks(userInput: string): FallbackBook[] {
 }
 
 /**
- * Format fallback books for display
+ * Format fallback books for display with cover fetching - FIXED TO USE 3-CATEGORY STRUCTURE
  */
-export function formatFallbackRecommendations(userInput: string) {
+export async function formatFallbackRecommendations(userInput: string) {
   const books = getEmergencyFallbackBooks(userInput);
   
+  console.log(`🚨 [EMERGENCY FALLBACK] Processing "${userInput}" with ${books.length} books`);
+  
+  // CRITICAL FIX: Attempt to fetch real covers for fallback books
+  try {
+    console.log('🎯 [FALLBACK SERVICE] Attempting to fetch real covers for fallback books');
+    const { bookCoverService } = await import('./book-cover-service');
+    
+    const coverResults = await Promise.race([
+      bookCoverService.getBatchCovers(books),
+      new Promise<Map<number, any>>((_, reject) => 
+        setTimeout(() => reject(new Error('Fallback service cover timeout')), 5000)
+      )
+    ]);
+
+    // Apply covers
+    books.forEach((book, index) => {
+      const coverResult = coverResults.get(index);
+      if (coverResult && coverResult.url && !coverResult.url.startsWith('gradient:')) {
+        book.cover = coverResult.url;
+        console.log(`✅ [FALLBACK SERVICE] Real cover found for "${book.title}"`);
+      } else {
+        // Generate gradient as last resort
+        const hash = (book.title + book.author).split('').reduce((acc, char) => {
+          return (acc << 5) - acc + char.charCodeAt(0);
+        }, 0);
+        const colors = [
+          ['#FF6B6B', '#4ECDC4'],
+          ['#45B7D1', '#F39C12'], 
+          ['#96CEB4', '#FECA57'],
+          ['#6C5CE7', '#FD79A8']
+        ];
+        const colorPair = colors[Math.abs(hash) % colors.length];
+        book.cover = `gradient:${colorPair![0]}:${colorPair![1]}:${encodeURIComponent(book.title)}:${encodeURIComponent(book.author)}`;
+        console.log(`🎨 [FALLBACK SERVICE] Using gradient for "${book.title}"`);
+      }
+    });
+  } catch (coverError) {
+    console.error('❌ [FALLBACK SERVICE] Cover fetching failed:', coverError);
+    // Apply gradients to all books without covers
+    books.forEach((book) => {
+      if (!book.cover) {
+        const hash = (book.title + book.author).split('').reduce((acc, char) => {
+          return (acc << 5) - acc + char.charCodeAt(0);
+        }, 0);
+        const colors = [
+          ['#FF6B6B', '#4ECDC4'],
+          ['#45B7D1', '#F39C12'], 
+          ['#96CEB4', '#FECA57'],
+          ['#6C5CE7', '#FD79A8']
+        ];
+        const colorPair = colors[Math.abs(hash) % colors.length];
+        book.cover = `gradient:${colorPair![0]}:${colorPair![1]}:${encodeURIComponent(book.title)}:${encodeURIComponent(book.author)}`;
+      }
+    });
+  }
+  
+  // CRITICAL FIX: Return proper 3-category structure instead of flat books array
+  const enhancedBooks = books.map(book => ({
+    title: book.title,
+    author: book.author,
+    whyYoullLikeIt: book.why,
+    summary: book.why, // Use the 'why' as summary for fallback
+    cover: book.cover
+  }));
+  
+  // Distribute books across the 3 core categories
+  const categories = [
+    {
+      name: "The Plot",
+      description: "Books with similar storylines and narrative structure",
+      books: enhancedBooks.slice(0, Math.ceil(enhancedBooks.length / 3)) || enhancedBooks.slice(0, 1)
+    },
+    {
+      name: "The Characters", 
+      description: "Books with compelling character development and relationships",
+      books: enhancedBooks.slice(Math.ceil(enhancedBooks.length / 3), Math.ceil(enhancedBooks.length * 2 / 3)) || enhancedBooks.slice(0, 1)
+    },
+    {
+      name: "The Atmosphere",
+      description: "Books with similar mood, setting, and emotional tone", 
+      books: enhancedBooks.slice(Math.ceil(enhancedBooks.length * 2 / 3)) || enhancedBooks.slice(0, 1)
+    }
+  ];
+  
+  // Ensure each category has at least one book
+  categories.forEach((category, index) => {
+    if (category.books.length === 0) {
+      category.books = [enhancedBooks[index] || enhancedBooks[0]];
+    }
+  });
+  
+  console.log(`🎯 [EMERGENCY FALLBACK] Generated categories:`, categories.map(c => `${c.name} (${c.books.length} books)`));
+  
   return {
-    books,
+    overallTheme: `Emergency recommendations for "${userInput}"`,
+    categories,
     userInput,
-    emergency: true,
     timestamp: new Date().toISOString(),
-    message: 'Network issues detected. Showing offline recommendations.',
+    cost: 0,
+    models: ['emergency_fallback'],
   };
 }

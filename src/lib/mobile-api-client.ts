@@ -21,7 +21,7 @@ class MobileApiClient {
   
   constructor() {
     this.isMobile = this.detectMobile();
-    this.defaultTimeout = this.isMobile ? 60000 : 30000; // 60s for mobile, 30s for desktop
+    this.defaultTimeout = this.isMobile ? 90000 : 90000; // 90s for both mobile and desktop (AI needs time to complete)
   }
   
   private detectMobile(): boolean {

@@ -92,7 +92,7 @@ export class AIRecommendationService {
   private readonly CACHE_DURATION = 24 * 60 * 60 * 1000; // 24 hours
   // Progressive timeout strategy
   private readonly QUICK_TIMEOUT = 8000; // Fast lane: 8 seconds for quick models
-  private readonly QUALITY_TIMEOUT = 30000; // Quality lane: 30 seconds for premium models
+  private readonly QUALITY_TIMEOUT = 90000; // Quality lane: 90 seconds for premium models (AI needs 18-22s + network overhead)
   private readonly EMERGENCY_TIMEOUT = 5000; // Emergency: 5 seconds for cached/simple responses
   
   // Circuit breaker for API performance tracking
@@ -146,44 +146,34 @@ export class AIRecommendationService {
       // Progressive timeout strategy: start fast, escalate if needed
       console.log('[AI Service] Using progressive timeout strategy: Quick→Quality→Emergency');
       
-      // STAGE 1: Analysis with progressive fallback
-      console.log('[AI Service] Stage 1: Analysis with progressive fallback');
+      // STAGE 1: Analyze user input for better recommendations
+      console.log('[AI Service] Stage 1: Analyzing user input');
+      
       let analysisResult;
       try {
-        analysisResult = await this.getAnalysisWithFallback(userInput);
-        console.log('[AI Service] 🎯 Analysis fallback completed successfully');
-      } catch (fallbackError: any) {
-        console.error('[AI Service] 🚨 Progressive analysis completely failed, using emergency:', fallbackError);
+        // Try to analyze with a quick timeout
+        analysisResult = await Promise.race([
+          this.analyzeUserInput(userInput),
+          new Promise<any>((resolve) => setTimeout(() => resolve({
+            analysis: this.getDefaultAnalysis(userInput),
+            cost: 0,
+            model: 'timeout_default_analysis'
+          }), 5000)) // 5 second timeout for analysis
+        ]);
+      } catch (error) {
+        console.log('[AI Service] Analysis failed, using default:', error);
         analysisResult = {
           analysis: this.getDefaultAnalysis(userInput),
           cost: 0,
-          model: 'emergency_analysis_fallback'
+          model: 'error_default_analysis'
         };
       }
       
-      // Pre-emptively start OMDb lookup for potential references
-      const potentialOmdbPromise = this.extractPotentialReference(userInput)
-        ? fetchOmdbData(userInput)
-        : Promise.resolve(null);
-      
       onProgress?.(0, 25);
-      
-      // Get OMDb data if available
-      const omdbData = await potentialOmdbPromise;
-      
-      totalCost += analysisResult.cost;
-      modelsUsed.push(analysisResult.model);
-      const analysis = analysisResult.analysis;
-      
-      console.log('[AI Service] Analysis result:', analysis);
       onProgress?.(1, 40);
 
-      // Build enriched context from parallel OMDb data
-      let enrichedContext = '';
-      if (omdbData && (analysis.referenceType === 'show' || analysis.referenceType === 'movie')) {
-        enrichedContext = `\nReference: ${omdbData.title} - ${omdbData.plot}\nGenres: ${omdbData.genres}\nTone: ${omdbData.rated}`;
-        console.log('[AI Service] Using parallel OMDb enrichment');
-      }
+      // Skip OMDb lookup for now to keep it simple
+      const enrichedContext = `User wants books like: "${userInput}"`;
 
       // STAGE 3: Generate recommendations with progressive fallback
       console.log('[AI Service] Stage 3: Generating recommendations with fallback chain');
@@ -211,49 +201,59 @@ export class AIRecommendationService {
         allBooks.push(...category.books);
       }
 
-      // Fetch real covers with timeout
-      console.log(`[AI Service] Fetching covers for ${allBooks.length} books`);
+      // ENHANCED: Non-blocking cover fetching - never let covers block AI recommendations
+      console.log(`[AI Service] 🎯 CRITICAL: Fetching covers for ${allBooks.length} books (non-blocking)`);
+      let realCoversCount = 0;
+      let coverResults: Map<number, any> = new Map();
+      
       try {
-        const coverResults = await Promise.race([
+        console.log('[AI Service] 🚀 Fetching covers with 8s timeout');
+        coverResults = await Promise.race([
           bookCoverService.getBatchCovers(allBooks),
-          new Promise<Map<number, any>>((_, reject) => 
-            setTimeout(() => reject(new Error('Cover fetch timeout')), 10000) // 10 second timeout
-          )
+          new Promise<Map<number, any>>((resolve) => {
+            setTimeout(() => {
+              console.log('[AI Service] ⏰ Cover fetch timed out - proceeding with AI books');
+              resolve(new Map()); // Return empty map instead of rejecting
+            }, 8000)
+          })
         ]);
+        console.log(`[AI Service] ✅ Cover fetch completed: ${coverResults.size} results`);
+      } catch (coverError: any) {
+        console.log('[AI Service] ⚠️ Cover fetch failed but continuing with AI books:', coverError.message);
+        coverResults = new Map(); // Empty results, will use gradients
+      }
         
-        // Apply covers to books
-        let bookIndex = 0;
-        let realCoversCount = 0;
-        for (const category of recommendations.categories) {
-          for (const book of category.books) {
-            const coverResult = coverResults.get(bookIndex);
-            if (coverResult && coverResult.url) {
-              book.cover = coverResult.url;
-              if (!coverResult.url.startsWith('gradient:')) {
-                realCoversCount++;
-              }
-              console.log(`[AI Service] ✅ Cover attached for "${book.title}": ${coverResult.source}`);
-            } else {
-              // Generate fallback if no cover found
-              book.cover = this.generateFallbackCover(book.title, book.author);
-              console.log(`[AI Service] 🎨 Using gradient fallback for "${book.title}"`);
-            }
-            bookIndex++;
+      // Apply covers to books (covers can't fail the whole process now)
+      let bookIndex = 0;
+      for (const category of recommendations.categories) {
+        for (const book of category.books) {
+          const coverResult = coverResults.get(bookIndex);
+          if (coverResult && coverResult.url && !coverResult.url.startsWith('gradient:')) {
+            book.cover = coverResult.url;
+            realCoversCount++;
+            console.log(`[AI Service] ✅ REAL cover attached for "${book.title}": ${coverResult.source}`);
+          } else if (coverResult && coverResult.url) {
+            // It's a gradient, but from our service
+            book.cover = coverResult.url;
+            console.log(`[AI Service] 🎨 Service gradient for "${book.title}"`);
+          } else {
+            // Generate our own fallback gradient
+            book.cover = this.generateFallbackCover(book.title, book.author);
+            console.log(`[AI Service] 🎨 Generated gradient fallback for "${book.title}"`);
           }
-        }
-        console.log(`[AI Service] Cover fetch complete: ${realCoversCount} real covers, ${allBooks.length - realCoversCount} gradients`);
-        onProgress?.(3, 95);
-      } catch (coverError) {
-        console.warn('[AI Service] Cover fetching failed, using gradients:', coverError);
-        // Apply gradient covers as fallback
-        for (const category of recommendations.categories) {
-          for (const book of category.books) {
-            if (!book.cover) {
-              book.cover = this.generateFallbackCover(book.title, book.author);
-            }
-          }
+          bookIndex++;
         }
       }
+      
+      const successRate = Math.round((realCoversCount / allBooks.length) * 100);
+      console.log(`[AI Service] 🎯 COVER INTEGRATION RESULT: ${realCoversCount}/${allBooks.length} real covers (${successRate}% success rate)`);
+      
+      // Warning but not failure - covers don't block AI recommendations
+      if (successRate < 70) {
+        console.warn(`[AI Service] ⚠️ Cover success rate ${successRate}% below target, but AI recommendations are working`);
+      }
+      
+      onProgress?.(3, 95);
 
       // Build complete response with covers already attached
       const result: RecommendationResponse = {
@@ -289,28 +289,68 @@ export class AIRecommendationService {
         console.error('[AI Service] 🆘 Even emergency failed, using hardcoded response:', emergencyError);
         
         // Ultimate hardcoded fallback - this should NEVER fail
+        const ultimateBooks = [
+          {
+            title: "The Seven Husbands of Evelyn Hugo",
+            author: "Taylor Jenkins Reid",
+            whyYoullLikeIt: "A captivating story about love, ambition, and the price of fame",
+            summary: "Reclusive Hollywood icon Evelyn Hugo finally decides to tell her life story"
+          },
+          {
+            title: "Where the Crawdads Sing", 
+            author: "Delia Owens",
+            whyYoullLikeIt: "A beautiful blend of mystery and coming-of-age story",
+            summary: "A young woman survives alone in the marshes of North Carolina"
+          }
+        ];
+
+        // CRITICAL FIX: Attempt to fetch real covers even in ultimate fallback
+        try {
+          console.log('🎯 [ULTIMATE FALLBACK] Attempting to fetch real covers');
+          const coverResults = await Promise.race([
+            bookCoverService.getBatchCovers(ultimateBooks),
+            new Promise<Map<number, any>>((_, reject) => 
+              setTimeout(() => reject(new Error('Ultimate cover timeout')), 3000)
+            )
+          ]);
+
+          // Apply covers with real URLs preferred
+          ultimateBooks.forEach((book, index) => {
+            const coverResult = coverResults.get(index);
+            if (coverResult && coverResult.url && !coverResult.url.startsWith('gradient:')) {
+              (book as any).cover = coverResult.url;
+              console.log(`✅ [ULTIMATE FALLBACK] Real cover found for "${book.title}"`);
+            } else {
+              // Use gradient only as absolute last resort
+              (book as any).cover = this.generateFallbackCover(book.title, book.author);
+              console.log(`🎨 [ULTIMATE FALLBACK] Using gradient for "${book.title}"`);
+            }
+          });
+        } catch (coverError) {
+          console.error('❌ [ULTIMATE FALLBACK] Cover fetching failed:', coverError);
+          // Apply gradients to all books
+          ultimateBooks.forEach((book) => {
+            (book as any).cover = this.generateFallbackCover(book.title, book.author);
+          });
+        }
+
         return {
           overallTheme: `Books related to "${userInput}"`,
           categories: [
             {
-              name: "Popular Picks",
-              description: "Well-loved books that many readers enjoy",
-              books: [
-                {
-                  title: "The Seven Husbands of Evelyn Hugo",
-                  author: "Taylor Jenkins Reid",
-                  whyYoullLikeIt: "A captivating story about love, ambition, and the price of fame",
-                  summary: "Reclusive Hollywood icon Evelyn Hugo finally decides to tell her life story",
-                  cover: this.generateFallbackCover("The Seven Husbands of Evelyn Hugo", "Taylor Jenkins Reid")
-                },
-                {
-                  title: "Where the Crawdads Sing", 
-                  author: "Delia Owens",
-                  whyYoullLikeIt: "A beautiful blend of mystery and coming-of-age story",
-                  summary: "A young woman survives alone in the marshes of North Carolina",
-                  cover: this.generateFallbackCover("Where the Crawdads Sing", "Delia Owens")
-                }
-              ]
+              name: "The Plot",
+              description: "Books with similar storylines and narrative structure",
+              books: ultimateBooks.slice(0, 2)
+            },
+            {
+              name: "The Characters", 
+              description: "Books with compelling character development and relationships",
+              books: ultimateBooks.slice(2, 4).length > 0 ? ultimateBooks.slice(2, 4) : ultimateBooks.slice(0, 2)
+            },
+            {
+              name: "The Atmosphere",
+              description: "Books with similar mood, setting, and emotional tone",
+              books: ultimateBooks.length > 2 ? ultimateBooks.slice(0, 2) : ultimateBooks
             }
           ],
           userInput,
@@ -603,7 +643,16 @@ export class AIRecommendationService {
       console.log('[AI Service] Generating emergency recommendations with 5s timeout');
       const emergencyResponse = await this.makeAIRequestWithCircuitBreaker(
         'mood_recommendation' as AITask,
-        `Simple book recommendations for: "${userInput}". Return JSON with 2 categories, 2 books each.`,
+        `Simple book recommendations for: "${userInput}". Return JSON with exactly these 3 categories: "The Plot", "The Characters", "The Atmosphere". 2-3 books each.
+
+{
+  "overallTheme": "Brief description",
+  "categories": [
+    {"name": "The Plot", "description": "Books with similar storylines", "books": [...]},
+    {"name": "The Characters", "description": "Books with compelling characters", "books": [...]},
+    {"name": "The Atmosphere", "description": "Books with similar mood", "books": [...]}
+  ]
+}`,
         800,
         this.EMERGENCY_TIMEOUT
       );
@@ -621,50 +670,96 @@ export class AIRecommendationService {
       console.log('[AI Service] Emergency AI failed, using hardcoded fallback:', errorMessage);
     }
     
-    // Ultimate fallback: hardcoded response
+    // Ultimate fallback: hardcoded response with cover fetching attempt
+    const emergencyBooks = [
+      {
+        title: "The Seven Husbands of Evelyn Hugo",
+        author: "Taylor Jenkins Reid",
+        whyYoullLikeIt: "A captivating story about love, ambition, and the price of fame",
+        summary: "Reclusive Hollywood icon Evelyn Hugo finally decides to tell her life story"
+      },
+      {
+        title: "Where the Crawdads Sing",
+        author: "Delia Owens",
+        whyYoullLikeIt: "A beautiful blend of mystery and coming-of-age story",
+        summary: "A young woman survives alone in the marshes of North Carolina"
+      },
+      {
+        title: "To Kill a Mockingbird",
+        author: "Harper Lee",
+        whyYoullLikeIt: "A powerful story about justice, morality, and growing up",
+        summary: "A young girl learns about prejudice and justice in the American South"
+      },
+      {
+        title: "Pride and Prejudice",
+        author: "Jane Austen",
+        whyYoullLikeIt: "Witty dialogue and timeless romance with strong characters",
+        summary: "Elizabeth Bennet navigates love and social expectations in Regency England"
+      }
+    ];
+
+    // CRITICAL FIX: Attempt real covers even in emergency hardcoded fallback
+    try {
+      console.log('🎯 [EMERGENCY HARDCODED] Attempting to fetch real covers for emergency books');
+      const coverResults = await Promise.race([
+        bookCoverService.getBatchCovers(emergencyBooks),
+        new Promise<Map<number, any>>((_, reject) => 
+          setTimeout(() => reject(new Error('Emergency hardcoded cover timeout')), 3000)
+        )
+      ]);
+
+      // Apply covers
+      emergencyBooks.forEach((book, index) => {
+        const coverResult = coverResults.get(index);
+        if (coverResult && coverResult.url && !coverResult.url.startsWith('gradient:')) {
+          (book as any).cover = coverResult.url;
+          console.log(`✅ [EMERGENCY HARDCODED] Real cover found for "${book.title}"`);
+        } else {
+          (book as any).cover = this.generateFallbackCover(book.title, book.author);
+          console.log(`🎨 [EMERGENCY HARDCODED] Using gradient for "${book.title}"`);
+        }
+      });
+    } catch (coverError) {
+      console.error('❌ [EMERGENCY HARDCODED] Cover fetching failed:', coverError);
+      emergencyBooks.forEach((book) => {
+        (book as any).cover = this.generateFallbackCover(book.title, book.author);
+      });
+    }
+
+    // Import and use contextual fallback books
+    const { getEmergencyFallbackBooks } = await import('@/lib/emergency-fallback');
+    const contextualBooks = getEmergencyFallbackBooks(userInput);
+    
+    // Combine contextual books with hardcoded classics
+    const allBooks = [
+      ...contextualBooks.map(book => ({
+        title: book.title,
+        author: book.author,
+        whyYoullLikeIt: book.why,
+        summary: book.why,
+        cover: book.cover
+      })),
+      ...emergencyBooks
+    ];
+
     return {
       recommendations: {
         overallTheme: `Books related to "${userInput}"`,
         categories: [
           {
-            name: "Popular Picks",
-            description: "Well-loved books that many readers enjoy",
-            books: [
-              {
-                title: "The Seven Husbands of Evelyn Hugo",
-                author: "Taylor Jenkins Reid",
-                whyYoullLikeIt: "A captivating story about love, ambition, and the price of fame",
-                summary: "Reclusive Hollywood icon Evelyn Hugo finally decides to tell her life story",
-                cover: this.generateFallbackCover("The Seven Husbands of Evelyn Hugo", "Taylor Jenkins Reid")
-              },
-              {
-                title: "Where the Crawdads Sing",
-                author: "Delia Owens",
-                whyYoullLikeIt: "A beautiful blend of mystery and coming-of-age story",
-                summary: "A young woman survives alone in the marshes of North Carolina",
-                cover: this.generateFallbackCover("Where the Crawdads Sing", "Delia Owens")
-              }
-            ]
+            name: "The Plot",
+            description: "Books with similar storylines and narrative structure",
+            books: allBooks.slice(0, 2)
           },
           {
-            name: "Timeless Classics",
-            description: "Enduring stories that never go out of style",
-            books: [
-              {
-                title: "To Kill a Mockingbird",
-                author: "Harper Lee",
-                whyYoullLikeIt: "A powerful story about justice, morality, and growing up",
-                summary: "A young girl learns about prejudice and justice in the American South",
-                cover: this.generateFallbackCover("To Kill a Mockingbird", "Harper Lee")
-              },
-              {
-                title: "Pride and Prejudice",
-                author: "Jane Austen",
-                whyYoullLikeIt: "Witty dialogue and timeless romance with strong characters",
-                summary: "Elizabeth Bennet navigates love and social expectations in Regency England",
-                cover: this.generateFallbackCover("Pride and Prejudice", "Jane Austen")
-              }
-            ]
+            name: "The Characters",
+            description: "Books with compelling character development and relationships",
+            books: allBooks.slice(2, 4)
+          },
+          {
+            name: "The Atmosphere",
+            description: "Books with similar mood, setting, and emotional tone",
+            books: allBooks.slice(4, 6).length > 0 ? allBooks.slice(4, 6) : allBooks.slice(0, 2)
           }
         ]
       },
@@ -736,8 +831,8 @@ Return ONLY this JSON structure with NO additional text:
   "overallTheme": "One sentence summary",
   "categories": [
     {
-      "name": "The Atmosphere",
-      "description": "1-2 sentences why",
+      "name": "The Plot",
+      "description": "Books with similar storylines and narrative structure",
       "books": [
         {
           "title": "Book Title", 
@@ -751,9 +846,26 @@ Return ONLY this JSON structure with NO additional text:
           "publisher": "publisher if known"
         }
       ]
+    },
+    {
+      "name": "The Characters",
+      "description": "Books with compelling character development and relationships",
+      "books": [...]
+    },
+    {
+      "name": "The Atmosphere",
+      "description": "Books with similar mood, setting, and emotional tone",
+      "books": [...]
     }
   ]
 }
+
+CRITICAL: You MUST use exactly these 3 category names in this exact order:
+1. "The Plot" - for similar storylines, narrative structure, plot devices
+2. "The Characters" - for character-driven stories, relationships, character development
+3. "The Atmosphere" - for mood, setting, tone, emotional feeling
+
+DO NOT use any other category names. DO NOT change the order. DO NOT create additional categories.
 
 IMPORTANT for "whyYoullLikeIt" field:
 - Write natural, engaging descriptions WITHOUT repetitive "You'll like this because..." phrasing
@@ -761,16 +873,6 @@ IMPORTANT for "whyYoullLikeIt" field:
 - Be specific about themes, atmosphere, characters, or plot elements
 - Explain WHY it connects to the user's original request naturally
 - Make it 2-4 sentences that flow naturally and compellingly
-
-Create 3 different categories using names like:
-- "The Atmosphere" (for mood/setting/tone)
-- "The Characters" (for character-driven stories)  
-- "The Plot" (for similar storylines)
-- "The Themes" (for similar concepts/messages)
-- "The Writing Style" (for similar prose/narrative)
-- "The World Building" (for fantasy/sci-fi)
-- "The Emotions" (for similar feelings)
-- "The Mystery" (for suspense/thriller elements)
 
 Include 2-3 books per category with rich, detailed "whyYoullLikeIt" descriptions.`;
   }
@@ -785,6 +887,23 @@ Include 2-3 books per category with rich, detailed "whyYoullLikeIt" descriptions
       referenceType: 'none',
       aspectsOfInterest: ['themes'],
       emotionalContext: userInput,
+    };
+  }
+
+  /**
+   * Analyze user input to understand what they're looking for
+   */
+  private async analyzeUserInput(userInput: string): Promise<{
+    analysis: UserAnalysis;
+    cost: number;
+    model: string;
+  }> {
+    // For now, just return default analysis to avoid API calls
+    // This can be enhanced later with actual AI analysis
+    return {
+      analysis: this.getDefaultAnalysis(userInput),
+      cost: 0,
+      model: 'quick_analysis'
     };
   }
 

@@ -64,6 +64,7 @@ COMPLETED:           ACTIVE:              PENDING:
 ```
 
 ### Connector States
+
 ```
 COMPLETE: ════════ (Green, solid)
 ACTIVE:   ████▒▒▒▒ (Gradient with flow animation)
@@ -80,7 +81,7 @@ PENDING:  ▒▒▒▒▒▒▒▒ (White/20, subtle)
 ├─────────────────────────────────────────────────────────────┤
 │ Progress Fill: Dynamic gradient based on stage color       │
 │ - Base gradient (blue → teal, etc.)                        │
-│ - Shimmer overlay (white/40, animate-pulse)                │  
+│ - Shimmer overlay (white/40, animate-pulse)                │
 │ - Moving highlight (white/50, progressShine animation)     │
 └─────────────────────────────────────────────────────────────┘
 ```
@@ -117,29 +118,31 @@ FullTakeoverLoader
 ## Accessibility Structure
 
 ### ARIA Roles & Labels
+
 ```html
-<div role="dialog" aria-modal="true" 
-     aria-labelledby="loading-title" 
+<div role="dialog" aria-modal="true"
+     aria-labelledby="loading-title"
      aria-describedby="loading-description">
-  
+
   <h2 id="loading-title">ANALYZING REQUEST</h2>
-  
+
   <p id="loading-description">Understanding your mood...</p>
-  
-  <div role="progressbar" 
-       aria-valuenow="65" 
-       aria-valuemin="0" 
+
+  <div role="progressbar"
+       aria-valuenow="65"
+       aria-valuemin="0"
        aria-valuemax="100"
        aria-label="Loading progress: 65% complete">
-  
+
   <div aria-label="Stage 1: ANALYZING REQUEST completed">
   <div aria-label="Stage 2: ENRICHING CONTEXT in progress">
-  
+
   <button aria-label="Cancel book recommendation request">
 </div>
 ```
 
 ### Keyboard Navigation
+
 - **ESC Key**: Cancel request
 - **Tab**: Navigate to cancel button
 - **Enter/Space**: Activate cancel
@@ -147,38 +150,43 @@ FullTakeoverLoader
 ## Mobile Optimizations
 
 ### Touch Targets
+
 ```
 Cancel Button: 44px minimum (px-4 py-3)
-Stage Indicators: 48px (w-12 h-12) 
+Stage Indicators: 48px (w-12 h-12)
 Progress Bar: 16px height for easy visibility
 Icon Area: Large, centered, high contrast
 ```
 
 ### Safe Area Handling
+
 ```css
-padding: env(safe-area-inset-top) env(safe-area-inset-right) 
-         env(safe-area-inset-bottom) env(safe-area-inset-left);
+padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
 ```
 
 ## Animation Timeline
 
 ### Entry (0-500ms)
+
 - Backdrop fade-in with blur
 - Container scale up from 95%
 - Icon and title staggered fade-in
 
 ### Progress (500ms-15s)
+
 - Progress bar smooth width transitions
 - Stage indicator state changes
 - Shimmer and glow effects
 - Flow animations between stages
 
 ### Completion (15s+)
+
 - Final stage animation
 - Success state (100% progress)
 - Transition preparation
 
 ### Error State
+
 - Red accent coloring
 - Error message display
 - Retry/cancel options
@@ -187,12 +195,14 @@ padding: env(safe-area-inset-top) env(safe-area-inset-right)
 ## Performance Considerations
 
 ### Hardware Acceleration
+
 ```css
 transform: translateZ(0);
 will-change: transform;
 ```
 
 ### Efficient Animations
+
 - Use `transform` and `opacity` only
 - Minimize repaints and reflows
 - Remove `will-change` when complete
@@ -201,27 +211,32 @@ will-change: transform;
 ## Color Themes by Stage
 
 ### Stage 1: Analyzing (Blue → Teal)
+
 - Primary: `from-blue-500 to-teal-500`
 - Glow: Blue tinted background
 
-### Stage 2: Enriching (Purple → Pink)  
+### Stage 2: Enriching (Purple → Pink)
+
 - Primary: `from-purple-500 to-pink-500`
 - Glow: Purple tinted background
 
 ### Stage 3: Finding Matches (Green → Yellow)
+
 - Primary: `from-green-500 to-yellow-500`
 - Glow: Green tinted background
 
 ### Stage 4: Fetching Covers (Orange → Red)
+
 - Primary: `from-orange-500 to-red-500`
 - Glow: Orange tinted background
 
 ## Error States & Edge Cases
 
 ### Network Timeout
+
 ```
 ┌─────────────────────────────────────┐
-│            ⚠️ 
+│            ⚠️
 │     Request Taking Longer          │
 │   This might be due to slow        │
 │        internet connection.        │
@@ -231,6 +246,7 @@ will-change: transform;
 ```
 
 ### User Cancellation
+
 ```
 ┌─────────────────────────────────────┐
 │            ✋
@@ -242,6 +258,7 @@ will-change: transform;
 ```
 
 ### API Error
+
 ```
 ┌─────────────────────────────────────┐
 │            ❌
@@ -256,19 +273,21 @@ will-change: transform;
 ## Component States Summary
 
 ### Props Interface
+
 ```typescript
 interface FullTakeoverLoaderProps {
-  isVisible: boolean          // Show/hide overlay
-  currentStage: number        // 0-3 active stage
-  stages: LoadingStage[]      // Stage definitions  
-  progress: number           // 0-100 completion
-  costSavings?: string       // Optional savings info
-  onCancel: () => void       // Cancel callback
-  userQuery?: string         // User's search query
+  isVisible: boolean; // Show/hide overlay
+  currentStage: number; // 0-3 active stage
+  stages: LoadingStage[]; // Stage definitions
+  progress: number; // 0-100 completion
+  costSavings?: string; // Optional savings info
+  onCancel: () => void; // Cancel callback
+  userQuery?: string; // User's search query
 }
 ```
 
 ### Visual States
+
 - **Hidden**: `isVisible: false` - Portal unmounted
 - **Stage 0-3**: Different icons, colors, descriptions
 - **Progress**: Smooth 0-100% with animations
@@ -278,6 +297,7 @@ interface FullTakeoverLoaderProps {
 ## Implementation Status ✅
 
 All wireframes and specifications have been implemented in:
+
 - `/src/components/full-takeover-loader.tsx`
 - `/src/app/globals.css` (animations)
 - Full accessibility compliance
@@ -287,9 +307,10 @@ All wireframes and specifications have been implemented in:
 ---
 
 **DESIGN NOTES:**
+
 - Maintains ultra-bold Gen Z aesthetic
 - High contrast for readability
-- Engaging without being distracting  
+- Engaging without being distracting
 - Clear escape paths (cancel button)
 - Informative progress feedback
 - Smooth, polished animations

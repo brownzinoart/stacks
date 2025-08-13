@@ -11,10 +11,11 @@ import { clsx } from 'clsx';
 
 // Modern icon representations - Discovery-first strategy
 const navigationItems = [
-  { name: 'Discover', href: '/home', icon: '◈', color: 'primary-purple' },
-  { name: 'Library', href: '/ar-discovery', icon: '▣', color: 'primary-blue' },
+  { name: 'Learning', href: '/learning', icon: '▲', color: 'primary-blue' },
+  { name: 'Library', href: '/ar-discovery', icon: '▣', color: 'primary-teal' },
+  { name: 'Discover', href: '/home', icon: '◈', color: 'primary-purple', isHome: true },
   { name: 'Community', href: '/events', icon: '◆', color: 'primary-orange' },
-  { name: 'Progress', href: '/profile', icon: '●', color: 'primary-green' },
+  { name: 'Kids', href: '/kids', icon: '★', color: 'primary-pink' },
 ];
 
 export const NativeIOSTabBar = () => {
@@ -24,7 +25,7 @@ export const NativeIOSTabBar = () => {
   console.log('Current pathname:', pathname);
 
   // Vibrant Gen Z color styling
-  const getTabStyles = (color: string, isActive: boolean) => {
+  const getTabStyles = (color: string, isActive: boolean, isHome: boolean = false) => {
     if (isActive) {
       const activeStyles = {
         'primary-green': { backgroundColor: '#4ADE80', color: '#FFFFFF' },
@@ -32,9 +33,16 @@ export const NativeIOSTabBar = () => {
         'primary-purple': { backgroundColor: '#A78BFA', color: '#FFFFFF' },
         'primary-orange': { backgroundColor: '#FB7185', color: '#FFFFFF' },
         'primary-pink': { backgroundColor: '#EC4899', color: '#FFFFFF' },
+        'primary-teal': { backgroundColor: '#14B8A6', color: '#FFFFFF' },
       };
-      return activeStyles[color as keyof typeof activeStyles] || {};
+      const baseStyle = activeStyles[color as keyof typeof activeStyles] || {};
+      return isHome ? { ...baseStyle, transform: 'scale(1.05)', boxShadow: '0 8px 25px rgba(0,0,0,0.3)' } : baseStyle;
     }
+    
+    if (isHome) {
+      return { color: '#A78BFA', fontWeight: '700' };
+    }
+    
     return { color: '#8B5CF6' };
   };
 
@@ -47,9 +55,10 @@ export const NativeIOSTabBar = () => {
           paddingBottom: 'env(safe-area-inset-bottom)',
         }}
       >
-        <div className="flex items-center justify-center gap-1 px-2 py-3">
+        <div className="flex items-center justify-center gap-1 px-1 py-3">
           {navigationItems.map((item) => {
             const isActive = pathname === item.href;
+            const isHome = item.isHome || false;
 
             // Debug which tab is active
             if (isActive) {
@@ -62,17 +71,19 @@ export const NativeIOSTabBar = () => {
                 href={item.href}
                 className={clsx(
                   'flex flex-1 flex-col items-center justify-center transition-all duration-300',
-                  'rounded-3xl px-2 py-3',
+                  'rounded-3xl px-1 py-3',
                   'transform hover:scale-105 active:scale-95',
-                  isActive ? 'shadow-card' : 'opacity-70'
+                  isActive ? 'shadow-card' : isHome ? 'opacity-85' : 'opacity-70',
+                  isHome ? '-translate-y-2' : ''
                 )}
-                style={getTabStyles(item.color, isActive)}
+                style={getTabStyles(item.color, isActive, isHome)}
               >
                 {/* Icon */}
                 <div
                   className={clsx(
-                    'mb-1 text-2xl font-black transition-all duration-300',
-                    isActive ? 'scale-110 transform' : ''
+                    'mb-1 transition-all duration-300',
+                    isHome ? 'text-2xl font-black' : 'text-xl font-black',
+                    isActive ? 'scale-110 transform' : isHome ? 'scale-105 transform' : ''
                   )}
                 >
                   {item.icon}
@@ -80,7 +91,10 @@ export const NativeIOSTabBar = () => {
 
                 {/* Label */}
                 <span
-                  className={clsx('text-xs transition-all duration-300', isActive ? 'font-extra-bold' : 'font-medium')}
+                  className={clsx(
+                    'text-xs transition-all duration-300', 
+                    isActive ? 'font-extra-bold' : isHome ? 'font-bold' : 'font-medium'
+                  )}
                 >
                   {item.name}
                 </span>

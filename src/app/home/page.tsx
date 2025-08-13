@@ -7,7 +7,7 @@
 
 import { MobileLayout } from '@/components/mobile-layout';
 import PWAInstallPrompt from '@/components/pwa-install-prompt';
-import { AIPromptInput } from '@/features/home/ai-prompt-input';
+import AIPromptInput from '@/features/home/ai-prompt-input';
 import { NewReleases } from '@/features/home/recent-searches';
 import { MyQueue } from '@/features/home/my-queue';
 import { ReadingStreak } from '@/features/home/reading-streak';

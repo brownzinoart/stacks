@@ -28,8 +28,8 @@ export const TopicSearch = () => {
   return (
     <div className="pop-element-lg relative overflow-hidden rounded-3xl bg-primary-orange p-8 shadow-[0_10px_40px_rgb(0,0,0,0.3)] sm:p-12">
       <div className="relative z-10 space-y-6 sm:space-y-8">
-        <div>
-          <h2 className="mb-4 text-huge font-black leading-extra-tight text-text-primary sm:mb-6">
+        <div className="flex items-center justify-between">
+          <h2 className="text-huge font-black leading-extra-tight text-text-primary">
             <span className="text-primary-blue">LEARNING</span>
             <br />
             <span className="text-mega">PATHS</span>

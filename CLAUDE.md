@@ -265,3 +265,5 @@ When using `/dawgs` command:
 - Goal: Move fast with clarity, return smallest artifact that unblocks progress
 - Approve plans with `/approve` or "run all"/"run selected"
 - Auto-handoff threshold: `MYDAWGS_CONF_THRESHOLD=0.75`
+
+- start a document for my investment presentation, add notes to it when you mention them

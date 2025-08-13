@@ -80,17 +80,21 @@ const StacksRecommendationsPage = () => {
 
   // Load recommendations from localStorage on mount
   useEffect(() => {
-    console.log('[Recommendations Debug] Loading data from localStorage');
+    console.log('🔍 [RECOMMENDATIONS PAGE] Loading data from localStorage');
     const data = localStorage.getItem('stacks_recommendations');
-    console.log('[Recommendations Debug] Raw data:', data);
-    console.log('[Recommendations Debug] Data length:', data?.length);
+    console.log('🔍 [RECOMMENDATIONS PAGE] Raw data exists:', !!data);
+    console.log('🔍 [RECOMMENDATIONS PAGE] Data length:', data?.length);
 
     if (data) {
       try {
         const parsed = JSON.parse(data);
-        console.log('🎉🎉🎉 RECOMMENDATIONS PAGE v2.0 - COVER FIX ACTIVE 🎉🎉🎉');
-        console.log('[Recommendations Debug] Parsed data:', parsed);
-        console.log('[Recommendations Debug] Parsed data keys:', Object.keys(parsed));
+        console.log('🎯 [RECOMMENDATIONS PAGE] CRITICAL DEBUG - Parsed data structure:');
+        console.log('🎯 [RECOMMENDATIONS PAGE] Data keys:', Object.keys(parsed));
+        console.log('🎯 [RECOMMENDATIONS PAGE] Has categories:', !!parsed.categories);
+        console.log('🎯 [RECOMMENDATIONS PAGE] Categories type:', typeof parsed.categories);
+        console.log('🎯 [RECOMMENDATIONS PAGE] Categories length:', parsed.categories?.length);
+        console.log('🎯 [RECOMMENDATIONS PAGE] Category names:', parsed.categories?.map(c => c.name));
+        console.log('🎯 [RECOMMENDATIONS PAGE] Full parsed data:', parsed);
         setUserInput(parsed.userInput || '');
         setSearchValue(parsed.userInput || '');
 

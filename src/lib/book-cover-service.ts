@@ -464,91 +464,86 @@ export class BookCoverService {
 
     for (const query of attempts) {
       try {
-        const apiKey = process.env.NEXT_PUBLIC_GOOGLE_BOOKS_API_KEY || '';
-        const keyParam = apiKey ? `&key=${apiKey}` : '';
+        // DETAILED LOGGING: Track proxy request details  
+        console.log(`🔍 [GOOGLE BOOKS PROXY] Searching for "${query}"`);
         
-        const url = `https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(query!)}&maxResults=5${keyParam}`;
-        const response = await fetch(url, {
-          signal: AbortSignal.timeout(10000), // 10 second timeout
+        const response = await fetch('/api/google-books-proxy', {
+          method: 'POST',
           headers: {
-            'Accept': 'application/json',
-            'User-Agent': 'Stacks-BookApp/1.0',
-          }
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            query: query,
+            maxResults: 5
+          }),
+          signal: AbortSignal.timeout(10000), // 10 second timeout
         });
 
+        console.log(`📡 [GOOGLE BOOKS PROXY] Response status: ${response.status}`);
+        
         if (!response.ok) {
-          console.warn(`Google Books API returned ${response.status} for query: ${query}`);
+          console.error(`❌ [GOOGLE BOOKS PROXY] API returned ${response.status} for query: ${query}`);
+          const errorText = await response.text();
+          console.error(`❌ [GOOGLE BOOKS PROXY] Error details: ${errorText}`);
           continue;
         }
 
         const data = await response.json();
-        if (!data.items || data.items.length === 0) {
-          logger.debug(`No results from Google Books for query: ${query}`);
+        console.log(`📊 [GOOGLE BOOKS PROXY] Found ${data.books?.length || 0} results for query: ${query}`);
+        
+        if (!data.success || !data.books || data.books.length === 0) {
+          console.log(`🔍 [GOOGLE BOOKS PROXY] No results from proxy for query: ${query}`);
           continue;
         }
 
         // Try each result until we find a valid image
-        for (const item of data.items) {
-          const volumeInfo = item.volumeInfo;
-          const imageLinks = volumeInfo?.imageLinks;
+        for (const item of data.books) {
+          console.log(`📖 [GOOGLE BOOKS PROXY] Checking book: "${item.title}" by ${item.authors?.join(', ')}`);
+          console.log(`🖼️ [GOOGLE BOOKS PROXY] Cover URL available: ${item.coverUrl ? 'YES' : 'NO'}`);
 
-          if (!imageLinks) continue;
-
-          // Prefer larger images, try in order of quality
-          const imageUrls = [
-            imageLinks.extraLarge,
-            imageLinks.large,
-            imageLinks.medium,
-            imageLinks.thumbnail,
-            imageLinks.smallThumbnail
-          ].filter(Boolean);
-
-          for (const imageUrl of imageUrls) {
-            // Sanitize and enhance URL
-            let enhancedUrl = imageUrl
-              .replace('http://', 'https://') // Force HTTPS
-              .replace('&zoom=1', '&zoom=0') // Get larger image
-              .replace('&edge=curl', ''); // Remove curl effect
-
-            // Use proxy for Google Books URLs to avoid CORS issues
-            if (enhancedUrl.includes('books.google.com') || 
-                enhancedUrl.includes('googleusercontent.com') ||
-                enhancedUrl.includes('googleapis.com')) {
-              enhancedUrl = `/api/cover-proxy?url=${encodeURIComponent(enhancedUrl)}`;
-            }
-
-            // Calculate confidence based on match quality
-            let confidence = 75;
-            
-            if (book.isbn && query?.includes('isbn:')) {
-              confidence = 95; // ISBN matches are very reliable
-            } else {
-              const titleMatch = volumeInfo.title?.toLowerCase().includes(book.title.toLowerCase());
-              const authorMatch = volumeInfo.authors?.some((author: string) => 
-                author.toLowerCase().includes(book.author.toLowerCase()) ||
-                book.author.toLowerCase().includes(author.toLowerCase())
-              );
-              
-              if (titleMatch && authorMatch) confidence = 90;
-              else if (titleMatch) confidence = 80;
-            }
-
-            // Skip validation for faster response - let browser handle CORS
-            logger.debug(`✅ Google Books: Using cover URL (confidence: ${confidence}%)`);
-            return {
-              url: enhancedUrl,
-              source: 'google',
-              confidence,
-              quality: imageLinks.large || imageLinks.extraLarge ? 'high' : 'medium',
-            };
+          if (!item.coverUrl) {
+            console.log(`❌ [GOOGLE BOOKS PROXY] No cover URL for "${item.title}"`);
+            continue;
           }
+
+          console.log(`🔗 [GOOGLE BOOKS PROXY] Testing cover URL: ${item.coverUrl}`);
+          
+          // URL is already processed by the proxy
+          let enhancedUrl = item.coverUrl
+            .replace('&zoom=1', '&zoom=0') // Get larger image
+            .replace('&edge=curl', ''); // Remove curl effect
+
+          // Calculate confidence based on match quality
+          let confidence = 75;
+          
+          if (book.isbn && item.isbn && item.isbn.includes(book.isbn)) {
+            confidence = 95; // ISBN matches are very reliable
+          } else {
+            const titleMatch = item.title?.toLowerCase().includes(book.title.toLowerCase());
+            const authorMatch = item.authors?.some((author: string) => 
+              author.toLowerCase().includes(book.author.toLowerCase()) ||
+              book.author.toLowerCase().includes(author.toLowerCase())
+            );
+            
+            if (titleMatch && authorMatch) confidence = 90;
+            else if (titleMatch) confidence = 80;
+          }
+
+          console.log(`✅ [GOOGLE BOOKS PROXY] SUCCESS: Found cover for "${book.title}" (confidence: ${confidence}%) - ${enhancedUrl}`);
+          return {
+            url: enhancedUrl,
+            source: 'google',
+            confidence,
+            quality: 'high',
+          };
         }
       } catch (error) {
-        console.error(`Google Books API error for query ${query}:`, error instanceof Error ? error.message : String(error));
+        console.error(`❌ [GOOGLE BOOKS PROXY] ERROR for query "${query}":`, error instanceof Error ? error.message : String(error));
         continue;
       }
     }
-
+    
+    console.log(`❌ [GOOGLE BOOKS PROXY] FAILED: No cover found for "${book.title}" by ${book.author}`);
     return null;
   }
 

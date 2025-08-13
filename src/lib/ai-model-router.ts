@@ -37,15 +37,15 @@ const MODEL_COSTS = {
 } as const;
 
 /**
- * Model routing configuration based on task type
+ * Model routing configuration based on task type - SWITCHED TO OPENAI ONLY
  */
 const TASK_ROUTING: Record<AITask, keyof typeof MODEL_COSTS> = {
   mood_recommendation: 'gpt-4o',      // GPT-4o excels at emotional understanding
-  book_summary: 'claude-3-sonnet',    // Claude is excellent for text analysis
-  topic_bundle: 'gemini-1.5-flash',   // Gemini is FREE and great for categorization
-  learning_path: 'gemini-1.5-flash',  // Gemini handles structured content well
-  search_query: 'gemini-1.5-flash',   // Gemini is FREE and fast for simple processing
-  content_generation: 'claude-3-sonnet', // Claude produces high-quality content
+  book_summary: 'gpt-4o',             // Use GPT-4o instead of Claude to avoid rate limits
+  topic_bundle: 'gpt-4o',             // Use GPT-4o instead of Gemini to avoid rate limits
+  learning_path: 'gpt-4o',            // Use GPT-4o instead of Gemini to avoid rate limits  
+  search_query: 'gpt-4o',             // Use GPT-4o instead of Gemini to avoid rate limits
+  content_generation: 'gpt-4o',       // Use GPT-4o instead of Claude to avoid rate limits
 };
 
 /**
