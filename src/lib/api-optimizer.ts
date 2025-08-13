@@ -28,7 +28,6 @@ export interface CacheConfig {
  */
 const DEFAULT_CACHE_CONFIGS: Record<string, CacheConfig> = {
   '/api/books/search': { ttl: 5 * 60 * 1000, compress: true }, // 5 minutes
-  '/api/books/recommendations': { ttl: 15 * 60 * 1000, compress: true }, // 15 minutes
   '/api/library/availability': { ttl: 2 * 60 * 1000, compress: false }, // 2 minutes
   '/api/user/preferences': { ttl: 30 * 60 * 1000, compress: false }, // 30 minutes
   '/api/books/content': { ttl: 60 * 60 * 1000, compress: true }, // 1 hour

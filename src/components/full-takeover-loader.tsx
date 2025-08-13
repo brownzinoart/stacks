@@ -22,12 +22,12 @@ interface FullTakeoverLoaderProps {
   userQuery?: string
 }
 
-const ENHANCED_LOADING_STAGES: LoadingStage[] = [
+export const ENHANCED_LOADING_STAGES: LoadingStage[] = [
   {
     id: 'analyzing',
     title: 'ANALYZING REQUEST',
-    description: 'Understanding your mood and preferences...',
-    duration: 1, // Optimized: reduced from 4s to 1s
+    description: 'Understanding your mood and preferences with progressive fallback...',
+    duration: 1, // Fast stage with intelligent fallback
     color: 'from-blue-500 to-teal-500',
     icon: '🧠'
   },
@@ -35,23 +35,23 @@ const ENHANCED_LOADING_STAGES: LoadingStage[] = [
     id: 'enriching',
     title: 'ENRICHING CONTEXT', 
     description: 'Gathering additional context and references...',
-    duration: 1, // Optimized: reduced from 3s to 1s
+    duration: 1, // Context gathering remains fast
     color: 'from-purple-500 to-pink-500',
     icon: '🔍'
   },
   {
     id: 'matching',
     title: 'FINDING PERFECT MATCHES',
-    description: 'AI is curating personalized recommendations...',
-    duration: 2, // Optimized: reduced from 8s to 2s
+    description: 'AI is using smart routing to find your ideal books...',
+    duration: 2, // May take longer but has fallback lanes
     color: 'from-green-500 to-yellow-500',
     icon: '📚'
   },
   {
-    id: 'fetching_covers',
-    title: 'OPTIMIZING RESULTS',
-    description: 'Finalizing your personalized recommendations...',
-    duration: 1, // Optimized: reduced from 3s to 1s, covers now load in background
+    id: 'finalizing',
+    title: 'FETCHING BOOK COVERS',
+    description: 'Loading real book covers for your recommendations...',
+    duration: 1.5, // Slightly longer to fetch covers
     color: 'from-orange-500 to-red-500',
     icon: '🎨'
   }
@@ -71,10 +71,18 @@ export default function FullTakeoverLoader({
   console.log('🎬 [LOADER] FullTakeoverLoader rendered - isVisible:', isVisible, 'mounted:', mounted, 'currentStage:', currentStage)
 
   useEffect(() => {
-    console.log('🎬 [LOADER] Mounting FullTakeoverLoader');
+    console.log('🎬 [LOADER] Mount effect running - setting mounted to true');
     setMounted(true)
-    return () => setMounted(false)
+    return () => {
+      console.log('🎬 [LOADER] Unmount effect running - setting mounted to false');
+      setMounted(false)
+    }
   }, [])
+  
+  // Additional debugging for mount state
+  useEffect(() => {
+    console.log('🎬 [LOADER] Mount state changed - mounted:', mounted);
+  }, [mounted])
 
   useEffect(() => {
     if (!isVisible) return
@@ -98,7 +106,8 @@ export default function FullTakeoverLoader({
 
   console.log('🎬 [LOADER] Render check - mounted:', mounted, 'isVisible:', isVisible, 'will render:', mounted && isVisible)
   
-  if (!mounted || !isVisible) return null
+  // Fix SSR issue - only render on client side
+  if (!isVisible || typeof window === 'undefined') return null
 
   const LoaderContent = (
     <div 
@@ -276,5 +285,4 @@ export default function FullTakeoverLoader({
   return createPortal(LoaderContent, document.body)
 }
 
-export { ENHANCED_LOADING_STAGES }
 export type { LoadingStage }

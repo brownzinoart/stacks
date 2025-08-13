@@ -7,6 +7,25 @@
 import { aiRouter } from './ai-model-router';
 import { bookCoverAnalytics } from './book-cover-analytics';
 
+// Logging utility to reduce console spam
+const logger = {
+  debug: (message: string, ...args: any[]) => {
+    // Only log debug messages when explicitly enabled
+    if (process.env.BOOK_COVER_DEBUG === 'true' || process.env.NODE_ENV === 'development') {
+      console.log(message, ...args);
+    }
+  },
+  info: (message: string, ...args: any[]) => {
+    console.log(message, ...args);
+  },
+  warn: (message: string, ...args: any[]) => {
+    console.warn(message, ...args);
+  },
+  error: (message: string, ...args: any[]) => {
+    console.error(message, ...args);
+  }
+};
+
 interface CoverSearchResult {
   url: string;
   source: 'openlibrary' | 'google' | 'archive' | 'cache' | 'ai_generated' | 'gradient_generated';
@@ -23,7 +42,7 @@ interface CachedCover {
 }
 
 const CACHE_KEY = 'stacks_book_covers';
-const CACHE_DURATION = 7 * 24 * 60 * 60 * 1000; // 7 days
+const CACHE_DURATION = 30 * 24 * 60 * 60 * 1000; // 30 days - longer cache for better performance
 
 export class BookCoverService {
   private static instance: BookCoverService;
@@ -82,9 +101,34 @@ export class BookCoverService {
     return `${book.title}-${book.author}-${book.isbn || ''}`.toLowerCase().replace(/\s+/g, '-');
   }
 
+  private performStaleCheckIfNeeded(): void {
+    // Only check once per session
+    if ((this as any).hasPerformedStaleCheck) return;
+    (this as any).hasPerformedStaleCheck = true;
+
+    const staleThreshold = 24 * 60 * 60 * 1000; // 1 day
+    const now = Date.now();
+    let staleCacheEntries = 0;
+    
+    this.cache.forEach((value, key) => {
+      if (now - value.timestamp > staleThreshold) {
+        staleCacheEntries++;
+      }
+    });
+    
+    // If more than 50% of cache entries are stale, clear the entire cache
+    if (staleCacheEntries > this.cache.size * 0.5 && this.cache.size > 0) {
+      console.log(`🧹 Clearing stale book cover cache (${staleCacheEntries}/${this.cache.size} entries were stale)`);
+      this.clearCache();
+    }
+  }
+
   async getCover(book: { title: string; author: string; isbn?: string; year?: string }): Promise<CoverSearchResult> {
     const startTime = Date.now();
     const cacheKey = this.getCacheKey(book);
+
+    // Perform stale check on first use
+    this.performStaleCheckIfNeeded();
 
     // Check cache first
     const cached = this.cache.get(cacheKey);
@@ -112,7 +156,7 @@ export class BookCoverService {
     // Check if there's already a pending request for this book
     const existingRequest = this.pendingRequests.get(cacheKey);
     if (existingRequest) {
-      console.log('Deduplicating request for:', book.title);
+      logger.debug('Deduplicating request for:', book.title);
       return existingRequest;
     }
 
@@ -134,48 +178,76 @@ export class BookCoverService {
     startTime: number
   ): Promise<CoverSearchResult> {
     // Enhanced multi-source cover search with validation
-    console.log(`🔍 Searching for cover: "${book.title}" by ${book.author}`);
+    logger.debug(`🔍 Searching for cover: "${book.title}" by ${book.author}`);
     
-    // Try sources sequentially for better control and validation
+    // Try sources sequentially with retry logic
     const sources = [
-      { name: 'Google Books Enhanced', fetch: () => this.fetchFromGoogleBooksEnhanced(book) },
-      { name: 'OpenLibrary Enhanced', fetch: () => this.fetchFromOpenLibraryEnhanced(book) },
-      { name: 'Internet Archive', fetch: () => this.fetchFromInternetArchive(book) },
-      { name: 'Additional Sources', fetch: () => this.fetchFromAdditionalSources(book) },
+      { name: 'Google Books Enhanced', fetch: () => this.fetchFromGoogleBooksEnhanced(book), priority: 1 },
+      { name: 'OpenLibrary Enhanced', fetch: () => this.fetchFromOpenLibraryEnhanced(book), priority: 2 },
+      { name: 'Internet Archive', fetch: () => this.fetchFromInternetArchive(book), priority: 3 },
+      { name: 'Additional Sources', fetch: () => this.fetchFromAdditionalSources(book), priority: 4 },
     ];
 
     let bestResult: CoverSearchResult | null = null;
     
     for (const source of sources) {
-      try {
-        console.log(`🔎 Trying ${source.name}...`);
-        const result = await source.fetch();
-        
-        if (result && result.url && !result.url.startsWith('gradient:')) {
-          console.log(`📸 Found cover from ${source.name} (confidence: ${result.confidence}%)`);
+      let attempt = 0;
+      const maxAttempts = 2; // Reduced from 3 for better performance
+      
+      while (attempt < maxAttempts) {
+        try {
+          if (attempt > 0) {
+            // Exponential backoff: 1s, 2s
+            const delay = Math.pow(2, attempt) * 1000;
+            logger.debug(`⏱️  Retrying ${source.name} in ${delay}ms (attempt ${attempt + 1}/${maxAttempts})`);
+            await new Promise(resolve => setTimeout(resolve, delay));
+          } else {
+            logger.debug(`🔎 Trying ${source.name}...`);
+          }
           
-          // If this is a high-confidence result, use it immediately
-          if (result.confidence >= 90) {
-            bestResult = result;
+          const result = await source.fetch();
+          
+          if (result && result.url && !result.url.startsWith('gradient:')) {
+            logger.debug(`📸 Found cover from ${source.name} (confidence: ${result.confidence}%) on attempt ${attempt + 1}`);
+            
+            // If this is a high-confidence result, use it immediately
+            if (result.confidence >= 90) {
+              bestResult = result;
+              break;
+            }
+            
+            // Otherwise, keep the best result so far
+            if (!bestResult || result.confidence > bestResult.confidence) {
+              bestResult = result;
+            }
+            
+            // Break out of retry loop for this source
             break;
+          } else {
+            logger.debug(`🔍 ${source.name} returned no valid cover on attempt ${attempt + 1}`);
           }
+        } catch (error) {
+          console.error(`❌ Error from ${source.name} (attempt ${attempt + 1}):`, error instanceof Error ? error.message : String(error));
           
-          // Otherwise, keep the best result so far
-          if (!bestResult || result.confidence > bestResult.confidence) {
-            bestResult = result;
+          // If this was the last attempt, move to next source
+          if (attempt === maxAttempts - 1) {
+            console.log(`🚫 ${source.name} failed after ${maxAttempts} attempts`);
           }
-          
-          // Continue searching for potentially better results
         }
-      } catch (error) {
-        console.error(`Error from ${source.name}:`, error);
-        continue;
+        
+        attempt++;
+      }
+      
+      // If we found a high-confidence result, no need to try other sources
+      if (bestResult && bestResult.confidence >= 90) {
+        logger.debug(`🎯 High-confidence result found, skipping remaining sources`);
+        break;
       }
     }
 
     // If we found a real cover, cache it and return
     if (bestResult && bestResult.url && !bestResult.url.startsWith('gradient:')) {
-      console.log(`✅ Using best cover from ${bestResult.source}`);
+      logger.debug(`✅ Using best cover from ${bestResult.source}`);
       const loadTime = Date.now() - startTime;
       
       // Cache the result
@@ -318,29 +390,56 @@ export class BookCoverService {
       // Force HTTPS for security
       const httpsUrl = url.replace('http://', 'https://');
       
-      // Make a HEAD request to check if image exists and is accessible
-      const response = await fetch(httpsUrl, {
-        method: 'HEAD',
-        headers: {
-          'Accept': 'image/*',
-          'User-Agent': 'Stacks-BookApp/1.0',
-        },
-        // Add timeout and abort signal
-        signal: AbortSignal.timeout(5000), // 5 second timeout
-      });
+      // Check if this URL has already failed recently
+      if (this.failedUrls.has(httpsUrl)) {
+        logger.debug(`⏭️  Skipping known failed URL: ${httpsUrl.substring(0, 50)}...`);
+        return false;
+      }
       
-      // Check if it's a valid image response
-      const contentType = response.headers.get('content-type');
-      const isValidImage = !!(response.ok && 
-                          contentType && 
-                          contentType.startsWith('image/') &&
-                          !contentType.includes('svg')); // Avoid SVG for security
+      // Skip validation for Google Books and other CORS-protected URLs
+      // The browser will handle CORS errors when the image actually loads
+      if (httpsUrl.includes('books.google.com') || 
+          httpsUrl.includes('googleusercontent.com') ||
+          httpsUrl.includes('googleapis.com')) {
+        logger.debug(`📸 Accepting Google Books URL without validation: ${httpsUrl.substring(0, 50)}...`);
+        return true;
+      }
       
-      console.log(`📸 Image validation for ${httpsUrl}: ${isValidImage ? '✅' : '❌'}`);
-      return isValidImage;
+      // For OpenLibrary and other sources, do a quick validation
+      if (httpsUrl.includes('covers.openlibrary.org') ||
+          httpsUrl.includes('archive.org')) {
+        try {
+          const response = await fetch(httpsUrl, {
+            method: 'HEAD',
+            headers: {
+              'Accept': 'image/*',
+              'User-Agent': 'Stacks-BookApp/1.0',
+            },
+            signal: AbortSignal.timeout(3000), // Shorter timeout for validation
+          });
+          
+          const isValid = response.ok && (response.headers.get('content-type')?.startsWith('image/') ?? false);
+          if (isValid) {
+            logger.debug(`✅ Image validation successful: ${httpsUrl.substring(0, 50)}...`);
+          } else {
+            logger.debug(`❌ Image validation failed: ${httpsUrl.substring(0, 50)}... (status: ${response.status})`);
+            this.failedUrls.add(httpsUrl);
+          }
+          return isValid;
+        } catch (error) {
+          // Don't mark as failed for CORS errors, let the browser handle it
+          logger.debug(`⚠️ Validation skipped due to network error: ${httpsUrl.substring(0, 50)}...`);
+          return true; // Optimistically assume it works
+        }
+      }
+      
+      // For other URLs, assume they're valid
+      logger.debug(`✅ Accepting URL without validation: ${httpsUrl.substring(0, 50)}...`);
+      return true;
     } catch (error) {
-      console.warn(`Image validation failed for ${url}:`, error);
-      return false;
+      // Don't mark URLs as failed for network/CORS errors
+      logger.debug(`⚠️ Image validation error (allowing anyway): ${url.substring(0, 50)}...`);
+      return true;
     }
   }
 
@@ -384,7 +483,7 @@ export class BookCoverService {
 
         const data = await response.json();
         if (!data.items || data.items.length === 0) {
-          console.log(`No results from Google Books for query: ${query}`);
+          logger.debug(`No results from Google Books for query: ${query}`);
           continue;
         }
 
@@ -411,37 +510,41 @@ export class BookCoverService {
               .replace('&zoom=1', '&zoom=0') // Get larger image
               .replace('&edge=curl', ''); // Remove curl effect
 
-            // Validate the image
-            const isValid = await this.validateImageUrl(enhancedUrl);
-            if (isValid) {
-              // Calculate confidence based on match quality
-              let confidence = 75;
-              
-              if (book.isbn && query?.includes('isbn:')) {
-                confidence = 95; // ISBN matches are very reliable
-              } else {
-                const titleMatch = volumeInfo.title?.toLowerCase().includes(book.title.toLowerCase());
-                const authorMatch = volumeInfo.authors?.some((author: string) => 
-                  author.toLowerCase().includes(book.author.toLowerCase()) ||
-                  book.author.toLowerCase().includes(author.toLowerCase())
-                );
-                
-                if (titleMatch && authorMatch) confidence = 90;
-                else if (titleMatch) confidence = 80;
-              }
-
-              console.log(`✅ Google Books: Found valid cover (confidence: ${confidence}%)`);
-              return {
-                url: enhancedUrl,
-                source: 'google',
-                confidence,
-                quality: imageLinks.large || imageLinks.extraLarge ? 'high' : 'medium',
-              };
+            // Use proxy for Google Books URLs to avoid CORS issues
+            if (enhancedUrl.includes('books.google.com') || 
+                enhancedUrl.includes('googleusercontent.com') ||
+                enhancedUrl.includes('googleapis.com')) {
+              enhancedUrl = `/api/cover-proxy?url=${encodeURIComponent(enhancedUrl)}`;
             }
+
+            // Calculate confidence based on match quality
+            let confidence = 75;
+            
+            if (book.isbn && query?.includes('isbn:')) {
+              confidence = 95; // ISBN matches are very reliable
+            } else {
+              const titleMatch = volumeInfo.title?.toLowerCase().includes(book.title.toLowerCase());
+              const authorMatch = volumeInfo.authors?.some((author: string) => 
+                author.toLowerCase().includes(book.author.toLowerCase()) ||
+                book.author.toLowerCase().includes(author.toLowerCase())
+              );
+              
+              if (titleMatch && authorMatch) confidence = 90;
+              else if (titleMatch) confidence = 80;
+            }
+
+            // Skip validation for faster response - let browser handle CORS
+            logger.debug(`✅ Google Books: Using cover URL (confidence: ${confidence}%)`);
+            return {
+              url: enhancedUrl,
+              source: 'google',
+              confidence,
+              quality: imageLinks.large || imageLinks.extraLarge ? 'high' : 'medium',
+            };
           }
         }
       } catch (error) {
-        console.error(`Google Books API error for query ${query}:`, error);
+        console.error(`Google Books API error for query ${query}:`, error instanceof Error ? error.message : String(error));
         continue;
       }
     }
@@ -517,7 +620,7 @@ export class BookCoverService {
             );
 
             const confidence = authorMatch ? 85 : 70;
-            console.log(`✅ OpenLibrary: Found valid cover (confidence: ${confidence}%)`);
+            logger.debug(`✅ OpenLibrary: Found valid cover (confidence: ${confidence}%)`);
             
             return {
               url: coverUrl,
@@ -528,7 +631,7 @@ export class BookCoverService {
           }
         }
       } catch (error) {
-        console.error(`OpenLibrary search error for query ${query}:`, error);
+        console.error(`OpenLibrary search error for query ${query}:`, error instanceof Error ? error.message : String(error));
         continue;
       }
     }
@@ -544,7 +647,7 @@ export class BookCoverService {
     
     const isValid = await this.validateImageUrl(coverUrl);
     if (isValid) {
-      console.log(`✅ OpenLibrary ISBN: Found valid cover`);
+      logger.debug(`✅ OpenLibrary ISBN: Found valid cover`);
       return {
         url: coverUrl,
         source: 'openlibrary',
@@ -629,35 +732,52 @@ Keep it professional and marketable. Focus on visual elements that would work we
         };
       }
     } catch (error) {
-      console.error('AI cover generation failed:', error);
+      console.error('AI cover generation failed:', error instanceof Error ? error.message : String(error));
     }
     
     return null;
   }
 
   private generateFallbackCover(book: { title: string; author: string }): CoverSearchResult {
+    console.log(`🎨 Generating gradient fallback for "${book.title}" by ${book.author}`);
+    
     // Generate a consistent color based on title+author
     const hash = (book.title + book.author).split('').reduce((acc, char) => {
       return (acc << 5) - acc + char.charCodeAt(0);
     }, 0);
 
     const colors = [
+      ['#FF6B6B', '#4ECDC4'], // Vibrant red to teal
+      ['#45B7D1', '#F39C12'], // Blue to orange  
+      ['#96CEB4', '#FECA57'], // Green to yellow
+      ['#6C5CE7', '#FD79A8'], // Purple to pink
+      ['#00B894', '#00CEC9'], // Green to cyan
+      ['#E17055', '#FDCB6E'], // Orange gradient
+      ['#A29BFE', '#6C5CE7'], // Light purple to purple
+      ['#FD79A8', '#E84393'], // Pink gradient
       ['#00A8CC', '#0081A7'], // Blue gradient
       ['#F07167', '#C1666B'], // Red gradient
-      ['#06D6A0', '#118AB2'], // Green to blue
-      ['#7209B7', '#B5179E'], // Purple gradient
-      ['#F72585', '#4361EE'], // Pink to blue
-      ['#FCA311', '#E76F51'], // Orange gradient
-      ['#FF9F1C', '#2EC4B6'], // Orange to teal
-      ['#E63946', '#F77F00'], // Red to orange
     ];
 
     const index = Math.abs(hash) % colors.length;
     const colorPair = colors[index] || colors[0];
 
-    // This would be used by the BookCover component to generate a gradient
+    const fallbackUrl = `gradient:${colorPair![0]}:${colorPair![1]}:${encodeURIComponent(book.title)}:${encodeURIComponent(book.author)}`;
+    
+    console.log(`✨ Generated gradient cover with colors ${colorPair![0]} -> ${colorPair![1]}`);
+    
+    // Cache the fallback so we don't regenerate it
+    const cacheKey = this.getCacheKey(book);
+    this.cache.set(cacheKey, {
+      url: fallbackUrl,
+      source: 'gradient_generated',
+      confidence: 100,
+      timestamp: Date.now(),
+    });
+    this.saveCache();
+
     return {
-      url: `gradient:${colorPair![0]}:${colorPair![1]}:${encodeURIComponent(book.title)}:${encodeURIComponent(book.author)}`,
+      url: fallbackUrl,
       source: 'gradient_generated',
       confidence: 100, // Always works as final fallback
       quality: 'medium',

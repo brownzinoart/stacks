@@ -46,96 +46,9 @@ const BookCover = memo(({
   });
 
   useEffect(() => {
-    // If coverUrl is provided, validate it first
-    if (coverUrl) {
-      setCoverState(prev => ({ ...prev, isLoading: true }));
-      
-      // Test if provided URL works
-      const img = new Image();
-      img.onload = () => {
-        setCoverState({
-          url: coverUrl,
-          source: 'provided',
-          confidence: 100,
-          isLoading: false,
-          loadSuccess: true,
-          retryCount: 0
-        });
-      };
-      img.onerror = () => {
-        console.warn('Provided cover URL failed, falling back to search:', coverUrl);
-        // Fall back to search if provided URL fails
-        setCoverState(prev => ({ ...prev, isLoading: true }));
-        fetchCover();
-      };
-      img.src = coverUrl;
-      return;
-    }
-
-    const fetchCover = async (retryAttempt = 0) => {
-      try {
-        setCoverState(prev => ({ ...prev, isLoading: true, error: undefined, retryCount: retryAttempt }));
-        
-        const result = await bookCoverService.getCover({
-          title,
-          author,
-          isbn
-        });
-        
-        // If it's a real image URL, validate it before setting
-        if (result.url.startsWith('http')) {
-          const isValid = await validateImageLoad(result.url);
-          if (!isValid && retryAttempt < 2) {
-            console.warn(`Cover URL validation failed, retrying (${retryAttempt + 1}/2):`, result.url);
-            // Mark this specific URL as failed and clear cache only if it matches
-            bookCoverService.markUrlAsFailed(result.url);
-            bookCoverService.clearCacheIfNeeded({ title, author, isbn }, result.url);
-            return fetchCover(retryAttempt + 1);
-          }
-        }
-        
-        setCoverState({
-          url: result.url,
-          source: result.source,
-          confidence: result.confidence,
-          quality: result.quality,
-          isLoading: false,
-          loadSuccess: true,
-          retryCount: retryAttempt
-        });
-      } catch (error) {
-        console.error('Cover fetch failed:', error);
-        
-        // If this was a retry attempt, give up and use fallback
-        if (retryAttempt >= 2) {
-          setCoverState(prev => ({
-            ...prev,
-            url: generateEmergencyFallback(),
-            source: 'emergency_fallback',
-            confidence: 100,
-            isLoading: false,
-            error: 'All attempts failed, using emergency fallback',
-            retryCount: retryAttempt
-          }));
-        } else {
-          // Retry once
-          console.log(`Retrying cover fetch (${retryAttempt + 1}/2)`);
-          setTimeout(() => fetchCover(retryAttempt + 1), 1000);
-        }
-      }
-    };
-
-    const validateImageLoad = (url: string): Promise<boolean> => {
-      return new Promise((resolve) => {
-        const img = new Image();
-        img.onload = () => resolve(true);
-        img.onerror = () => resolve(false);
-        img.src = url;
-        // Timeout after 5 seconds
-        setTimeout(() => resolve(false), 5000);
-      });
-    };
-
+    // Debug: console.log(`📖 [BookCover] Initializing for "${title}" by ${author}`);
+    
+    // Define helper function
     const generateEmergencyFallback = (): string => {
       // Generate a hash-based color for consistent fallback
       const hash = (title + author).split('').reduce((acc, char) => {
@@ -154,6 +67,83 @@ const BookCover = memo(({
       const colorPair = colors[Math.abs(hash) % colors.length] || colors[0]!;
       return `gradient:${colorPair[0]}:${colorPair[1]}:${encodeURIComponent(title)}:${encodeURIComponent(author)}`;
     };
+    
+    // Now define fetchCover that uses the helper functions
+    async function fetchCover(retryAttempt = 0) {
+      try {
+        // Debug: console.log(`🔍 [BookCover] Fetching cover for "${title}" (attempt ${retryAttempt + 1})`);
+        setCoverState(prev => ({ ...prev, isLoading: true, error: undefined, retryCount: retryAttempt }));
+        
+        const result = await bookCoverService.getCover({
+          title,
+          author,
+          isbn
+        });
+        
+        // Debug: console.log(`📋 [BookCover] Service returned: ${result.source} cover for "${title}" (confidence: ${result.confidence}%)`);
+        
+        // Trust the book cover service - it already does validation
+        // Skip client-side validation to avoid CORS issues
+        
+        // Debug: console.log(`🎨 [BookCover] Setting final cover for "${title}": ${result.source}`);
+        setCoverState({
+          url: result.url,
+          source: result.source,
+          confidence: result.confidence,
+          quality: result.quality,
+          isLoading: false,
+          loadSuccess: true,
+          retryCount: retryAttempt
+        });
+      } catch (error) {
+        console.error(`❌ [BookCover] Fetch failed for "${title}":`, error);
+        
+        // If this was a retry attempt, give up and use fallback
+        if (retryAttempt >= 2) {
+          // Debug: console.log(`🆘 [BookCover] All attempts exhausted for "${title}", using emergency fallback`);
+          setCoverState(prev => ({
+            ...prev,
+            url: generateEmergencyFallback(),
+            source: 'emergency_fallback',
+            confidence: 100,
+            isLoading: false,
+            error: 'All attempts failed, using emergency fallback',
+            retryCount: retryAttempt
+          }));
+        } else {
+          // Retry once
+          // Debug: console.log(`🔄 [BookCover] Retrying fetch for "${title}" in 1s (attempt ${retryAttempt + 1}/2)`);
+          setTimeout(() => fetchCover(retryAttempt + 1), 1000);
+        }
+      }
+    }
+
+    // If coverUrl is provided, trust it and use it directly
+    if (coverUrl) {
+      // Debug: console.log(`📖 [BookCover] Using provided URL for "${title}"`);
+      // If it's a gradient, use it as-is
+      if (coverUrl.startsWith('gradient:')) {
+        setCoverState({
+          url: coverUrl,
+          source: 'provided',
+          confidence: 100,
+          isLoading: false,
+          loadSuccess: true,
+          retryCount: 0
+        });
+        return;
+      }
+      // For HTTP URLs, trust them (the book-cover-service already validated)
+      setCoverState({
+        url: coverUrl,
+        source: 'provided',
+        confidence: 100,
+        isLoading: false,
+        loadSuccess: true,
+        retryCount: 0
+      });
+      return;
+    }
 
     if (title && author) {
       fetchCover();
@@ -198,7 +188,7 @@ const BookCover = memo(({
               
               // Trigger fallback mechanism
               if (coverState.retryCount! < 2) {
-                console.log('Image failed, triggering retry mechanism');
+                // Debug: console.log('Image failed, triggering retry mechanism');
                 // Mark the current URL as failed and only clear if it's the cached one
                 bookCoverService.markUrlAsFailed(coverState.url);
                 bookCoverService.clearCacheIfNeeded({ title, author, isbn }, coverState.url);
@@ -230,7 +220,7 @@ const BookCover = memo(({
                 }));
               } else {
                 // Final fallback
-                console.log('All retries exhausted, using emergency fallback');
+                // Debug: console.log('All retries exhausted, using emergency fallback');
                 const finalFallbackUrl = (() => {
                   const hash = (title + author).split('').reduce((acc, char) => {
                     return (acc << 5) - acc + char.charCodeAt(0);

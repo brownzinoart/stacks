@@ -5,7 +5,7 @@
 
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { aiRecommendationService } from '@/lib/ai-recommendation-service';
 import FullTakeoverLoader, { ENHANCED_LOADING_STAGES } from '@/components/full-takeover-loader';
@@ -62,118 +62,264 @@ export const AIPromptInput = () => {
   const [errorMessage, setErrorMessage] = useState('');
   const [costSavings, setCostSavings] = useState<string>('~65%');
   const [userQuery, setUserQuery] = useState('');
+  const [isMounted, setIsMounted] = useState(false);
   const router = useRouter();
   
-  // DEBUG: Version indicator
-  console.log('🚀🚀🚀 AI PROMPT INPUT v2.0 - ENHANCED LOADING STAGES ACTIVE 🚀🚀🚀');
-  console.log('📊 Loading stages available:', ENHANCED_LOADING_STAGES.length, 'stages');
-  console.log('📊 Stages:', ENHANCED_LOADING_STAGES.map(s => s.title).join(' → '));
+  // Refs to track timeouts and intervals for cleanup
+  const timeoutsRef = useRef<NodeJS.Timeout[]>([]);
+  const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const isLoadingRef = useRef<boolean>(false); // Track loading state to avoid stale closures
+  
 
-  // Cleanup function to cancel requests
+  // Enhanced cleanup function to cancel requests and clear timeouts
   const cleanup = useCallback(() => {
+    console.log('🧹 [CLEANUP] Performing comprehensive cleanup');
     aiRecommendationService.cancel();
+    
+    // Clear all pending timeouts
+    timeoutsRef.current.forEach(timeout => {
+      if (timeout) clearTimeout(timeout);
+    });
+    timeoutsRef.current = [];
+    
+    // Clear example rotation interval
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+      intervalRef.current = null;
+    }
   }, []);
 
-  // Cleanup on unmount
-  useEffect(() => {
-    return cleanup;
-  }, [cleanup]);
+  // Reset all loading states to initial values
+  const resetLoadingStates = useCallback(() => {
+    console.log('🔄 [RESET] Resetting all loading states to initial values');
+    console.trace('🔍 [RESET] Stack trace for reset call');
+    isLoadingRef.current = false; // Reset ref too
+    setIsLoading((prev) => {
+      console.log('📊 [STATE] setIsLoading(false) called - prev:', prev, '-> new: false');
+      return false;
+    });
+    setCurrentStage(0);
+    setProgress(0);
+    setShowError(false);
+    setErrorMessage('');
+    setUserQuery('');
+    setCostSavings('~65%');
+  }, []);
 
-  // Rotate through examples every 3 seconds
+  // Enhanced mount/unmount lifecycle management with proper state reset
   useEffect(() => {
+    setIsMounted(true);
+    
+    // Always reset loading states on mount to handle navigation back scenarios
+    resetLoadingStates();
+    
+    // Check for pending search from results page and set input value
+    if (typeof window !== 'undefined') {
+      const pendingSearch = sessionStorage.getItem('pendingSearch');
+      if (pendingSearch) {
+        console.log('🔍 [MOUNT] Found pending search:', pendingSearch);
+        sessionStorage.removeItem('pendingSearch');
+        setInputValue(pendingSearch);
+        
+        // Set a flag to trigger search after handleSubmit is available
+        sessionStorage.setItem('triggerSearch', 'true');
+      }
+      
+      
+      const hasRecommendations = localStorage.getItem('stacks_recommendations');
+      if (hasRecommendations) {
+        console.log('🗑️ [MOUNT] Clearing stale recommendations state');
+        // Don't remove the data, just reset the component state
+      }
+    }
+    
+    return () => {
+      console.log('🔄 [LIFECYCLE] Component unmounting');
+      setIsMounted(false);
+      cleanup();
+    };
+  }, [cleanup, resetLoadingStates]);
+
+  // Reset states when coming back from navigation (popstate/focus events)
+  useEffect(() => {
+    const handlePageFocus = () => {
+      console.log('👁️ [FOCUS] Page gained focus - resetting states for fresh search');
+      resetLoadingStates();
+    };
+
+    const handlePopState = () => {
+      console.log('🔙 [POPSTATE] User navigated back - resetting states');
+      resetLoadingStates();
+    };
+
+    window.addEventListener('focus', handlePageFocus);
+    window.addEventListener('popstate', handlePopState);
+    
+    return () => {
+      window.removeEventListener('focus', handlePageFocus);
+      window.removeEventListener('popstate', handlePopState);
+    };
+  }, [resetLoadingStates]);
+
+  // Rotate through examples every 3 seconds with proper cleanup
+  useEffect(() => {
+    if (!isMounted) return;
+    
     const interval = setInterval(() => {
+      if (!isMounted) return; // Guard against state updates after unmount
+      
       setIsExampleVisible(false);
-      setTimeout(() => {
+      const fadeTimeout = setTimeout(() => {
+        if (!isMounted) return;
         setCurrentExampleIndex((prev) => (prev + 1) % discoveryExamples.length);
         setIsExampleVisible(true);
       }, 300); // Fade out duration
+      
+      // Track the timeout for cleanup
+      timeoutsRef.current.push(fadeTimeout);
     }, 3000);
+    
+    intervalRef.current = interval;
 
-    return () => clearInterval(interval);
-  }, []);
+    return () => {
+      clearInterval(interval);
+      intervalRef.current = null;
+    };
+  }, [isMounted]);
 
-  // Progress callback for loading stages with progress percentage
+  // Enhanced progress callback with better timeout management
   const handleProgress = useCallback((stage: number, progressPercent: number = 0) => {
+    if (!isMounted) return; // Prevent updates after unmount
+    
     console.log(`🎯 PROGRESS UPDATE: Stage ${stage} - ${progressPercent}% - ${ENHANCED_LOADING_STAGES[stage]?.title || 'Unknown'}`);
     setCurrentStage(stage);
     setProgress(progressPercent);
     
     // Auto-timeout protection - if we're stuck at a stage too long, show error
     const stageTimeout = setTimeout(() => {
-      if (stage === currentStage && isLoading) {
-        setErrorMessage('Request is taking longer than expected. This might be due to slow internet. Please try again.');
-        setShowError(true);
-        setIsLoading(false);
-        setCurrentStage(0);
-        setProgress(0);
-        cleanup();
-      }
+      if (!isMounted) return; // Guard against state updates after unmount
+      
+      // Only timeout if we're still on the same stage and still loading
+      setIsLoading(prevLoading => {
+        if (prevLoading) {
+          setCurrentStage(prevStage => {
+            if (prevStage === stage) {
+              // We're stuck on this stage, timeout
+              setErrorMessage('Request is taking longer than expected. This might be due to slow internet. Please try again.');
+              setShowError(true);
+              setCurrentStage(0);
+              setProgress(0);
+              cleanup();
+              return 0;
+            }
+            return prevStage;
+          });
+          return false;
+        }
+        return prevLoading;
+      });
     }, 90000); // 90 second timeout per stage for mobile
     
-    // Clear timeout on next progress update
-    return () => clearTimeout(stageTimeout);
-  }, [currentStage, isLoading, cleanup]);
+    // Track timeout for cleanup
+    timeoutsRef.current.push(stageTimeout);
+  }, [isMounted, cleanup]);
 
-  // Cancel handler for full takeover loader
+  // Enhanced cancel handler with comprehensive state reset
   const handleCancel = useCallback(() => {
+    console.log('❌ [CANCEL] User cancelled search');
     cleanup();
-    setIsLoading(false);
-    setCurrentStage(0);
-    setProgress(0);
-    setUserQuery('');
-  }, [cleanup]);
+    resetLoadingStates();
+  }, [cleanup, resetLoadingStates]);
 
-  // Optimized submit handler with new AI service
-  const handleSubmit = async (e: React.FormEvent, forceRefresh: boolean = false) => {
+  // Enhanced submit handler with better state management and race condition prevention
+  const handleSubmit = useCallback(async (e: React.FormEvent, forceRefresh: boolean = false) => {
     e.preventDefault();
+    // Debug: console.log('🎯 [SUBMIT] handleSubmit called with inputValue:', inputValue, 'selectedMood:', selectedMood);
+    // Debug: console.log('📊 [SUBMIT] Current loading state:', isLoading, 'isLoadingRef:', isLoadingRef.current);
+    
+    // Prevent multiple concurrent requests using ref to avoid stale closure
+    if (isLoadingRef.current) {
+      console.log('⚠️ [SUBMIT] Request already in progress, ignoring');
+      return;
+    }
 
     // Show error feedback if no input
     if (!inputValue && !selectedMood) {
+      console.log('❌ [SUBMIT] No input or mood selected, showing error');
       setShowError(true);
       setErrorMessage('Please select a mood or enter what you\'re looking for!');
       // Shake animation for the input
       const inputEl = document.querySelector('.search-input-container');
       if (inputEl) {
         inputEl.classList.add('animate-shake');
-        setTimeout(() => {
+        const shakeTimeout = setTimeout(() => {
           inputEl.classList.remove('animate-shake');
         }, 500);
+        timeoutsRef.current.push(shakeTimeout);
       }
       // Clear error after 3 seconds
-      setTimeout(() => setShowError(false), 3000);
+      const errorTimeout = setTimeout(() => {
+        if (isMounted) setShowError(false);
+      }, 3000);
+      timeoutsRef.current.push(errorTimeout);
       return;
     }
 
-    setShowError(false);
-    setIsLoading(true);
+    // Ensure clean state before starting new request
+    cleanup();
+    // DON'T reset loading states here - we're about to set them!
+    // resetLoadingStates();  // REMOVED - this was resetting isLoading to false
+    
+    // Initialize loading state
+    // Debug: console.log('🚀 [SUBMIT] Setting isLoading to TRUE - starting search');
+    // Debug: console.log('🔍 [SUBMIT] User input will be:', inputValue || selectedMood || '(empty)');
+    isLoadingRef.current = true; // Set ref immediately
+    setIsLoading((prev) => {
+      console.log('📊 [STATE] setIsLoading called - prev:', prev, '-> new: true');
+      return true;
+    });
     setCurrentStage(0);
     setProgress(0);
     setCostSavings('~65%');
 
     const userInput = inputValue || selectedMood || '';
+    // Debug: console.log('🎬 [SUBMIT] userInput set to:', userInput);
     setUserQuery(userInput); // Store for display in full takeover loader
+    
+    // Force a re-render to ensure the loader shows
+    // Debug: console.log('🔄 [SUBMIT] Loading state should now be true, triggering overlay');
     const inputType = detectInputType(userInput);
     
-    console.log('🔥🔥🔥 SEARCH STARTED 🔥🔥🔥');
-    console.log('📝 User input:', userInput);
-    console.log('🎬 Loading overlay should be visible now!');
-    console.log('🎬 IsLoading:', true);
-    console.log('🎬 Stages passed to loader:', ENHANCED_LOADING_STAGES);
 
-    // Set up overall timeout protection (120 seconds total for mobile)
+    // Set up overall timeout protection (120 seconds total for mobile) with proper state checks
     const overallTimeout = setTimeout(() => {
-      if (isLoading) {
-        cleanup();
-        setIsLoading(false);
-        setCurrentStage(0);
-        setProgress(0);
-        setUserQuery('');
-        setErrorMessage('Request timed out. This might be due to slow internet. Please try again.');
-        setShowError(true);
-      }
+      if (!isMounted) return; // Prevent state updates after unmount
+      
+      setIsLoading(prevLoading => {
+        if (prevLoading) {
+          console.log('⏱️ [TIMEOUT] Overall request timeout reached');
+          cleanup();
+          setCurrentStage(0);
+          setProgress(0);
+          setUserQuery('');
+          setErrorMessage('Request timed out. This might be due to slow internet. Please try again.');
+          setShowError(true);
+          return false;
+        }
+        return prevLoading;
+      });
     }, 120000);
+    
+    // Track timeout for cleanup
+    timeoutsRef.current.push(overallTimeout);
 
     try {
+      // Track when we started loading
+      const startTime = Date.now();
+      
+      // Ensure loading state is visible before starting the request
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
       const result = await aiRecommendationService.getSmartRecommendations({
         userInput,
         forceRefresh,
@@ -181,6 +327,8 @@ export const AIPromptInput = () => {
       });
 
       clearTimeout(overallTimeout);
+      
+      if (!isMounted) return; // Prevent state updates after unmount
       
       // Show cost savings info
       const savings = ((0.03 - (result.cost / 1000)) * 1000 * 100).toFixed(0); // Estimate vs GPT-4 only
@@ -190,28 +338,47 @@ export const AIPromptInput = () => {
       setCurrentStage(3);
       setProgress(100);
       
-      // Small delay to show completion
-      await new Promise(resolve => setTimeout(resolve, 500));
+      // Ensure minimum display time for overlay (2 seconds total)
+      const elapsedTime = Date.now() - startTime;
+      const minDisplayTime = 2000;
+      const remainingTime = Math.max(0, minDisplayTime - elapsedTime);
       
-      setIsLoading(false);
+      console.log(`⏱️ [TIMING] Search completed in ${elapsedTime}ms, waiting ${remainingTime}ms more`);
+      
+      // Wait for minimum display time before navigating
+      const completionTimeout = setTimeout(async () => {
+        if (!isMounted) return;
+        
+        isLoadingRef.current = false; // Reset ref
+        setIsLoading(false);
 
-      // Store recommendations and navigate
-      if (typeof window !== 'undefined') {
-        try {
-          localStorage.setItem('stacks_recommendations', JSON.stringify(result));
-          router.push('/stacks-recommendations');
-        } catch (storageError) {
-          setErrorMessage('Failed to save recommendations. Please try again.');
-          setShowError(true);
-          setIsLoading(false);
+        // Store recommendations and navigate
+        if (typeof window !== 'undefined') {
+          try {
+            localStorage.setItem('stacks_recommendations', JSON.stringify(result));
+            console.log('✅ [SUCCESS] Recommendations saved, navigating to results');
+            router.push('/stacks-recommendations');
+          } catch (storageError) {
+            console.error('💾 [STORAGE ERROR] Failed to save recommendations:', storageError);
+            if (isMounted) {
+              setErrorMessage('Failed to save recommendations. Please try again.');
+              setShowError(true);
+              setIsLoading(false);
+            }
+          }
         }
-      }
+      }, remainingTime + 500); // Add extra 500ms to show completion state
+      
+      timeoutsRef.current.push(completionTimeout);
     } catch (error: any) {
       clearTimeout(overallTimeout);
-      setIsLoading(false);
-      setCurrentStage(0);
-      setProgress(0);
-      setUserQuery('');
+      
+      if (!isMounted) return; // Prevent state updates after unmount
+      
+      console.error('❌ [ERROR] Search failed:', error);
+      
+      isLoadingRef.current = false; // Reset ref
+      resetLoadingStates();
       
       // Enhanced error handling with specific mobile considerations
       let errorMsg = 'Something went wrong. Please try again.';
@@ -227,33 +394,80 @@ export const AIPromptInput = () => {
       
       // If network error or timeout, use emergency fallback
       if (error.message.includes('timeout') || error.message.includes('Network') || error.message.includes('fetch')) {
-        console.log('[Mobile Debug] Using emergency fallback for:', userInput);
+        console.log('🚨 [FALLBACK] Using emergency fallback for:', userInput);
         const fallbackData = formatFallbackRecommendations(userInput);
         
         // Store fallback data and navigate
         if (typeof window !== 'undefined') {
           try {
             localStorage.setItem('stacks_recommendations', JSON.stringify(fallbackData));
-            console.log('[Mobile Debug] Emergency fallback data stored');
+            console.log('🚨 [FALLBACK] Emergency fallback data stored');
             router.push('/stacks-recommendations');
             return; // Exit early after successful fallback
           } catch (storageError) {
-            console.error('[Mobile Debug] Failed to store fallback data:', storageError);
+            console.error('🚨 [FALLBACK ERROR] Failed to store fallback data:', storageError);
           }
         }
       }
       
-      setErrorMessage(errorMsg);
-      setShowError(true);
-      
-      // Clear error after 10 seconds (longer for mobile users to read)
-      setTimeout(() => setShowError(false), 10000);
+      if (isMounted) {
+        setErrorMessage(errorMsg);
+        setShowError(true);
+        
+        // Clear error after 10 seconds (longer for mobile users to read)
+        const errorTimeout = setTimeout(() => {
+          if (isMounted) setShowError(false);
+        }, 10000);
+        timeoutsRef.current.push(errorTimeout);
+      }
     }
-  };
+  }, [
+    inputValue, 
+    selectedMood, 
+    isMounted, 
+    cleanup, 
+    resetLoadingStates, 
+    handleProgress, 
+    router
+  ]); // Removed isLoading and timeoutsRef from deps to avoid stale closure
+
+  // Handle pending search trigger after handleSubmit is available
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const shouldTrigger = sessionStorage.getItem('triggerSearch');
+      if (shouldTrigger === 'true' && inputValue && isMounted) {
+        console.log('🚀 [AUTO-SEARCH] Triggering pending search for:', inputValue);
+        sessionStorage.removeItem('triggerSearch');
+        
+        // Delay to ensure component is fully rendered
+        setTimeout(() => {
+          if (isMounted && inputValue) {
+            const fakeEvent = { preventDefault: () => {} } as React.FormEvent;
+            handleSubmit(fakeEvent);
+          }
+        }, 1000);
+      }
+    }
+  }, [inputValue, isMounted, handleSubmit]);
 
   const handleMoodSelect = (mood: string) => {
+    console.log('🎭 [MOOD] Mood selected:', mood);
+    const isSelecting = selectedMood !== mood;
     setSelectedMood(selectedMood === mood ? null : mood);
     setInputValue(''); // Clear text input when mood is selected
+    
+    // AUTO-TRIGGER SEARCH FOR TESTING - REMOVED DUE TO RACE CONDITION
+    // Users should click the submit button after selecting a mood
+    // If you want auto-submit, uncomment the code below and increase timeout
+    /*
+    if (isSelecting) { // Only trigger if mood is being selected, not deselected
+      setTimeout(() => {
+        console.log('🚀 [AUTO] Auto-triggering search after mood selection');
+        const fakeEvent = { preventDefault: () => {} } as React.FormEvent;
+        handleSubmit(fakeEvent);
+      }, 500); // Increased timeout to allow state to settle
+    }
+    */
   };
 
   const handleLibraryCheck = (bookId: number) => {
@@ -263,11 +477,6 @@ export const AIPromptInput = () => {
 
   return (
     <div className="relative space-y-6 sm:space-y-8">
-      {/* DEBUG VERSION INDICATOR */}
-      <div className="fixed top-0 left-0 z-[10000] bg-red-600 text-white px-3 py-1 text-xs font-bold">
-        v2.0 DEBUG | Stages: {ENHANCED_LOADING_STAGES.length} | Loading: {isLoading ? 'YES' : 'NO'} | Stage: {currentStage}
-      </div>
-      
       {/* Full Takeover Loading State with Icons */}
       <FullTakeoverLoader
         isVisible={isLoading}

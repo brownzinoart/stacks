@@ -202,32 +202,58 @@ const StacksRecommendationsPage = () => {
   // Books should already have covers from pre-fetch, but we'll still check for any missing ones
   useEffect(() => {
     const fetchCovers = async () => {
+      console.log(`📊 [RECOMMENDATIONS] Starting cover health check for ${books.length} books`);
+      
       const updates: { [key: number]: string } = {};
       const booksNeedingCovers: Array<{ book: any; idx: number }> = [];
+      let realCoverCount = 0;
+      let gradientCoverCount = 0;
+      let noCoverCount = 0;
 
-      // Find books that don't have covers
+      // Analyze current cover status
       books.forEach((book, idx) => {
-        if (!book.cover || !book.cover.startsWith('http')) {
+        if (!book.cover) {
+          noCoverCount++;
+          booksNeedingCovers.push({ book, idx });
+        } else if (book.cover.startsWith('http')) {
+          realCoverCount++;
+        } else if (book.cover.startsWith('gradient:')) {
+          gradientCoverCount++;
+        } else {
+          noCoverCount++;
           booksNeedingCovers.push({ book, idx });
         }
       });
 
-      if (booksNeedingCovers.length === 0) return;
+      console.log(`📊 [COVER HEALTH] Real covers: ${realCoverCount}, Gradient covers: ${gradientCoverCount}, Missing: ${noCoverCount}`);
+
+      if (booksNeedingCovers.length === 0) {
+        console.log(`✅ [COVER HEALTH] All books have covers!`);
+        return;
+      }
+
+      console.log(`🔄 [COVER HEALTH] Fetching covers for ${booksNeedingCovers.length} books`);
 
       // Use our enhanced cover service for remaining books
       const { bookCoverService } = await import('@/lib/book-cover-service');
       const coverResults = await bookCoverService.getBatchCovers(booksNeedingCovers.map((item) => item.book));
 
+      let successfulFetches = 0;
       booksNeedingCovers.forEach((item, resultIdx) => {
         const coverResult = coverResults.get(resultIdx);
-        if (coverResult && coverResult.url && !coverResult.url.startsWith('gradient:')) {
+        if (coverResult && coverResult.url) {
           updates[item.idx] = coverResult.url;
+          successfulFetches++;
+          console.log(`📚 [COVER HEALTH] Got ${coverResult.source} cover for "${item.book.title}"`);
         }
       });
 
       if (Object.keys(updates).length > 0) {
+        console.log(`💾 [COVER HEALTH] Applying ${Object.keys(updates).length} cover updates`);
         setCoverUrls((prev) => ({ ...prev, ...updates }));
       }
+
+      console.log(`🎯 [COVER HEALTH] Final result: ${successfulFetches}/${booksNeedingCovers.length} covers fetched successfully`);
     };
 
     if (books.length > 0) fetchCovers();
@@ -324,9 +350,20 @@ const StacksRecommendationsPage = () => {
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    // Save new search to localStorage and reload page
-    localStorage.setItem('stacks_recommendations', JSON.stringify({ books: [], userInput: searchValue }));
-    window.location.reload();
+    
+    if (!searchValue.trim()) {
+      return;
+    }
+    
+    // Navigate back to home page to trigger the proper loading overlay
+    // Store the new search query so the home page can pick it up
+    if (typeof window !== 'undefined') {
+      sessionStorage.setItem('pendingSearch', searchValue);
+      localStorage.removeItem('stacks_recommendations'); // Clear old results
+    }
+    
+    console.log('🔍 [SEARCH] Navigating to home with new search:', searchValue);
+    router.push('/home');
   };
 
   return (

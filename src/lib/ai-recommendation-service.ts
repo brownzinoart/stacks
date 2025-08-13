@@ -90,8 +90,15 @@ export class AIRecommendationService {
   private abortController: AbortController | null = null;
   private cache = new Map<string, { data: RecommendationResponse; timestamp: number }>();
   private readonly CACHE_DURATION = 24 * 60 * 60 * 1000; // 24 hours
-  private readonly MOBILE_TIMEOUT = 15000; // Optimized: 15 seconds for mobile
-  private readonly WEB_TIMEOUT = 12000; // Optimized: 12 seconds for web
+  // Progressive timeout strategy
+  private readonly QUICK_TIMEOUT = 8000; // Fast lane: 8 seconds for quick models
+  private readonly QUALITY_TIMEOUT = 30000; // Quality lane: 30 seconds for premium models
+  private readonly EMERGENCY_TIMEOUT = 5000; // Emergency: 5 seconds for cached/simple responses
+  
+  // Circuit breaker for API performance tracking
+  private apiPerformance = new Map<string, { failures: number; lastFailure: number; avgResponseTime: number }>();
+  private readonly FAILURE_THRESHOLD = 3;
+  private readonly RECOVERY_TIME = 60000; // 1 minute recovery period
 
   /**
    * Extract potential reference from user input for parallel OMDb lookup
@@ -136,18 +143,23 @@ export class AIRecommendationService {
       console.log('[AI Service] Starting parallel optimization workflow');
       onProgress?.(0, 10);
       
-      // Set optimized timeout - reduced for faster responses
-      const isMobile = this.isMobileDevice();
-      const timeout = 15000; // Unified 15-second timeout for faster responses
+      // Progressive timeout strategy: start fast, escalate if needed
+      console.log('[AI Service] Using progressive timeout strategy: Quick→Quality→Emergency');
       
-      console.log(`[AI Service] Using optimized ${timeout}ms timeout`);
-      
-      // PARALLEL STAGE 1 & 2: Analysis + OMDb enrichment simultaneously
-      const analysisPromise = aiRouter.routeRequest({
-        task: 'search_query' as AITask,
-        prompt: this.buildAnalysisPrompt(userInput),
-        maxTokens: 200,
-      });
+      // STAGE 1: Analysis with progressive fallback
+      console.log('[AI Service] Stage 1: Analysis with progressive fallback');
+      let analysisResult;
+      try {
+        analysisResult = await this.getAnalysisWithFallback(userInput);
+        console.log('[AI Service] 🎯 Analysis fallback completed successfully');
+      } catch (fallbackError: any) {
+        console.error('[AI Service] 🚨 Progressive analysis completely failed, using emergency:', fallbackError);
+        analysisResult = {
+          analysis: this.getDefaultAnalysis(userInput),
+          cost: 0,
+          model: 'emergency_analysis_fallback'
+        };
+      }
       
       // Pre-emptively start OMDb lookup for potential references
       const potentialOmdbPromise = this.extractPotentialReference(userInput)
@@ -156,30 +168,12 @@ export class AIRecommendationService {
       
       onProgress?.(0, 25);
       
-      // Wait for both analysis and potential OMDb data
-      const [analysisResponse, omdbData] = await Promise.all([
-        Promise.race([analysisPromise, new Promise((_, reject) => 
-          setTimeout(() => reject(new Error('Analysis timeout')), timeout)
-        )]),
-        potentialOmdbPromise
-      ]);
+      // Get OMDb data if available
+      const omdbData = await potentialOmdbPromise;
       
-      totalCost += (analysisResponse as any).cost;
-      modelsUsed.push((analysisResponse as any).model);
-      
-      let analysis: UserAnalysis;
-      try {
-        const content = (analysisResponse as any).content;
-        const jsonMatch = content.match(/\{[\s\S]*\}/);
-        if (jsonMatch) {
-          analysis = JSON.parse(jsonMatch[0]);
-        } else {
-          throw new Error('No JSON found in analysis response');
-        }
-      } catch (parseError) {
-        console.warn('[AI Service] Failed to parse analysis, using defaults');
-        analysis = this.getDefaultAnalysis(userInput);
-      }
+      totalCost += analysisResult.cost;
+      modelsUsed.push(analysisResult.model);
+      const analysis = analysisResult.analysis;
       
       console.log('[AI Service] Analysis result:', analysis);
       onProgress?.(1, 40);
@@ -191,52 +185,77 @@ export class AIRecommendationService {
         console.log('[AI Service] Using parallel OMDb enrichment');
       }
 
-      // STAGE 3: Generate recommendations with reduced timeout
-      console.log('[AI Service] Stage 3: Generating recommendations (optimized)');
+      // STAGE 3: Generate recommendations with progressive fallback
+      console.log('[AI Service] Stage 3: Generating recommendations with fallback chain');
       onProgress?.(2, 60);
       
-      const recommendationPromise = aiRouter.routeRequest({
-        task: 'mood_recommendation' as AITask,
-        prompt: this.buildRecommendationPrompt(userInput, enrichedContext),
-        context: enrichedContext,
-        maxTokens: 1500,
-      });
-      
-      const recommendationResponse = await Promise.race([
-        recommendationPromise,
-        new Promise((_, reject) => setTimeout(() => reject(new Error('Recommendation timeout')), timeout))
-      ]);
-      
-      totalCost += (recommendationResponse as any).cost;
-      modelsUsed.push((recommendationResponse as any).model);
-
-      let recommendations;
+      let recommendationResult;
       try {
-        const content = (recommendationResponse as any).content;
-        const jsonMatch = content.match(/\{[\s\S]*\}/);
-        if (jsonMatch) {
-          recommendations = JSON.parse(jsonMatch[0]);
-        } else {
-          throw new Error('No JSON found in recommendation response');
-        }
-      } catch (parseError) {
-        console.error('[AI Service] Failed to parse recommendations:', parseError);
-        throw new Error('Failed to parse AI response');
+        recommendationResult = await this.getRecommendationsWithFallback(userInput, enrichedContext);
+        console.log('[AI Service] 🎯 Recommendation fallback completed successfully');
+      } catch (fallbackError: any) {
+        console.error('[AI Service] 🚨 Progressive recommendations completely failed, using emergency:', fallbackError);
+        recommendationResult = await this.getEmergencyRecommendations(userInput);
       }
+      
+      totalCost += recommendationResult.cost;
+      modelsUsed.push(recommendationResult.model);
+      const recommendations = recommendationResult.recommendations;
 
-      // PARALLEL STAGE 4: Start cover fetching while building response
-      console.log('[AI Service] Stage 4: Parallel cover fetching');
-      onProgress?.(3, 80);
+      // STAGE 4: Fetch real covers before returning results
+      console.log('[AI Service] Stage 4: Fetching book covers');
+      onProgress?.(3, 85);
       
       const allBooks: BookRecommendation[] = [];
       for (const category of recommendations.categories) {
         allBooks.push(...category.books);
       }
 
-      console.log(`[AI Service] Pre-fetching covers for ${allBooks.length} books across ${recommendations.categories.length} categories`);
-      console.log('[AI Service] Categories:', recommendations.categories.map((c: any) => `${c.name} (${c.books.length} books)`).join(', '));
-      
-      // Build response immediately, fetch covers in background
+      // Fetch real covers with timeout
+      console.log(`[AI Service] Fetching covers for ${allBooks.length} books`);
+      try {
+        const coverResults = await Promise.race([
+          bookCoverService.getBatchCovers(allBooks),
+          new Promise<Map<number, any>>((_, reject) => 
+            setTimeout(() => reject(new Error('Cover fetch timeout')), 10000) // 10 second timeout
+          )
+        ]);
+        
+        // Apply covers to books
+        let bookIndex = 0;
+        let realCoversCount = 0;
+        for (const category of recommendations.categories) {
+          for (const book of category.books) {
+            const coverResult = coverResults.get(bookIndex);
+            if (coverResult && coverResult.url) {
+              book.cover = coverResult.url;
+              if (!coverResult.url.startsWith('gradient:')) {
+                realCoversCount++;
+              }
+              console.log(`[AI Service] ✅ Cover attached for "${book.title}": ${coverResult.source}`);
+            } else {
+              // Generate fallback if no cover found
+              book.cover = this.generateFallbackCover(book.title, book.author);
+              console.log(`[AI Service] 🎨 Using gradient fallback for "${book.title}"`);
+            }
+            bookIndex++;
+          }
+        }
+        console.log(`[AI Service] Cover fetch complete: ${realCoversCount} real covers, ${allBooks.length - realCoversCount} gradients`);
+        onProgress?.(3, 95);
+      } catch (coverError) {
+        console.warn('[AI Service] Cover fetching failed, using gradients:', coverError);
+        // Apply gradient covers as fallback
+        for (const category of recommendations.categories) {
+          for (const book of category.books) {
+            if (!book.cover) {
+              book.cover = this.generateFallbackCover(book.title, book.author);
+            }
+          }
+        }
+      }
+
+      // Build complete response with covers already attached
       const result: RecommendationResponse = {
         ...recommendations,
         userInput,
@@ -244,37 +263,6 @@ export class AIRecommendationService {
         cost: totalCost,
         models: modelsUsed,
       };
-      
-      // Start cover fetching in background (non-blocking)
-      bookCoverService.getBatchCovers(allBooks).then(coverResults => {
-        console.log(`[AI Service] Background cover service returned ${coverResults.size} results`);
-        
-        // Apply covers to the books
-        let coversAttached = 0;
-        let bookIndex = 0;
-        for (const category of result.categories) {
-          for (const book of category.books) {
-            const coverResult = coverResults.get(bookIndex);
-            if (coverResult && coverResult.url) {
-              book.cover = coverResult.url;
-              coversAttached++;
-            } else {
-              // Generate a fallback cover if none was found
-              book.cover = this.generateFallbackCover(book.title, book.author);
-            }
-            bookIndex++;
-          }
-        }
-        console.log(`[AI Service] Background covers attached: ${coversAttached}/${allBooks.length}`);
-      }).catch(error => {
-        console.error('[AI Service] Background cover fetching failed:', error);
-        // Apply fallback covers
-        for (const category of result.categories) {
-          for (const book of category.books) {
-            book.cover = this.generateFallbackCover(book.title, book.author);
-          }
-        }
-      });
 
       // Cache the result immediately
       this.setCache(cacheKey, result);
@@ -284,25 +272,52 @@ export class AIRecommendationService {
       return result;
 
     } catch (error: any) {
-      console.error('[AI Service] Error generating recommendations:', error);
+      console.error('[AI Service] 🚨 Complete system failure - using ultimate emergency fallback:', error);
       
-      // Enhanced error handling with mobile-specific messages
-      if (error.name === 'AbortError') {
-        throw new Error('Request was cancelled');
-      } else if (error.message?.includes('timeout')) {
-        const isMobile = this.isMobileDevice();
-        const msg = isMobile 
-          ? 'Request timed out. Mobile networks can be slower - please try again or connect to WiFi.'
-          : 'Request timed out. Please check your internet connection and try again.';
-        throw new Error(msg);
-      } else if (error.message?.includes('fetch') || error.message?.includes('Network')) {
-        throw new Error('Network error. Please check your internet connection.');
-      } else if (error.message?.includes('Failed to parse')) {
-        // Retry once with a simpler prompt
-        console.log('[AI Service] Retrying with fallback prompt...');
-        return this.getSmartRecommendationsWithFallback(userInput, onProgress);
-      } else {
-        throw new Error('Failed to generate recommendations. Please try again.');
+      try {
+        // Try emergency recommendations one more time
+        const emergencyResult = await this.getEmergencyRecommendations(userInput);
+        console.log('[AI Service] ✅ Emergency fallback succeeded');
+        return {
+          ...emergencyResult.recommendations,
+          userInput,
+          timestamp: new Date().toISOString(),
+          cost: emergencyResult.cost,
+          models: [emergencyResult.model],
+        };
+      } catch (emergencyError: any) {
+        console.error('[AI Service] 🆘 Even emergency failed, using hardcoded response:', emergencyError);
+        
+        // Ultimate hardcoded fallback - this should NEVER fail
+        return {
+          overallTheme: `Books related to "${userInput}"`,
+          categories: [
+            {
+              name: "Popular Picks",
+              description: "Well-loved books that many readers enjoy",
+              books: [
+                {
+                  title: "The Seven Husbands of Evelyn Hugo",
+                  author: "Taylor Jenkins Reid",
+                  whyYoullLikeIt: "A captivating story about love, ambition, and the price of fame",
+                  summary: "Reclusive Hollywood icon Evelyn Hugo finally decides to tell her life story",
+                  cover: this.generateFallbackCover("The Seven Husbands of Evelyn Hugo", "Taylor Jenkins Reid")
+                },
+                {
+                  title: "Where the Crawdads Sing", 
+                  author: "Delia Owens",
+                  whyYoullLikeIt: "A beautiful blend of mystery and coming-of-age story",
+                  summary: "A young woman survives alone in the marshes of North Carolina",
+                  cover: this.generateFallbackCover("Where the Crawdads Sing", "Delia Owens")
+                }
+              ]
+            }
+          ],
+          userInput,
+          timestamp: new Date().toISOString(),
+          cost: 0,
+          models: ['ultimate_hardcoded_fallback'],
+        };
       }
     }
   }
@@ -314,6 +329,380 @@ export class AIRecommendationService {
     if (this.abortController) {
       this.abortController.abort();
       this.abortController = null;
+    }
+  }
+  
+  /**
+   * Circuit breaker: Record API performance
+   */
+  private recordApiPerformance(endpoint: string, success: boolean, responseTime: number): void {
+    const key = endpoint;
+    const existing = this.apiPerformance.get(key) || { failures: 0, lastFailure: 0, avgResponseTime: 0 };
+    
+    if (success) {
+      // Success: reduce failure count and update average response time
+      existing.failures = Math.max(0, existing.failures - 1);
+      existing.avgResponseTime = existing.avgResponseTime * 0.8 + responseTime * 0.2; // Moving average
+    } else {
+      // Failure: increment failure count and record timestamp
+      existing.failures += 1;
+      existing.lastFailure = Date.now();
+    }
+    
+    this.apiPerformance.set(key, existing);
+    console.log(`[Circuit Breaker] ${key}: failures=${existing.failures}, avgTime=${existing.avgResponseTime.toFixed(0)}ms`);
+  }
+  
+  /**
+   * Circuit breaker: Check if endpoint should be avoided
+   */
+  private shouldAvoidEndpoint(endpoint: string): boolean {
+    const perf = this.apiPerformance.get(endpoint);
+    if (!perf) return false;
+    
+    // Avoid if we've had too many recent failures
+    if (perf.failures >= this.FAILURE_THRESHOLD) {
+      const timeSinceLastFailure = Date.now() - perf.lastFailure;
+      if (timeSinceLastFailure < this.RECOVERY_TIME) {
+        console.log(`[Circuit Breaker] Avoiding ${endpoint} due to recent failures`);
+        return true;
+      }
+      // Reset after recovery time
+      perf.failures = 0;
+      this.apiPerformance.set(endpoint, perf);
+    }
+    
+    // Avoid if response times are consistently too slow (>25s)
+    if (perf.avgResponseTime > 25000) {
+      console.log(`[Circuit Breaker] Avoiding ${endpoint} due to slow response times (${perf.avgResponseTime.toFixed(0)}ms)`);
+      return true;
+    }
+    
+    return false;
+  }
+  
+  /**
+   * Enhanced AI request with circuit breaker
+   */
+  private async makeAIRequestWithCircuitBreaker(
+    task: AITask,
+    prompt: string,
+    maxTokens: number,
+    timeout: number,
+    context?: string
+  ): Promise<any> {
+    const endpointKey = `${task}_${timeout}`;
+    const startTime = Date.now();
+    
+    try {
+      // Check circuit breaker before making request
+      if (this.shouldAvoidEndpoint(endpointKey)) {
+        throw new Error(`Circuit breaker: Avoiding ${endpointKey}`);
+      }
+      
+      const response = await Promise.race([
+        aiRouter.routeRequest({
+          task,
+          prompt,
+          context,
+          maxTokens,
+        }),
+        new Promise((_, reject) => 
+          setTimeout(() => reject(new Error(`${task} timeout after ${timeout}ms`)), timeout)
+        )
+      ]);
+      
+      // Record success
+      const responseTime = Date.now() - startTime;
+      this.recordApiPerformance(endpointKey, true, responseTime);
+      
+      return response;
+    } catch (error) {
+      // Record failure
+      const responseTime = Date.now() - startTime;
+      this.recordApiPerformance(endpointKey, false, responseTime);
+      throw error;
+    }
+  }
+
+  /**
+   * Progressive analysis with fallback chain
+   */
+  private async getAnalysisWithFallback(userInput: string): Promise<{
+    analysis: UserAnalysis;
+    cost: number;
+    model: string;
+  }> {
+    console.log('[AI Service] 🚀 Starting analysis with progressive fallback for:', JSON.stringify(userInput.substring(0, 50)));
+    
+    // Quick Lane: Fast models with short timeout
+    try {
+      console.log('[AI Service] 📞 Trying quick lane for analysis (8s timeout)');
+      console.log('[AI Service] 🔧 Circuit breaker values - QUICK_TIMEOUT:', this.QUICK_TIMEOUT);
+      
+      const quickResponse = await this.makeAIRequestWithCircuitBreaker(
+        'search_query' as AITask,
+        this.buildAnalysisPrompt(userInput),
+        200,
+        this.QUICK_TIMEOUT
+      );
+      
+      console.log('[AI Service] 📨 Quick analysis response received:', !!quickResponse);
+      
+      const analysis = this.parseAnalysisResponse(quickResponse.content);
+      if (analysis) {
+        console.log('[AI Service] ✅ Analysis succeeded in quick lane');
+        return {
+          analysis,
+          cost: quickResponse.cost,
+          model: quickResponse.model
+        };
+      }
+    } catch (error: any) {
+      const errorMessage = (error as Error)?.message || String(error) || 'Unknown error';
+      console.log('[AI Service] ⚡ Quick lane failed, trying quality lane:', errorMessage);
+    }
+    
+    // Quality Lane: Premium models with longer timeout
+    try {
+      console.log('[AI Service] Trying quality lane for analysis (30s timeout)');
+      const qualityResponse = await this.makeAIRequestWithCircuitBreaker(
+        'search_query' as AITask,
+        this.buildAnalysisPrompt(userInput),
+        200,
+        this.QUALITY_TIMEOUT
+      );
+      
+      const analysis = this.parseAnalysisResponse(qualityResponse.content);
+      if (analysis) {
+        console.log('[AI Service] ✅ Analysis succeeded in quality lane');
+        return {
+          analysis,
+          cost: qualityResponse.cost,
+          model: qualityResponse.model + '_quality'
+        };
+      }
+    } catch (error: any) {
+      const errorMessage = (error as Error)?.message || String(error) || 'Unknown error';
+      console.log('[AI Service] ⚡ Quality lane failed, using emergency fallback:', errorMessage);
+    }
+    
+    // Emergency Lane: Use default analysis
+    console.log('[AI Service] 🚨 Using emergency analysis fallback');
+    return {
+      analysis: this.getDefaultAnalysis(userInput),
+      cost: 0,
+      model: 'emergency_fallback'
+    };
+  }
+  
+  /**
+   * Progressive recommendations with fallback chain
+   */
+  private async getRecommendationsWithFallback(userInput: string, enrichedContext: string): Promise<{
+    recommendations: any;
+    cost: number;
+    model: string;
+  }> {
+    console.log('[AI Service] Starting recommendations with progressive fallback');
+    
+    // Quick Lane: Fast models
+    try {
+      console.log('[AI Service] Trying quick lane for recommendations (8s timeout)');
+      const quickResponse = await this.makeAIRequestWithCircuitBreaker(
+        'mood_recommendation' as AITask,
+        this.buildRecommendationPrompt(userInput, enrichedContext),
+        1200,
+        this.QUICK_TIMEOUT,
+        enrichedContext
+      );
+      
+      const recommendations = this.parseRecommendationResponse(quickResponse.content);
+      if (recommendations) {
+        console.log('[AI Service] ✅ Recommendations succeeded in quick lane');
+        return {
+          recommendations,
+          cost: quickResponse.cost,
+          model: quickResponse.model
+        };
+      }
+    } catch (error: any) {
+      const errorMessage = (error as Error)?.message || String(error) || 'Unknown error';
+      console.log('[AI Service] ⚡ Quick lane failed, trying quality lane:', errorMessage);
+    }
+    
+    // Quality Lane: Premium models
+    try {
+      console.log('[AI Service] Trying quality lane for recommendations (30s timeout)');
+      const qualityResponse = await this.makeAIRequestWithCircuitBreaker(
+        'mood_recommendation' as AITask,
+        this.buildRecommendationPrompt(userInput, enrichedContext),
+        1500,
+        this.QUALITY_TIMEOUT,
+        enrichedContext
+      );
+      
+      const recommendations = this.parseRecommendationResponse(qualityResponse.content);
+      if (recommendations) {
+        console.log('[AI Service] ✅ Recommendations succeeded in quality lane');
+        return {
+          recommendations,
+          cost: qualityResponse.cost,
+          model: qualityResponse.model + '_quality'
+        };
+      }
+    } catch (error: any) {
+      const errorMessage = (error as Error)?.message || String(error) || 'Unknown error';
+      console.log('[AI Service] ⚡ Quality lane failed, trying emergency fallback:', errorMessage);
+    }
+    
+    // Emergency Lane: Use cached/simple response
+    console.log('[AI Service] 🚨 Using emergency recommendations fallback');
+    return await this.getEmergencyRecommendations(userInput);
+  }
+  
+  /**
+   * Parse analysis response with error handling
+   */
+  private parseAnalysisResponse(content: string): UserAnalysis | null {
+    try {
+      const jsonMatch = content.match(/\{[\s\S]*\}/);
+      if (jsonMatch) {
+        return JSON.parse(jsonMatch[0]);
+      }
+    } catch (error) {
+      console.warn('[AI Service] Failed to parse analysis response:', error);
+    }
+    return null;
+  }
+  
+  /**
+   * Parse recommendation response with error handling
+   */
+  private parseRecommendationResponse(content: string): any | null {
+    try {
+      const jsonMatch = content.match(/\{[\s\S]*\}/);
+      if (jsonMatch) {
+        return JSON.parse(jsonMatch[0]);
+      }
+    } catch (error) {
+      console.warn('[AI Service] Failed to parse recommendation response:', error);
+    }
+    return null;
+  }
+  
+  /**
+   * Emergency recommendations using simple local generation
+   */
+  private async getEmergencyRecommendations(userInput: string): Promise<{
+    recommendations: any;
+    cost: number;
+    model: string;
+  }> {
+    try {
+      console.log('[AI Service] Generating emergency recommendations with 5s timeout');
+      const emergencyResponse = await this.makeAIRequestWithCircuitBreaker(
+        'mood_recommendation' as AITask,
+        `Simple book recommendations for: "${userInput}". Return JSON with 2 categories, 2 books each.`,
+        800,
+        this.EMERGENCY_TIMEOUT
+      );
+      
+      const recommendations = this.parseRecommendationResponse(emergencyResponse.content);
+      if (recommendations) {
+        return {
+          recommendations,
+          cost: emergencyResponse.cost,
+          model: 'emergency_ai'
+        };
+      }
+    } catch (error: any) {
+      const errorMessage = (error as Error)?.message || String(error) || 'Unknown error';
+      console.log('[AI Service] Emergency AI failed, using hardcoded fallback:', errorMessage);
+    }
+    
+    // Ultimate fallback: hardcoded response
+    return {
+      recommendations: {
+        overallTheme: `Books related to "${userInput}"`,
+        categories: [
+          {
+            name: "Popular Picks",
+            description: "Well-loved books that many readers enjoy",
+            books: [
+              {
+                title: "The Seven Husbands of Evelyn Hugo",
+                author: "Taylor Jenkins Reid",
+                whyYoullLikeIt: "A captivating story about love, ambition, and the price of fame",
+                summary: "Reclusive Hollywood icon Evelyn Hugo finally decides to tell her life story",
+                cover: this.generateFallbackCover("The Seven Husbands of Evelyn Hugo", "Taylor Jenkins Reid")
+              },
+              {
+                title: "Where the Crawdads Sing",
+                author: "Delia Owens",
+                whyYoullLikeIt: "A beautiful blend of mystery and coming-of-age story",
+                summary: "A young woman survives alone in the marshes of North Carolina",
+                cover: this.generateFallbackCover("Where the Crawdads Sing", "Delia Owens")
+              }
+            ]
+          },
+          {
+            name: "Timeless Classics",
+            description: "Enduring stories that never go out of style",
+            books: [
+              {
+                title: "To Kill a Mockingbird",
+                author: "Harper Lee",
+                whyYoullLikeIt: "A powerful story about justice, morality, and growing up",
+                summary: "A young girl learns about prejudice and justice in the American South",
+                cover: this.generateFallbackCover("To Kill a Mockingbird", "Harper Lee")
+              },
+              {
+                title: "Pride and Prejudice",
+                author: "Jane Austen",
+                whyYoullLikeIt: "Witty dialogue and timeless romance with strong characters",
+                summary: "Elizabeth Bennet navigates love and social expectations in Regency England",
+                cover: this.generateFallbackCover("Pride and Prejudice", "Jane Austen")
+              }
+            ]
+          }
+        ]
+      },
+      cost: 0,
+      model: 'hardcoded_emergency'
+    };
+  }
+  
+  /**
+   * Asynchronous cover loading that runs in background
+   */
+  private async loadCoversAsync(books: BookRecommendation[]): Promise<void> {
+    console.log(`[AI Service] Starting background cover loading for ${books.length} books`);
+    
+    try {
+      // Load covers with generous timeout since this is non-blocking
+      const coverResults = await Promise.race([
+        bookCoverService.getBatchCovers(books),
+        new Promise<Map<number, any>>((_, reject) => 
+          setTimeout(() => reject(new Error('Background cover timeout')), 15000)
+        )
+      ]);
+      
+      console.log(`[AI Service] Background: loaded ${coverResults.size} covers`);
+      
+      // Update books with actual covers (this would require a callback mechanism
+      // or event system to update the UI - for now just log success)
+      let coversFound = 0;
+      coverResults.forEach((coverResult, index) => {
+        if (coverResult && coverResult.url && !coverResult.url.startsWith('gradient:')) {
+          coversFound++;
+        }
+      });
+      
+      console.log(`[AI Service] 🎨 Background cover loading complete: ${coversFound}/${books.length} real covers found`);
+      
+    } catch (error: any) {
+      console.log('[AI Service] Background cover loading failed (non-critical):', error.message);
     }
   }
 
@@ -567,11 +956,14 @@ Include 2-3 books per category with rich, detailed "whyYoullLikeIt" descriptions
     }, 0);
     
     const colors = [
-      ['#FF6B6B', '#4ECDC4'], // Red to teal
-      ['#45B7D1', '#F39C12'], // Blue to orange  
-      ['#96CEB4', '#FECA57'], // Green to yellow
-      ['#6C5CE7', '#FD79A8'], // Purple to pink
-      ['#00B894', '#00CEC9'], // Green to cyan
+      ['#667eea', '#764ba2'], // Blue to purple gradient
+      ['#f093fb', '#f5576c'], // Pink to coral gradient
+      ['#4facfe', '#00f2fe'], // Light blue to cyan gradient
+      ['#43e97b', '#38f9d7'], // Green to turquoise gradient
+      ['#fa709a', '#fee140'], // Pink to yellow gradient
+      ['#a8edea', '#fed6e3'], // Mint to pink gradient
+      ['#ff9a9e', '#fecfef'], // Coral to light pink gradient
+      ['#667eea', '#764ba2'], // Deep blue to purple gradient
       ['#E17055', '#FDCB6E'], // Orange gradient
     ];
     

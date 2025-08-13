@@ -14,7 +14,7 @@ import { performanceAnalytics } from '@/lib/performance-analytics';
 export function OptimizedAppShell({ children }: { children: React.ReactNode }) {
   const getPreloadEndpoints = useCallback((path: string): string[] => {
     const endpointMap: Record<string, string[]> = {
-      '/home': ['/api/books/recommendations', '/api/user/preferences'],
+      '/home': ['/api/user/preferences'],
       '/explore': ['/api/books/trending', '/api/books/categories'],
       '/community': ['/api/community/posts', '/api/community/recommendations'],
       '/ar-discovery': ['/api/library/nearby', '/api/books/availability']

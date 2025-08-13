@@ -1,135 +1,137 @@
-/**
- * Test the 100% book cover coverage system
- * Run with: node test-book-covers.js
- */
+// Test script to verify book covers are being fetched and stored properly
 
-// Simple test to verify the Google Books API without using the full Next.js setup
-async function testGoogleBooksAPI() {
-  console.log('🔍 Testing Google Books API (FREE)...');
+async function testMoodSelection(mood) {
+  console.log(`\n🔍 Testing mood selection: ${mood}`);
+  console.log('=' .repeat(50));
   
   try {
-    // Test with a popular book
-    const query = 'isbn:9780141182636'; // The Great Gatsby
-    const url = `https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(query)}&maxResults=1`;
-    
-    const response = await fetch(url);
+    // First, make the search request through the AI proxy
+    const searchPayload = {
+      model: "gpt-4o",
+      messages: [
+        {
+          role: "system",
+          content: "You are a library assistant expert at understanding mood and emotional context to recommend perfect books. Focus on matching the emotional tone and reading experience the user seeks."
+        },
+        {
+          role: "user",
+          content: `Based on the user wanting books like "${mood}", create exactly 3 categories of recommendations.\n\nReturn ONLY this JSON structure with NO additional text:\n{\n  "overallTheme": "One sentence summary",\n  "categories": [\n    {\n      "name": "Category Name",\n      "description": "1-2 sentences why",\n      "books": [\n        {\n          "title": "Book Title", \n          "author": "Author Name", \n          "isbn": "ISBN-13 if known", \n          "year": "publication year",\n          "whyYoullLikeIt": "Natural description",\n          "summary": "Brief plot summary",\n          "pageCount": "estimated pages",\n          "readingTime": "estimated hours",\n          "publisher": "publisher if known"\n        }\n      ]\n    }\n  ]\n}\n\nInclude 2 books per category.`
+        }
+      ],
+      max_tokens: 1200,
+      temperature: 0.7
+    };
+
+    console.log('📤 Sending request to OpenAI proxy...');
+    const response = await fetch('http://localhost:3000/api/openai-proxy', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(searchPayload)
+    });
+
+    if (\!response.ok) {
+      throw new Error(`HTTP error\! status: ${response.status}`);
+    }
+
     const data = await response.json();
+    console.log('✅ Received response from OpenAI');
     
-    if (data.items && data.items.length > 0) {
-      const book = data.items[0].volumeInfo;
-      const imageLinks = book.imageLinks;
-      
-      console.log('✅ Google Books API working!');
-      console.log(`   Title: ${book.title}`);
-      console.log(`   Authors: ${book.authors?.join(', ')}`);
-      console.log(`   Cover URL: ${imageLinks?.thumbnail || 'No cover found'}`);
-      
-      return {
-        success: true,
-        source: 'google',
-        confidence: 95,
-        url: imageLinks?.thumbnail
-      };
-    } else {
-      console.log('❌ No results from Google Books API');
-      return { success: false };
+    // Parse the recommendations
+    const content = data.choices[0].message.content;
+    const jsonMatch = content.match(/\{[\s\S]*\}/);
+    if (\!jsonMatch) {
+      throw new Error('No JSON found in response');
     }
+    
+    const recommendations = JSON.parse(jsonMatch[0]);
+    console.log(`📚 Found ${recommendations.categories.length} categories`);
+    
+    // Count books and check for covers
+    let totalBooks = 0;
+    let booksWithCovers = 0;
+    
+    recommendations.categories.forEach(category => {
+      console.log(`\n  📂 ${category.name}: ${category.books.length} books`);
+      category.books.forEach(book => {
+        totalBooks++;
+        if (book.cover) {
+          booksWithCovers++;
+          const coverType = book.cover.startsWith('http') ? 'URL' : 
+                           book.cover.startsWith('gradient:') ? 'Gradient' : 'Unknown';
+          console.log(`    📖 "${book.title}" - Cover: ${coverType}`);
+        } else {
+          console.log(`    📖 "${book.title}" - Cover: ❌ MISSING`);
+        }
+      });
+    });
+    
+    console.log(`\n📊 Summary: ${booksWithCovers}/${totalBooks} books have covers`);
+    
+    if (booksWithCovers === 0) {
+      console.log('⚠️  WARNING: No books have covers\! The fix may not be working.');
+    } else if (booksWithCovers < totalBooks) {
+      console.log('⚠️  WARNING: Some books are missing covers.');
+    } else {
+      console.log('✅ SUCCESS: All books have covers\!');
+    }
+    
+    return { totalBooks, booksWithCovers };
+    
   } catch (error) {
-    console.error('❌ Google Books API error:', error.message);
-    return { success: false, error: error.message };
+    console.error(`❌ Error testing ${mood}:`, error.message);
+    return { totalBooks: 0, booksWithCovers: 0 };
   }
 }
 
-async function testOpenLibraryAPI() {
-  console.log('🔍 Testing Open Library API (FREE)...');
+async function runTests() {
+  console.log('🚀 Starting Book Cover Test Suite');
+  console.log('=' .repeat(50));
   
-  try {
-    // Test with ISBN
-    const isbn = '9780141182636';
-    const coverUrl = `https://covers.openlibrary.org/b/isbn/${isbn}-L.jpg`;
-    
-    const response = await fetch(coverUrl, { method: 'HEAD' });
-    
-    if (response.ok) {
-      console.log('✅ Open Library API working!');
-      console.log(`   Cover URL: ${coverUrl}`);
-      
-      return {
-        success: true,
-        source: 'openlibrary',
-        confidence: 85,
-        url: coverUrl
-      };
-    } else {
-      console.log('⚠️ Open Library: No cover found for this ISBN');
-      return { success: false, reason: 'No cover found' };
-    }
-  } catch (error) {
-    console.error('❌ Open Library API error:', error.message);
-    return { success: false, error: error.message };
-  }
-}
-
-async function testAPIChain() {
-  console.log('\n🚀 Testing Complete API Chain for 100% Coverage\n');
+  const moods = ['FUNNY', 'LOVE STORY'];
+  const results = [];
   
-  const testBooks = [
-    { title: 'The Great Gatsby', author: 'F. Scott Fitzgerald', isbn: '9780141182636' },
-    { title: '1984', author: 'George Orwell', isbn: '9780451524935' },
-    { title: 'Made Up Book That Doesnt Exist', author: 'Fake Author' }
-  ];
-  
-  let totalCovered = 0;
-  
-  for (const book of testBooks) {
-    console.log(`\n📖 Testing: "${book.title}" by ${book.author}`);
-    
-    // Try Google Books first
-    let result = await testGoogleBooksAPI();
-    
-    if (!result.success) {
-      // Try Open Library as fallback
-      result = await testOpenLibraryAPI();
-    }
-    
-    if (!result.success) {
-      // Final fallback: AI generation (simulated)
-      console.log('🤖 Would generate AI cover (simulated)');
-      result = {
-        success: true,
-        source: 'ai_generated',
-        confidence: 85,
-        url: `ai_description:${encodeURIComponent(`Professional cover design for "${book.title}" by ${book.author}`)}`
-      };
-    }
-    
-    if (!result.success) {
-      // Absolute final fallback: gradient
-      console.log('🎨 Using gradient fallback');
-      result = {
-        success: true,
-        source: 'gradient',
-        confidence: 100,
-        url: 'gradient:#00A8CC:#0081A7'
-      };
-    }
-    
-    if (result.success) {
-      totalCovered++;
-      console.log(`✅ Cover found from ${result.source} (confidence: ${result.confidence}%)`);
-    }
+  for (const mood of moods) {
+    const result = await testMoodSelection(mood);
+    results.push({ mood, ...result });
+    // Wait a bit between requests to avoid rate limiting
+    await new Promise(resolve => setTimeout(resolve, 2000));
   }
   
-  const coverage = (totalCovered / testBooks.length) * 100;
-  console.log(`\n🎯 Coverage Result: ${coverage}% (${totalCovered}/${testBooks.length})`);
+  // Final summary
+  console.log('\n' + '=' .repeat(50));
+  console.log('📈 FINAL TEST RESULTS');
+  console.log('=' .repeat(50));
   
-  if (coverage === 100) {
-    console.log('🎉 SUCCESS: 100% coverage achieved!');
-    console.log('💰 Estimated monthly cost: $0-2 (mostly FREE APIs)');
+  let totalBooksOverall = 0;
+  let booksWithCoversOverall = 0;
+  
+  results.forEach(result => {
+    totalBooksOverall += result.totalBooks;
+    booksWithCoversOverall += result.booksWithCovers;
+    const percentage = result.totalBooks > 0 
+      ? Math.round((result.booksWithCovers / result.totalBooks) * 100) 
+      : 0;
+    console.log(`${result.mood}: ${result.booksWithCovers}/${result.totalBooks} books with covers (${percentage}%)`);
+  });
+  
+  const overallPercentage = totalBooksOverall > 0 
+    ? Math.round((booksWithCoversOverall / totalBooksOverall) * 100) 
+    : 0;
+  
+  console.log('\n' + '=' .repeat(50));
+  console.log(`OVERALL: ${booksWithCoversOverall}/${totalBooksOverall} books with covers (${overallPercentage}%)`);
+  
+  if (overallPercentage === 100) {
+    console.log('🎉 ALL TESTS PASSED\! Book covers are working perfectly\!');
+  } else if (overallPercentage > 0) {
+    console.log('⚠️  PARTIAL SUCCESS: Some books have covers, but not all.');
   } else {
-    console.log('❌ Coverage gap detected - needs investigation');
+    console.log('❌ FAILURE: No books have covers. The issue is not fixed.');
   }
 }
 
 // Run the tests
-testAPIChain().catch(console.error);
+runTests().catch(console.error);
+ENDSCRIPT < /dev/null

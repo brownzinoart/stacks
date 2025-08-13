@@ -5,11 +5,12 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Development Commands
 
 ### Essential Commands
+
 ```bash
 # Frontend development (Next.js with Turbopack)
 npm run dev              # Start at http://localhost:3000 with Turbopack, binds to 0.0.0.0
 
-# Backend development (Fastify API server)  
+# Backend development (Fastify API server)
 npm run backend:dev      # Start API server at 0.0.0.0:3001
 
 # Build for production
@@ -42,27 +43,32 @@ npm run audit:performance # Run performance audit
 This is a Next.js 15 progressive web app for AI-powered library book discovery with iOS/Android mobile app capabilities via Capacitor.
 
 ### Frontend Structure
+
 - **App Router**: Uses Next.js 15 App Router (not Pages Router) in `src/app/`
 - **Feature Organization**: Components organized by feature in `src/features/` matching page structure:
   - `home/` - AI prompt input, reading queue, streak tracking
-  - `explore/` - Topic search, learning paths, branch availability  
+  - `explore/` - Topic search, learning paths, branch availability
   - `ar/` - AR shelf scanning, branch explorer
 - **State Management**: TanStack Query v5 for server state, React hooks for local state
 - **Styling**: Tailwind CSS with custom design tokens in `tailwind.config.js`
 
 ### Backend Architecture
+
 - **API Server**: Separate Fastify server in `/api/server.js` running on port 3001
 - **Database**: Supabase with pgvector extension for semantic search
 - **AI Integration**: Proxy pattern through Next.js API routes (`/api/*-proxy/`) to manage API keys securely
 
 ### Mobile Architecture
+
 - **Framework**: Capacitor 7 for iOS/Android native builds
 - **iOS**: Xcode project in `/ios/App/` and `/mobile/ios/App/`
 - **Config**: Live reload dev server configured in `mobile/capacitor.config.ts`
 - **Build**: Static export (`output: 'export'`) for mobile app packaging
 
 ### AI Model Strategy
+
 Different models optimized for specific tasks:
+
 - **GPT-4o**: Mood-based book recommendations (3k context, fallback to Gemini 2.5 Flash)
 - **Gemini 2.5 Pro**: Topic bundles and learning paths (32k context)
 - **Claude 3.7 Sonnet**: Book summaries and insights
@@ -71,6 +77,7 @@ Different models optimized for specific tasks:
 ## Environment Variables
 
 Required environment variables (see `.env.example`):
+
 ```bash
 # Supabase (required)
 NEXT_PUBLIC_SUPABASE_URL=
@@ -97,23 +104,27 @@ NEXT_PUBLIC_DEV_SERVER_IP=192.168.86.174  # Your local IP for mobile testing
 ## Development Conventions
 
 ### TypeScript
+
 - Strict mode with `noUncheckedIndexedAccess: true`
 - Always use type-safe imports
 - Prefer interfaces over types for object shapes
 
 ### Code Style
+
 - Prettier: 120 character lines, single quotes, no semicolons
 - ESLint: Next.js recommended + TypeScript rules
 - Tailwind: Use design tokens from config, avoid arbitrary values
 - Components must accept `className` prop
 
 ### Git Workflow
+
 - Conventional commits enforced by commitlint and Husky
 - Feature branches: `feature/description`
 - Bugfix branches: `bugfix/description`
 - Main branch is protected, use PRs
 
 ### Component Patterns
+
 - Server Components by default in App Router
 - Client Components only when needed (`'use client'` directive)
 - Feature-based organization matching route structure
@@ -122,6 +133,7 @@ NEXT_PUBLIC_DEV_SERVER_IP=192.168.86.174  # Your local IP for mobile testing
 ## Testing Strategy
 
 Playwright E2E testing with comprehensive coverage:
+
 - Tests in `tests/` directory organized by feature
 - Mobile viewport testing included
 - Accessibility checks integrated
@@ -130,6 +142,7 @@ Playwright E2E testing with comprehensive coverage:
 ## Database Schema
 
 Key Supabase tables with pgvector for semantic search:
+
 - `books`: Core book data with vector embeddings
 - `users`: User profiles and preferences
 - `reading_history`: User reading activity
@@ -149,6 +162,7 @@ Migration files in `supabase/migrations/`
 ## Mobile Development
 
 ### iOS Development
+
 ```bash
 # From mobile/ directory
 npx cap sync             # Sync web assets to native
@@ -161,6 +175,7 @@ cd ios/App && pod install
 ```
 
 ### Testing on Physical Device
+
 1. Update `NEXT_PUBLIC_DEV_SERVER_IP` in `.env.local` with your machine's IP
 2. Update `url` in `mobile/capacitor.config.ts` to match
 3. Ensure device is on same network
@@ -181,18 +196,22 @@ cd ios/App && pod install
 **IMPORTANT**: When making ANY changes that could affect the iOS app, ALWAYS follow this sequence:
 
 ### After Every Code Change:
+
 1. **Build the app**:
+
    ```bash
    npm run build
    ```
 
 2. **Copy to iOS project** (handles RSC issue):
+
    ```bash
    cp out/home.html ios/App/App/public/index.html
    npx cap sync ios
    ```
 
 3. **For API features**, ensure dev server is running:
+
    ```bash
    HOST=0.0.0.0 npm run dev  # Run in background/new terminal
    ```
@@ -202,6 +221,7 @@ cd ios/App && pod install
    - Run the app: Press ▶ or ⌘R
 
 ### Known iOS Issues & Solutions:
+
 - **React Server Components**: .txt files don't work with Capacitor - always use home.html as index.html
 - **API Connectivity**: Dev server must run on 0.0.0.0 for network access from phone
 - **Current Mac IP**: 192.168.86.190 (hardcoded in src/lib/api-config.ts - update if network changes)
@@ -213,14 +233,16 @@ cd ios/App && pod install
 A specialized agent (`agents/ios-dev-agent.py`) handles iOS development with live reload:
 
 ### Quick Commands
+
 ```bash
 npm run ios:setup    # Complete iOS setup with live reload
-npm run ios:dev      # Start servers with correct IP binding  
+npm run ios:dev      # Start servers with correct IP binding
 npm run ios:fix      # Fix common issues automatically
 npm run ios:monitor  # Monitor development status
 ```
 
 ### Agent Capabilities
+
 - Automatic IP configuration for live reload
 - AR permissions setup
 - Build error resolution
@@ -228,6 +250,7 @@ npm run ios:monitor  # Monitor development status
 - Real-time development monitoring
 
 ### Testing Workflow
+
 1. Run `npm run ios:setup` for initial configuration
 2. Use `npm run ios:open` to launch Xcode
 3. Select your physical device and run
@@ -238,6 +261,7 @@ See `IOS_DEVELOPMENT_GUIDE.md` for complete documentation.
 ## mydawgs Team Integration
 
 When using `/dawgs` command:
+
 - Goal: Move fast with clarity, return smallest artifact that unblocks progress
 - Approve plans with `/approve` or "run all"/"run selected"
 - Auto-handoff threshold: `MYDAWGS_CONF_THRESHOLD=0.75`
