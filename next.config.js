@@ -5,8 +5,10 @@
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // Enable static export only for production builds (Capacitor/mobile deployment)
-  ...(process.env.NODE_ENV === 'production' && { output: 'export' }),
+  // Always use static export for consistent web/mobile behavior
+  output: 'export',
+  // Force static navigation to avoid RSC fetch errors
+  skipTrailingSlashRedirect: true,
   // Disable image optimization for static export
   images: {
     unoptimized: true,
@@ -88,45 +90,18 @@ const nextConfig = {
 
     return headers;
   },
-  // Development server configuration
-  ...(process.env.NODE_ENV === 'development' && {
-    experimental: {
-      turbo: {
-        loaders: {
-          '.svg': ['@svgr/webpack'],
-        },
-      },
+  // Enable trailing slash for static export compatibility
+  trailingSlash: true,
+  // Updated Turbopack configuration
+  turbopack: {
+    rules: {
+      '*.svg': ['@svgr/webpack'],
     },
-    // Proxy API requests to backend server in development
-    async rewrites() {
-      return [
-        {
-          source: '/api/books/:path*',
-          destination: 'http://localhost:3001/api/books/:path*',
-        },
-        {
-          source: '/api/user/:path*',
-          destination: 'http://localhost:3001/api/user/:path*',
-        },
-        {
-          source: '/api/library/:path*',
-          destination: 'http://localhost:3001/api/library/:path*',
-        },
-        {
-          source: '/api/community/:path*',
-          destination: 'http://localhost:3001/api/community/:path*',
-        },
-        {
-          source: '/api/availability/:path*',
-          destination: 'http://localhost:3001/api/availability/:path*',
-        },
-        {
-          source: '/api/queue',
-          destination: 'http://localhost:3001/api/queue',
-        },
-      ];
-    },
-  }),
+  },
+  // Server external packages for mobile compatibility
+  serverExternalPackages: [],
+  // Force static build ID for consistency
+  generateBuildId: () => 'static-build',
 };
 
 module.exports = nextConfig;

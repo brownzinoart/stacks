@@ -537,14 +537,14 @@ export class AIRecommendationService {
   }
   
   /**
-   * Progressive recommendations with fallback chain
+   * Progressive recommendations with fallback chain and retry logic
    */
   private async getRecommendationsWithFallback(userInput: string, enrichedContext: string): Promise<{
     recommendations: any;
     cost: number;
     model: string;
   }> {
-    console.log('[AI Service] Starting recommendations with progressive fallback');
+    console.log('[AI Service] Starting recommendations with progressive fallback and retry logic');
     
     // Quick Lane: Fast models
     try {
@@ -565,13 +565,15 @@ export class AIRecommendationService {
           cost: quickResponse.cost,
           model: quickResponse.model
         };
+      } else {
+        console.log('[AI Service] ⚠️ Quick lane response failed validation - trying retry with simpler prompt');
       }
     } catch (error: any) {
       const errorMessage = (error as Error)?.message || String(error) || 'Unknown error';
       console.log('[AI Service] ⚡ Quick lane failed, trying quality lane:', errorMessage);
     }
     
-    // Quality Lane: Premium models
+    // Quality Lane: Premium models with retry logic
     try {
       console.log('[AI Service] Trying quality lane for recommendations (30s timeout)');
       const qualityResponse = await this.makeAIRequestWithCircuitBreaker(
@@ -590,15 +592,95 @@ export class AIRecommendationService {
           cost: qualityResponse.cost,
           model: qualityResponse.model + '_quality'
         };
+      } else {
+        console.log('[AI Service] ⚠️ Quality lane response failed validation - trying simplified retry');
+        
+        // RETRY LOGIC: Try with simplified, more explicit prompt
+        const simplifiedResponse = await this.makeAIRequestWithCircuitBreaker(
+          'mood_recommendation' as AITask,
+          this.buildSimplifiedRetryPrompt(userInput),
+          1000,
+          this.QUALITY_TIMEOUT,
+          enrichedContext
+        );
+        
+        const retryRecommendations = this.parseRecommendationResponse(simplifiedResponse.content);
+        if (retryRecommendations) {
+          console.log('[AI Service] ✅ Simplified retry succeeded');
+          return {
+            recommendations: retryRecommendations,
+            cost: qualityResponse.cost + simplifiedResponse.cost,
+            model: simplifiedResponse.model + '_retry'
+          };
+        } else {
+          console.log('[AI Service] ❌ Retry also failed validation - proceeding to emergency');
+        }
       }
     } catch (error: any) {
       const errorMessage = (error as Error)?.message || String(error) || 'Unknown error';
-      console.log('[AI Service] ⚡ Quality lane failed, trying emergency fallback:', errorMessage);
+      console.log('[AI Service] ⚡ Quality lane completely failed, trying emergency fallback:', errorMessage);
     }
     
     // Emergency Lane: Use cached/simple response
     console.log('[AI Service] 🚨 Using emergency recommendations fallback');
     return await this.getEmergencyRecommendations(userInput);
+  }
+
+  /**
+   * Build simplified retry prompt that's more likely to produce valid structure
+   */
+  private buildSimplifiedRetryPrompt(userInput: string): string {
+    return `You are a book recommendation expert. The user wants: "${userInput}"
+
+CRITICAL: You MUST return a JSON response with EXACTLY this structure:
+
+{
+  "overallTheme": "Brief description of recommendations",
+  "categories": [
+    {
+      "name": "The Plot",
+      "description": "Books with similar storylines",
+      "books": [
+        {
+          "title": "Book Title",
+          "author": "Author Name", 
+          "whyYoullLikeIt": "Explanation of why this matches the user's request",
+          "summary": "Brief book summary"
+        }
+      ]
+    },
+    {
+      "name": "The Characters",
+      "description": "Books with compelling characters",
+      "books": [
+        {
+          "title": "Book Title",
+          "author": "Author Name",
+          "whyYoullLikeIt": "Explanation of why this matches the user's request", 
+          "summary": "Brief book summary"
+        }
+      ]
+    },
+    {
+      "name": "The Atmosphere",
+      "description": "Books with similar mood and setting",
+      "books": [
+        {
+          "title": "Book Title",
+          "author": "Author Name",
+          "whyYoullLikeIt": "Explanation of why this matches the user's request",
+          "summary": "Brief book summary"
+        }
+      ]
+    }
+  ]
+}
+
+Requirements:
+- Include 2-3 books per category
+- Each category MUST have at least 1 book
+- All fields (title, author, whyYoullLikeIt, summary) are required
+- Return ONLY the JSON, no other text`;
   }
   
   /**
@@ -617,155 +699,217 @@ export class AIRecommendationService {
   }
   
   /**
-   * Parse recommendation response with error handling
+   * Parse recommendation response with STRICT VALIDATION to prevent partial data contamination
    */
   private parseRecommendationResponse(content: string): any | null {
     try {
       const jsonMatch = content.match(/\{[\s\S]*\}/);
-      if (jsonMatch) {
-        return JSON.parse(jsonMatch[0]);
+      if (!jsonMatch) {
+        console.warn('[AI Service] No JSON found in response');
+        return null;
       }
+
+      const parsed = JSON.parse(jsonMatch[0]);
+      
+      // CRITICAL: Strict validation to prevent partial data storage
+      if (!this.validateRecommendationStructure(parsed)) {
+        console.warn('[AI Service] Invalid recommendation structure - rejecting to prevent contamination');
+        return null;
+      }
+
+      console.log('[AI Service] ✅ Response validation passed - complete structure confirmed');
+      return parsed;
     } catch (error) {
       console.warn('[AI Service] Failed to parse recommendation response:', error);
     }
     return null;
   }
+
+  /**
+   * Strict validation to ensure complete recommendation structure
+   * Prevents partial data that leads to emergency fallback contamination
+   */
+  private validateRecommendationStructure(data: any): boolean {
+    try {
+      // Check basic structure
+      if (!data || typeof data !== 'object') {
+        console.warn('[Validation] Missing root object');
+        return false;
+      }
+
+      if (!data.categories || !Array.isArray(data.categories)) {
+        console.warn('[Validation] Missing or invalid categories array');
+        return false;
+      }
+
+      // Must have exactly 3 categories to prevent mixing with fallback
+      if (data.categories.length !== 3) {
+        console.warn(`[Validation] Expected 3 categories, got ${data.categories.length}`);
+        return false;
+      }
+
+      // Validate each category
+      const requiredCategoryNames = ['The Plot', 'The Characters', 'The Atmosphere'];
+      for (let i = 0; i < 3; i++) {
+        const category = data.categories[i];
+        
+        if (!category || typeof category !== 'object') {
+          console.warn(`[Validation] Category ${i} is not an object`);
+          return false;
+        }
+
+        if (!category.name || typeof category.name !== 'string') {
+          console.warn(`[Validation] Category ${i} missing name`);
+          return false;
+        }
+
+        if (!category.description || typeof category.description !== 'string') {
+          console.warn(`[Validation] Category ${i} missing description`);
+          return false;
+        }
+
+        if (!category.books || !Array.isArray(category.books)) {
+          console.warn(`[Validation] Category ${i} missing books array`);
+          return false;
+        }
+
+        // Each category must have at least 1 book
+        if (category.books.length === 0) {
+          console.warn(`[Validation] Category ${i} has no books`);
+          return false;
+        }
+
+        // Validate each book in the category
+        for (let j = 0; j < category.books.length; j++) {
+          const book = category.books[j];
+          
+          if (!book || typeof book !== 'object') {
+            console.warn(`[Validation] Book ${j} in category ${i} is not an object`);
+            return false;
+          }
+
+          // Required fields for a valid book
+          const requiredFields = ['title', 'author', 'whyYoullLikeIt'];
+          for (const field of requiredFields) {
+            if (!book[field] || typeof book[field] !== 'string' || book[field].trim().length === 0) {
+              console.warn(`[Validation] Book ${j} in category ${i} missing or empty ${field}`);
+              return false;
+            }
+          }
+        }
+      }
+
+      console.log('[Validation] ✅ Complete structure validated - safe to store');
+      return true;
+
+    } catch (error) {
+      console.warn('[Validation] Validation failed with error:', error);
+      return false;
+    }
+  }
   
   /**
-   * Emergency recommendations using simple local generation
+   * Emergency recommendations using contextual fallback system
    */
   private async getEmergencyRecommendations(userInput: string): Promise<{
     recommendations: any;
     cost: number;
     model: string;
   }> {
+    console.log(`[AI Service] 🚨 EMERGENCY FALLBACK: Generating contextual recommendations for "${userInput}"`);
+    
     try {
-      console.log('[AI Service] Generating emergency recommendations with 5s timeout');
+      console.log('[AI Service] Trying final emergency AI attempt with 5s timeout');
       const emergencyResponse = await this.makeAIRequestWithCircuitBreaker(
         'mood_recommendation' as AITask,
-        `Simple book recommendations for: "${userInput}". Return JSON with exactly these 3 categories: "The Plot", "The Characters", "The Atmosphere". 2-3 books each.
-
-{
-  "overallTheme": "Brief description",
-  "categories": [
-    {"name": "The Plot", "description": "Books with similar storylines", "books": [...]},
-    {"name": "The Characters", "description": "Books with compelling characters", "books": [...]},
-    {"name": "The Atmosphere", "description": "Books with similar mood", "books": [...]}
-  ]
-}`,
-        800,
+        this.buildSimplifiedRetryPrompt(userInput),
+        600,
         this.EMERGENCY_TIMEOUT
       );
       
       const recommendations = this.parseRecommendationResponse(emergencyResponse.content);
       if (recommendations) {
+        console.log('[AI Service] ✅ Emergency AI succeeded with simplified prompt');
         return {
           recommendations,
           cost: emergencyResponse.cost,
-          model: 'emergency_ai'
+          model: 'emergency_ai_simplified'
         };
       }
     } catch (error: any) {
       const errorMessage = (error as Error)?.message || String(error) || 'Unknown error';
-      console.log('[AI Service] Emergency AI failed, using hardcoded fallback:', errorMessage);
+      console.log('[AI Service] Final emergency AI failed, using contextual fallback:', errorMessage);
     }
     
-    // Ultimate fallback: hardcoded response with cover fetching attempt
-    const emergencyBooks = [
-      {
-        title: "The Seven Husbands of Evelyn Hugo",
-        author: "Taylor Jenkins Reid",
-        whyYoullLikeIt: "A captivating story about love, ambition, and the price of fame",
-        summary: "Reclusive Hollywood icon Evelyn Hugo finally decides to tell her life story"
-      },
-      {
-        title: "Where the Crawdads Sing",
-        author: "Delia Owens",
-        whyYoullLikeIt: "A beautiful blend of mystery and coming-of-age story",
-        summary: "A young woman survives alone in the marshes of North Carolina"
-      },
-      {
-        title: "To Kill a Mockingbird",
-        author: "Harper Lee",
-        whyYoullLikeIt: "A powerful story about justice, morality, and growing up",
-        summary: "A young girl learns about prejudice and justice in the American South"
-      },
-      {
-        title: "Pride and Prejudice",
-        author: "Jane Austen",
-        whyYoullLikeIt: "Witty dialogue and timeless romance with strong characters",
-        summary: "Elizabeth Bennet navigates love and social expectations in Regency England"
-      }
-    ];
-
-    // CRITICAL FIX: Attempt real covers even in emergency hardcoded fallback
+    // Use contextual emergency fallback instead of hardcoded books
+    console.log('[AI Service] 📚 Using contextual emergency fallback system');
     try {
-      console.log('🎯 [EMERGENCY HARDCODED] Attempting to fetch real covers for emergency books');
-      const coverResults = await Promise.race([
-        bookCoverService.getBatchCovers(emergencyBooks),
-        new Promise<Map<number, any>>((_, reject) => 
-          setTimeout(() => reject(new Error('Emergency hardcoded cover timeout')), 3000)
-        )
-      ]);
-
-      // Apply covers
-      emergencyBooks.forEach((book, index) => {
-        const coverResult = coverResults.get(index);
-        if (coverResult && coverResult.url && !coverResult.url.startsWith('gradient:')) {
-          (book as any).cover = coverResult.url;
-          console.log(`✅ [EMERGENCY HARDCODED] Real cover found for "${book.title}"`);
-        } else {
-          (book as any).cover = this.generateFallbackCover(book.title, book.author);
-          console.log(`🎨 [EMERGENCY HARDCODED] Using gradient for "${book.title}"`);
+      const { formatFallbackRecommendations } = await import('./emergency-fallback');
+      const contextualRecommendations = await formatFallbackRecommendations(userInput);
+      
+      console.log(`[AI Service] ✅ Contextual emergency fallback generated ${contextualRecommendations.categories.length} categories`);
+      console.log(`[AI Service] Categories: ${contextualRecommendations.categories.map(c => `${c.name} (${c.books.length})`).join(', ')}`);
+      
+      return {
+        recommendations: contextualRecommendations,
+        cost: 0,
+        model: 'contextual_emergency_fallback'
+      };
+    } catch (fallbackError: any) {
+      console.error('[AI Service] 🚨 CRITICAL: Contextual fallback failed:', fallbackError);
+      
+      // ABSOLUTE LAST RESORT: Simple hardcoded response to prevent total failure
+      const absoluteEmergencyBooks = [
+        {
+          title: "The Midnight Library",
+          author: "Matt Haig",
+          whyYoullLikeIt: "A thought-provoking story about infinite possibilities",
+          summary: "Between life and death there is a library",
+          cover: this.generateFallbackCover("The Midnight Library", "Matt Haig")
+        },
+        {
+          title: "Project Hail Mary", 
+          author: "Andy Weir",
+          whyYoullLikeIt: "Science adventure with humor and hope",
+          summary: "A man wakes up alone on a spaceship with no memory",
+          cover: this.generateFallbackCover("Project Hail Mary", "Andy Weir")
+        },
+        {
+          title: "Klara and the Sun",
+          author: "Kazuo Ishiguro", 
+          whyYoullLikeIt: "Beautiful exploration of love and humanity",
+          summary: "An artificial friend observes the world",
+          cover: this.generateFallbackCover("Klara and the Sun", "Kazuo Ishiguro")
         }
-      });
-    } catch (coverError) {
-      console.error('❌ [EMERGENCY HARDCODED] Cover fetching failed:', coverError);
-      emergencyBooks.forEach((book) => {
-        (book as any).cover = this.generateFallbackCover(book.title, book.author);
-      });
+      ];
+      
+      return {
+        recommendations: {
+          overallTheme: `Emergency recommendations for "${userInput}"`,
+          categories: [
+            {
+              name: "The Plot",
+              description: "Books with engaging storylines",
+              books: [absoluteEmergencyBooks[0]]
+            },
+            {
+              name: "The Characters",
+              description: "Books with memorable characters", 
+              books: [absoluteEmergencyBooks[1]]
+            },
+            {
+              name: "The Atmosphere",
+              description: "Books with distinctive moods",
+              books: [absoluteEmergencyBooks[2]]
+            }
+          ],
+          userInput,
+          timestamp: new Date().toISOString(),
+        },
+        cost: 0,
+        model: 'absolute_emergency_fallback'
+      };
     }
-
-    // Import and use contextual fallback books
-    const { getEmergencyFallbackBooks } = await import('@/lib/emergency-fallback');
-    const contextualBooks = getEmergencyFallbackBooks(userInput);
-    
-    // Combine contextual books with hardcoded classics
-    const allBooks = [
-      ...contextualBooks.map(book => ({
-        title: book.title,
-        author: book.author,
-        whyYoullLikeIt: book.why,
-        summary: book.why,
-        cover: book.cover
-      })),
-      ...emergencyBooks
-    ];
-
-    return {
-      recommendations: {
-        overallTheme: `Books related to "${userInput}"`,
-        categories: [
-          {
-            name: "The Plot",
-            description: "Books with similar storylines and narrative structure",
-            books: allBooks.slice(0, 2)
-          },
-          {
-            name: "The Characters",
-            description: "Books with compelling character development and relationships",
-            books: allBooks.slice(2, 4)
-          },
-          {
-            name: "The Atmosphere",
-            description: "Books with similar mood, setting, and emotional tone",
-            books: allBooks.slice(4, 6).length > 0 ? allBooks.slice(4, 6) : allBooks.slice(0, 2)
-          }
-        ]
-      },
-      cost: 0,
-      model: 'hardcoded_emergency'
-    };
   }
   
   /**
@@ -824,6 +968,16 @@ No other text, just the JSON object.`;
    */
   private buildRecommendationPrompt(userInput: string, enrichedContext: string): string {
     return `Based on the user wanting books like "${userInput}", create exactly 3 categories of recommendations.
+
+IMPORTANT: Understand ALL cultural references including:
+- Video games (Zelda, Dark Souls, Minecraft, The Last of Us, Stardew Valley, etc.)
+- Music artists & vibes (Taylor Swift, Billie Eilish, The Weeknd, Phoebe Bridgers, etc.)
+- Aesthetics & trends (cottagecore, dark academia, Y2K, indie sleaze, etc.)
+- Internet culture & social media trends
+- Movies, TV shows, and any cultural touchpoints
+
+Translate these references into literary themes, atmospheres, and emotional experiences.
+
 ${enrichedContext}
 
 Return ONLY this JSON structure with NO additional text:

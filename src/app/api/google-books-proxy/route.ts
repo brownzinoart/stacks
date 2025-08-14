@@ -1,5 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 
+// Use force-static for export, but runtime will be ignored since Capacitor uses live server
+export const dynamic = 'force-static';
+export const revalidate = false;
+
 interface GoogleBooksRequest {
   query: string;
   maxResults?: number;

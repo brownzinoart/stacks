@@ -35,7 +35,7 @@ export function getApiBaseUrl(): string {
     // Mobile app - use your computer's IP address
     // IMPORTANT: Update this to your computer's actual IP address
     const devServerIp = '192.168.86.190'; // Your Mac's IP from earlier
-    const actualPort = '3000';
+    const actualPort = '3001';
     const baseUrl = `http://${devServerIp}:${actualPort}`;
     
     console.log('[API Config] Using mobile base URL:', baseUrl);

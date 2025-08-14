@@ -6,6 +6,7 @@
 
 import { aiRouter } from './ai-model-router';
 import { bookCoverAnalytics } from './book-cover-analytics';
+import { getStaticCover } from './static-cover-mapping';
 
 // Logging utility to reduce console spam
 const logger = {
@@ -28,7 +29,7 @@ const logger = {
 
 interface CoverSearchResult {
   url: string;
-  source: 'openlibrary' | 'google' | 'archive' | 'cache' | 'ai_generated' | 'gradient_generated';
+  source: 'static' | 'openlibrary' | 'google' | 'archive' | 'cache' | 'ai_generated' | 'gradient_generated';
   confidence: number; // 0-100
   quality?: 'high' | 'medium' | 'low';
   cached?: boolean;
@@ -127,10 +128,36 @@ export class BookCoverService {
     const startTime = Date.now();
     const cacheKey = this.getCacheKey(book);
 
+    // ✨ FIRST: Check for static covers (eliminates API calls for homepage books)
+    const staticCoverPath = getStaticCover(book.title, book.author);
+    if (staticCoverPath) {
+      const loadTime = Date.now() - startTime;
+      
+      // Record static cover hit
+      bookCoverAnalytics.recordRequest({
+        title: book.title,
+        author: book.author,
+        isbn: book.isbn,
+        source: 'static',
+        confidence: 100,
+        loadTime,
+        success: true,
+      });
+
+      logger.info(`🎯 [STATIC COVER] Using static cover for "${book.title}" by ${book.author}: ${staticCoverPath}`);
+      
+      return {
+        url: staticCoverPath,
+        source: 'static',
+        confidence: 100,
+        quality: 'high',
+      };
+    }
+
     // Perform stale check on first use
     this.performStaleCheckIfNeeded();
 
-    // Check cache first
+    // Check cache (only for non-static covers)
     const cached = this.cache.get(cacheKey);
     if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
       const loadTime = Date.now() - startTime;
@@ -181,9 +208,10 @@ export class BookCoverService {
     logger.debug(`🔍 Searching for cover: "${book.title}" by ${book.author}`);
     
     // Try sources sequentially with retry logic
+    // Disabled OpenLibrary due to reliability issues - focusing on Google Books
     const sources = [
       { name: 'Google Books Enhanced', fetch: () => this.fetchFromGoogleBooksEnhanced(book), priority: 1 },
-      { name: 'OpenLibrary Enhanced', fetch: () => this.fetchFromOpenLibraryEnhanced(book), priority: 2 },
+      // { name: 'OpenLibrary Enhanced', fetch: () => this.fetchFromOpenLibraryEnhanced(book), priority: 2 },
       { name: 'Internet Archive', fetch: () => this.fetchFromInternetArchive(book), priority: 3 },
       { name: 'Additional Sources', fetch: () => this.fetchFromAdditionalSources(book), priority: 4 },
     ];
@@ -452,15 +480,13 @@ export class BookCoverService {
     isbn?: string;
   }): Promise<CoverSearchResult | null> {
     const attempts = [
-      // Try ISBN first if available
-      book.isbn ? `isbn:${book.isbn}` : null,
-      // Exact title and author match
+      // Start with title and author match (highest success rate)
       `intitle:"${book.title}" inauthor:"${book.author}"`,
       // Broader search without quotes
       `${book.title} ${book.author}`,
       // Title only as last resort
       book.title
-    ].filter(Boolean);
+    ];
 
     for (const query of attempts) {
       try {
@@ -538,12 +564,14 @@ export class BookCoverService {
           };
         }
       } catch (error) {
-        console.error(`❌ [GOOGLE BOOKS PROXY] ERROR for query "${query}":`, error instanceof Error ? error.message : String(error));
+        // Log error silently for debugging without alarming users
+        logger.debug(`❌ [GOOGLE BOOKS PROXY] ERROR for query "${query}":`, error instanceof Error ? error.message : String(error));
         continue;
       }
     }
     
-    console.log(`❌ [GOOGLE BOOKS PROXY] FAILED: No cover found for "${book.title}" by ${book.author}`);
+    // Log failure silently for debugging
+    logger.debug(`❌ [GOOGLE BOOKS PROXY] FAILED: No cover found for "${book.title}" by ${book.author}`);
     return null;
   }
 
@@ -626,7 +654,8 @@ export class BookCoverService {
           }
         }
       } catch (error) {
-        console.error(`OpenLibrary search error for query ${query}:`, error instanceof Error ? error.message : String(error));
+        // Log error silently for debugging without alarming users
+        logger.debug(`OpenLibrary search error for query ${query}:`, error instanceof Error ? error.message : String(error));
         continue;
       }
     }
@@ -734,32 +763,13 @@ Keep it professional and marketable. Focus on visual elements that would work we
   }
 
   private generateFallbackCover(book: { title: string; author: string }): CoverSearchResult {
-    console.log(`🎨 Generating gradient fallback for "${book.title}" by ${book.author}`);
+    console.log(`🎨 Generating design system gradient fallback for "${book.title}" by ${book.author}`);
     
-    // Generate a consistent color based on title+author
-    const hash = (book.title + book.author).split('').reduce((acc, char) => {
-      return (acc << 5) - acc + char.charCodeAt(0);
-    }, 0);
-
-    const colors = [
-      ['#FF6B6B', '#4ECDC4'], // Vibrant red to teal
-      ['#45B7D1', '#F39C12'], // Blue to orange  
-      ['#96CEB4', '#FECA57'], // Green to yellow
-      ['#6C5CE7', '#FD79A8'], // Purple to pink
-      ['#00B894', '#00CEC9'], // Green to cyan
-      ['#E17055', '#FDCB6E'], // Orange gradient
-      ['#A29BFE', '#6C5CE7'], // Light purple to purple
-      ['#FD79A8', '#E84393'], // Pink gradient
-      ['#00A8CC', '#0081A7'], // Blue gradient
-      ['#F07167', '#C1666B'], // Red gradient
-    ];
-
-    const index = Math.abs(hash) % colors.length;
-    const colorPair = colors[index] || colors[0];
-
-    const fallbackUrl = `gradient:${colorPair![0]}:${colorPair![1]}:${encodeURIComponent(book.title)}:${encodeURIComponent(book.author)}`;
+    // Use design system gradient generator
+    const { generateDesignSystemGradientUrl } = require('../components/design-system-gradient-cover');
+    const fallbackUrl = generateDesignSystemGradientUrl(book.title, book.author);
     
-    console.log(`✨ Generated gradient cover with colors ${colorPair![0]} -> ${colorPair![1]}`);
+    console.log(`✨ Generated design system gradient cover: ${fallbackUrl}`);
     
     // Cache the fallback so we don't regenerate it
     const cacheKey = this.getCacheKey(book);

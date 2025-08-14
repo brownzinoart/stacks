@@ -51,6 +51,79 @@ const setQueue = (queue: any[]) => {
 
 const isRealCoverUrl = (url: string) => url && url.startsWith('http');
 
+/**
+ * Validate recommendation data to detect contamination/mixing of old and new data
+ */
+const validateRecommendationData = (data: any): boolean => {
+  try {
+    console.log('🔍 [DATA QUALITY] Starting contamination detection...');
+    
+    if (!data || !data.categories || !Array.isArray(data.categories)) {
+      console.warn('[DATA QUALITY] Invalid data structure');
+      return true; // Contaminated
+    }
+    
+    // Check for known emergency fallback books that indicate contamination
+    const emergencyFallbackBooks = [
+      'The Name of the Wind',
+      'A Wizard of Earthsea', 
+      'The Magicians',
+      'Dune',
+      'The Expanse Series',
+      'Foundation',
+      'The Midnight Library',
+      'Project Hail Mary',
+      'Klara and the Sun'
+    ];
+    
+    let emergencyBookCount = 0;
+    let totalBooks = 0;
+    
+    data.categories.forEach((category: any) => {
+      if (category.books && Array.isArray(category.books)) {
+        category.books.forEach((book: any) => {
+          totalBooks++;
+          if (book.title && emergencyFallbackBooks.some(title => 
+            book.title.toLowerCase().includes(title.toLowerCase()) || 
+            title.toLowerCase().includes(book.title.toLowerCase())
+          )) {
+            emergencyBookCount++;
+            console.warn(`[DATA QUALITY] Emergency fallback book detected: "${book.title}"`);
+          }
+        });
+      }
+    });
+    
+    // If more than 30% of books are from emergency fallback, consider it contaminated
+    const contaminationRatio = emergencyBookCount / totalBooks;
+    console.log(`[DATA QUALITY] Contamination analysis: ${emergencyBookCount}/${totalBooks} emergency books (${Math.round(contaminationRatio * 100)}%)`);
+    
+    if (contaminationRatio > 0.3) {
+      console.warn(`[DATA QUALITY] HIGH CONTAMINATION: ${Math.round(contaminationRatio * 100)}% emergency fallback books detected`);
+      return true;
+    }
+    
+    // Check for timestamp freshness (older than 10 minutes is suspicious)
+    if (data.timestamp) {
+      const age = Date.now() - new Date(data.timestamp).getTime();
+      const ageMinutes = age / (1000 * 60);
+      console.log(`[DATA QUALITY] Data age: ${Math.round(ageMinutes)} minutes`);
+      
+      if (ageMinutes > 10) {
+        console.warn('[DATA QUALITY] Data is stale (>10 minutes old)');
+        return true;
+      }
+    }
+    
+    console.log('[DATA QUALITY] ✅ Data appears clean and fresh');
+    return false; // Not contaminated
+    
+  } catch (error) {
+    console.error('[DATA QUALITY] Validation error:', error);
+    return true; // Assume contaminated on error
+  }
+};
+
 // Book data fetching moved to BookDetails3D component
 
 const StacksRecommendationsPage = () => {
@@ -93,8 +166,19 @@ const StacksRecommendationsPage = () => {
         console.log('🎯 [RECOMMENDATIONS PAGE] Has categories:', !!parsed.categories);
         console.log('🎯 [RECOMMENDATIONS PAGE] Categories type:', typeof parsed.categories);
         console.log('🎯 [RECOMMENDATIONS PAGE] Categories length:', parsed.categories?.length);
-        console.log('🎯 [RECOMMENDATIONS PAGE] Category names:', parsed.categories?.map(c => c.name));
+        console.log('🎯 [RECOMMENDATIONS PAGE] Category names:', parsed.categories?.map((c: any) => c.name));
         console.log('🎯 [RECOMMENDATIONS PAGE] Full parsed data:', parsed);
+        
+        // DATA QUALITY VALIDATION - Detect contamination
+        const isDataContaminated = validateRecommendationData(parsed);
+        if (isDataContaminated) {
+          console.warn('🚨 [DATA QUALITY] CONTAMINATED DATA DETECTED - Force refreshing...');
+          // Clear contaminated data and redirect to new search
+          localStorage.removeItem('stacks_recommendations');
+          router.push('/home');
+          return;
+        }
+        
         setUserInput(parsed.userInput || '');
         setSearchValue(parsed.userInput || '');
 
@@ -364,6 +448,8 @@ const StacksRecommendationsPage = () => {
     if (typeof window !== 'undefined') {
       sessionStorage.setItem('pendingSearch', searchValue);
       localStorage.removeItem('stacks_recommendations'); // Clear old results
+      console.log('💾 [SESSION STORAGE] Stored pendingSearch:', searchValue);
+      console.log('🗑️ [CACHE CLEAR] Removed stacks_recommendations from localStorage');
     }
     
     console.log('🔍 [SEARCH] Navigating to home with new search:', searchValue);
@@ -380,12 +466,6 @@ const StacksRecommendationsPage = () => {
           </button>
           <span>›</span>
           <span className="font-semibold text-text-primary">Recommendations</span>
-          {userInput && (
-            <>
-              <span>›</span>
-              <span className="max-w-[200px] truncate text-text-primary">{userInput}</span>
-            </>
-          )}
         </div>
       </div>
 
@@ -423,10 +503,9 @@ const StacksRecommendationsPage = () => {
             <br />
             <span className="text-3xl sm:text-mega">RECOMMENDATIONS</span>
           </h1>
-          {/* Enhanced reprompt section */}
-          <div
-            className={`${isMobileDevice ? 'sticky top-0 z-40 -mx-4 mb-4 bg-bg-light/95 px-4 py-4 shadow-lg backdrop-blur-lg' : 'mb-8'}`}
-          >
+          
+          {/* Reprompt section - non-sticky */}
+          <div className="mb-8">
             {userInput && (
               <div className="mb-3">
                 <p className="mb-1 text-sm font-semibold text-text-secondary">Your original prompt:</p>

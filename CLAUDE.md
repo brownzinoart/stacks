@@ -274,3 +274,4 @@ When using `/dawgs` command:
 - Auto-handoff threshold: `MYDAWGS_CONF_THRESHOLD=0.75`
 
 - start a document for my investment presentation, add notes to it when you mention them
+- all testing moving forward needs to be done via phone application

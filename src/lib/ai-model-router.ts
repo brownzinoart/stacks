@@ -3,7 +3,7 @@
  * Routes requests to the most cost-effective AI model based on task type
  */
 
-import { callAIAPI } from './api-client';
+// Use direct API calls with client-side keys for static export compatibility
 
 export type AITask = 
   | 'mood_recommendation'     // GPT-4o: Best at understanding mood/emotion
@@ -37,15 +37,16 @@ const MODEL_COSTS = {
 } as const;
 
 /**
- * Model routing configuration based on task type - SWITCHED TO OPENAI ONLY
+ * Model routing configuration based on task type - OPTIMIZED FOR COST EFFICIENCY
+ * 85% cost reduction by using Gemini Flash FREE tier for primary tasks
  */
 const TASK_ROUTING: Record<AITask, keyof typeof MODEL_COSTS> = {
-  mood_recommendation: 'gpt-4o',      // GPT-4o excels at emotional understanding
-  book_summary: 'gpt-4o',             // Use GPT-4o instead of Claude to avoid rate limits
-  topic_bundle: 'gpt-4o',             // Use GPT-4o instead of Gemini to avoid rate limits
-  learning_path: 'gpt-4o',            // Use GPT-4o instead of Gemini to avoid rate limits  
-  search_query: 'gpt-4o',             // Use GPT-4o instead of Gemini to avoid rate limits
-  content_generation: 'gpt-4o',       // Use GPT-4o instead of Claude to avoid rate limits
+  mood_recommendation: 'gemini-1.5-flash',    // FREE tier - excellent at recommendations
+  book_summary: 'gemini-1.5-flash',           // FREE tier - great at text analysis
+  topic_bundle: 'gemini-1.5-flash',           // FREE tier - perfect for categorization
+  learning_path: 'gemini-1.5-flash',          // FREE tier - good at educational content
+  search_query: 'gemini-1.5-flash',           // FREE tier - fast query processing
+  content_generation: 'gemini-1.5-flash',     // FREE tier - quality content creation
 };
 
 /**
@@ -87,7 +88,31 @@ class AIModelRouter {
       };
     } catch (error) {
       console.error(`[AI Router] Error with ${optimalModel}:`, error);
-      // Fallback to GPT-4o if primary model fails
+      
+      // Smart fallback chain: Gemini → Claude → GPT-4o
+      if (optimalModel === 'gemini-1.5-flash') {
+        console.log('[AI Router] Gemini failed, trying Claude Sonnet fallback');
+        try {
+          const claudeResponse = await this.callClaude(request);
+          return {
+            content: claudeResponse.content,
+            model: 'claude-3-sonnet (fallback)',
+            cost: (estimatedTokens / 1000) * MODEL_COSTS['claude-3-sonnet'],
+            tokensUsed: claudeResponse.tokensUsed,
+          };
+        } catch (claudeError) {
+          console.log('[AI Router] Claude failed, using GPT-4o emergency fallback');
+          const openaiResponse = await this.callOpenAI(request);
+          return {
+            content: openaiResponse.content,
+            model: 'gpt-4o (emergency)',
+            cost: (estimatedTokens / 1000) * MODEL_COSTS['gpt-4o'],
+            tokensUsed: openaiResponse.tokensUsed,
+          };
+        }
+      }
+      
+      // For non-Gemini primary models, fall back to GPT-4o
       if (optimalModel !== 'gpt-4o') {
         console.log('[AI Router] Falling back to GPT-4o');
         const fallbackResponse = await this.callOpenAI(request);
@@ -123,10 +148,28 @@ class AIModelRouter {
     };
 
     try {
-      const response = await callAIAPI('openai', payload);
+      const apiKey = process.env.NEXT_PUBLIC_OPENAI_API_KEY;
+      if (!apiKey) {
+        throw new Error('OpenAI API key not configured');
+      }
+
+      const response = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${apiKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (!response.ok) {
+        throw new Error(`OpenAI API error: ${response.status}`);
+      }
+
+      const data = await response.json();
       return {
-        content: response.choices[0].message.content,
-        tokensUsed: response.usage?.total_tokens,
+        content: data.choices[0].message.content,
+        tokensUsed: data.usage?.total_tokens,
       };
     } catch (error) {
       console.error('[AI Router] OpenAI call failed:', error);
@@ -152,10 +195,29 @@ class AIModelRouter {
     };
 
     try {
-      const response = await callAIAPI('anthropic', payload);
+      const apiKey = process.env.NEXT_PUBLIC_ANTHROPIC_API_KEY;
+      if (!apiKey) {
+        throw new Error('Anthropic API key not configured');
+      }
+
+      const response = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: {
+          'x-api-key': apiKey,
+          'Content-Type': 'application/json',
+          'anthropic-version': '2023-06-01',
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Anthropic API error: ${response.status}`);
+      }
+
+      const data = await response.json();
       return {
-        content: response.content[0].text,
-        tokensUsed: response.usage?.input_tokens + response.usage?.output_tokens,
+        content: data.content[0].text,
+        tokensUsed: data.usage?.input_tokens + data.usage?.output_tokens,
       };
     } catch (error) {
       console.error('[AI Router] Claude call failed:', error);
@@ -186,10 +248,27 @@ class AIModelRouter {
     };
 
     try {
-      const response = await callAIAPI('vertex', payload);
+      const apiKey = process.env.NEXT_PUBLIC_GOOGLE_AI_API_KEY;
+      if (!apiKey) {
+        throw new Error('Google AI API key not configured');
+      }
+
+      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Google AI API error: ${response.status}`);
+      }
+
+      const data = await response.json();
       return {
-        content: response.candidates[0].content.parts[0].text,
-        tokensUsed: response.usageMetadata?.totalTokenCount,
+        content: data.candidates[0].content.parts[0].text,
+        tokensUsed: data.usageMetadata?.totalTokenCount,
       };
     } catch (error) {
       console.error('[AI Router] Gemini call failed:', error);
@@ -202,17 +281,17 @@ class AIModelRouter {
    */
   private getSystemPrompt(task: AITask): string {
     const prompts = {
-      mood_recommendation: 'You are a library assistant expert at understanding mood and emotional context to recommend perfect books. Focus on matching the emotional tone and reading experience the user seeks.',
+      mood_recommendation: 'You are a culturally-aware library assistant who understands references across ALL media and culture - video games, music artists, movies, TV shows, social media aesthetics, internet trends, and cultural movements. When users mention games like "Zelda", "Dark Souls", or "Minecraft", artists like "Taylor Swift", "Billie Eilish", or "The Weeknd", aesthetics like "cottagecore", "dark academia", or "Y2K vibes", or any cultural reference, translate these into literary themes and book recommendations that capture the same energy, atmosphere, emotional experience, and cultural essence. You understand gaming narratives, musical aesthetics, internet culture, and can find books that match any vibe or reference.',
       
-      book_summary: 'You are a literary analyst who creates concise, insightful book summaries. Focus on key themes, plot points, and what makes each book unique and worth reading.',
+      book_summary: 'You are a literary analyst who creates concise, insightful book summaries. Focus on key themes, plot points, and what makes each book unique and worth reading. You understand how books connect to broader cultural trends and references.',
       
-      topic_bundle: 'You are a librarian who excels at categorizing and grouping books by topic, theme, or subject matter. Create logical, discoverable bundles that help users find related content.',
+      topic_bundle: 'You are a culturally-savvy librarian who excels at categorizing and grouping books by topic, theme, cultural references, and cross-media connections. Create logical bundles that help users discover books through gaming, music, aesthetic, and cultural touchpoints.',
       
-      learning_path: 'You are an educational content specialist who designs progressive learning paths. Structure book recommendations that build knowledge step-by-step from beginner to advanced.',
+      learning_path: 'You are an educational content specialist who designs progressive learning paths. Structure book recommendations that build knowledge step-by-step from beginner to advanced, incorporating cultural references and cross-media connections when relevant.',
       
-      search_query: 'You are a search optimization specialist. Help users refine and improve their book search queries to find exactly what they\'re looking for.',
+      search_query: 'You are a search optimization specialist who understands cultural references, gaming terminology, music aesthetics, and internet culture. Help users refine and improve their book search queries, translating cultural references into literary themes.',
       
-      content_generation: 'You are a skilled content creator who produces engaging, informative text about books and reading. Write in a friendly, accessible tone that inspires people to read.',
+      content_generation: 'You are a skilled content creator who produces engaging, informative text about books and reading. You understand cultural references, gaming, music, and internet culture. Write in a friendly, accessible tone that connects books to broader cultural touchstones and inspires people to read.',
     };
 
     return prompts[task];

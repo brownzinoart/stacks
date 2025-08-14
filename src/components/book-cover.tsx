@@ -1,12 +1,15 @@
 /**
  * 100% Coverage Book Cover Component
- * Uses optimized API chain: Google Books → Open Library → AI Generation → Gradient Fallback
+ * Uses optimized API chain: Static → Google Books → Open Library → AI Generation → Gradient Fallback
  * GUARANTEE: Every book gets a cover, no exceptions!
  */
+
+'use client';
 
 import { bookCoverService } from '@/lib/book-cover-service';
 import { useState, useEffect, memo } from 'react';
 import NextImage from 'next/image';
+import { generateDesignSystemGradientUrl, parseDesignSystemGradientUrl, DesignSystemGradientCover } from './design-system-gradient-cover';
 
 interface BookCoverProps {
   title: string;
@@ -46,32 +49,17 @@ const BookCover = memo(({
   });
 
   useEffect(() => {
-    // Debug: console.log(`📖 [BookCover] Initializing for "${title}" by ${author}`);
+    console.log(`📖 [BookCover] Initializing for "${title}" by ${author}`);
     
-    // Define helper function
+    // Define helper function using design system gradients
     const generateEmergencyFallback = (): string => {
-      // Generate a hash-based color for consistent fallback
-      const hash = (title + author).split('').reduce((acc, char) => {
-        return (acc << 5) - acc + char.charCodeAt(0);
-      }, 0);
-      
-      const colors = [
-        ['#FF6B6B', '#4ECDC4'], // Red to teal
-        ['#45B7D1', '#F39C12'], // Blue to orange  
-        ['#96CEB4', '#FECA57'], // Green to yellow
-        ['#6C5CE7', '#FD79A8'], // Purple to pink
-        ['#00B894', '#00CEC9'], // Green to cyan
-        ['#E17055', '#FDCB6E'], // Orange gradient
-      ];
-      
-      const colorPair = colors[Math.abs(hash) % colors.length] || colors[0]!;
-      return `gradient:${colorPair[0]}:${colorPair[1]}:${encodeURIComponent(title)}:${encodeURIComponent(author)}`;
+      return generateDesignSystemGradientUrl(title, author);
     };
     
     // Now define fetchCover that uses the helper functions
     async function fetchCover(retryAttempt = 0) {
       try {
-        // Debug: console.log(`🔍 [BookCover] Fetching cover for "${title}" (attempt ${retryAttempt + 1})`);
+        console.log(`🔍 [BookCover] Fetching cover for "${title}" (attempt ${retryAttempt + 1})`);
         setCoverState(prev => ({ ...prev, isLoading: true, error: undefined, retryCount: retryAttempt }));
         
         const result = await bookCoverService.getCover({
@@ -80,12 +68,13 @@ const BookCover = memo(({
           isbn
         });
         
-        // Debug: console.log(`📋 [BookCover] Service returned: ${result.source} cover for "${title}" (confidence: ${result.confidence}%)`);
+        console.log(`📋 [BookCover] Service returned: ${result.source} cover for "${title}" (confidence: ${result.confidence}%)`);
+        console.log(`🎯 [BookCover] Cover URL: ${result.url}`);
         
         // Trust the book cover service - it already does validation
         // Skip client-side validation to avoid CORS issues
         
-        // Debug: console.log(`🎨 [BookCover] Setting final cover for "${title}": ${result.source}`);
+        console.log(`🎨 [BookCover] Setting final cover for "${title}": ${result.source}`);
         setCoverState({
           url: result.url,
           source: result.source,
@@ -121,8 +110,8 @@ const BookCover = memo(({
     // If coverUrl is provided, trust it and use it directly
     if (coverUrl) {
       // Debug: console.log(`📖 [BookCover] Using provided URL for "${title}"`);
-      // If it's a gradient, use it as-is
-      if (coverUrl.startsWith('gradient:')) {
+      // If it's a gradient (old or new format), use it as-is
+      if (coverUrl.startsWith('gradient:') || coverUrl.startsWith('gradient-ds:')) {
         setCoverState({
           url: coverUrl,
           source: 'provided',
@@ -151,9 +140,23 @@ const BookCover = memo(({
   }, [title, author, isbn, coverUrl]);
 
   // Determine cover type
+  const isStaticCover = coverState.url.startsWith('/demo book covers/') || coverState.url.startsWith('/demo%20book%20covers/');
   const isRealCover = coverState.url.startsWith('http');
   const isAIGenerated = coverState.url.startsWith('ai_description:');
   const isGradient = coverState.url.startsWith('gradient:');
+  const isDesignSystemGradient = coverState.url.startsWith('gradient-ds:');
+
+  // Debug logging for cover type detection
+  if (coverState.url && !coverState.isLoading) {
+    console.log(`🎨 [BookCover] Cover type detection for "${title}":`, {
+      url: coverState.url,
+      isStaticCover,
+      isRealCover,
+      isGradient,
+      isDesignSystemGradient,
+      source: coverState.source
+    });
+  }
 
   // Render different cover types
   const renderCover = () => {
@@ -167,6 +170,47 @@ const BookCover = memo(({
             </div>
           )}
         </div>
+      );
+    }
+
+    if (isStaticCover) {
+      // Static cover from our demo book covers collection
+      console.log(`🏠 [BookCover] Rendering STATIC cover for "${title}": ${coverState.url}`);
+      return (
+        <>
+          <NextImage
+            src={coverState.url}
+            alt={`${title} by ${author}`}
+            fill
+            className="object-cover"
+            sizes="(max-width: 768px) 25vw, (max-width: 1200px) 16vw, 12vw"
+            priority={true} // Static covers should load with high priority
+            onError={(e) => {
+              console.error('❌ [BookCover] Static cover load error for:', coverState.url);
+              const target = e.target as HTMLImageElement;
+              target.style.display = 'none';
+              
+              // Fallback to design system gradient if static cover fails
+              const fallbackUrl = generateDesignSystemGradientUrl(title, author);
+              setCoverState(prev => ({
+                ...prev,
+                url: fallbackUrl,
+                source: 'static_fallback',
+                confidence: 100,
+                error: 'Static cover failed, using fallback'
+              }));
+            }}
+            onLoad={() => {
+              setCoverState(prev => ({ ...prev, loadSuccess: true, error: undefined }));
+            }}
+          />
+          <div className="absolute inset-0 bg-gradient-to-br from-transparent via-transparent to-black/20" />
+          {showSource && (
+            <div className="absolute top-0 right-0 bg-green-600 text-white text-xs px-1 rounded-bl">
+              STATIC
+            </div>
+          )}
+        </>
       );
     }
 
@@ -192,24 +236,8 @@ const BookCover = memo(({
                 // Mark the current URL as failed and only clear if it's the cached one
                 bookCoverService.markUrlAsFailed(coverState.url);
                 bookCoverService.clearCacheIfNeeded({ title, author, isbn }, coverState.url);
-                // fetchCover is not available in this scope, so create a new fallback URL
-                const fallbackUrl = (() => {
-                  const hash = (title + author).split('').reduce((acc, char) => {
-                    return (acc << 5) - acc + char.charCodeAt(0);
-                  }, 0);
-                  
-                  const colors = [
-                    ['#FF6B6B', '#4ECDC4'], // Red to teal
-                    ['#45B7D1', '#F39C12'], // Blue to orange  
-                    ['#96CEB4', '#FECA57'], // Green to yellow
-                    ['#6C5CE7', '#FD79A8'], // Purple to pink
-                    ['#00B894', '#00CEC9'], // Green to cyan
-                    ['#E17055', '#FDCB6E'], // Orange gradient
-                  ];
-                  
-                  const colorPair = colors[Math.abs(hash) % colors.length] || colors[0]!;
-                  return `gradient:${colorPair[0]}:${colorPair[1]}:${encodeURIComponent(title)}:${encodeURIComponent(author)}`;
-                })();
+                // Generate design system fallback URL
+                const fallbackUrl = generateDesignSystemGradientUrl(title, author);
                 
                 setCoverState(prev => ({
                   ...prev,
@@ -219,25 +247,8 @@ const BookCover = memo(({
                   error: 'Image load failed, using fallback'
                 }));
               } else {
-                // Final fallback
-                // Debug: console.log('All retries exhausted, using emergency fallback');
-                const finalFallbackUrl = (() => {
-                  const hash = (title + author).split('').reduce((acc, char) => {
-                    return (acc << 5) - acc + char.charCodeAt(0);
-                  }, 0);
-                  
-                  const colors = [
-                    ['#FF6B6B', '#4ECDC4'], // Red to teal
-                    ['#45B7D1', '#F39C12'], // Blue to orange  
-                    ['#96CEB4', '#FECA57'], // Green to yellow
-                    ['#6C5CE7', '#FD79A8'], // Purple to pink
-                    ['#00B894', '#00CEC9'], // Green to cyan
-                    ['#E17055', '#FDCB6E'], // Orange gradient
-                  ];
-                  
-                  const colorPair = colors[Math.abs(hash) % colors.length] || colors[0]!;
-                  return `gradient:${colorPair[0]}:${colorPair[1]}:${encodeURIComponent(title)}:${encodeURIComponent(author)}`;
-                })();
+                // Final fallback using design system
+                const finalFallbackUrl = generateDesignSystemGradientUrl(title, author);
                 
                 setCoverState(prev => ({
                   ...prev,
@@ -279,8 +290,20 @@ const BookCover = memo(({
       );
     }
 
+    if (isDesignSystemGradient) {
+      // Use the new design system gradient component
+      return (
+        <DesignSystemGradientCover 
+          title={title}
+          author={author}
+          className="h-full w-full"
+          showText={false}
+        />
+      );
+    }
+
     if (isGradient) {
-      // Parse gradient data: gradient:color1:color2:title:author
+      // Legacy gradient support for backward compatibility
       const parts = coverState.url.split(':');
       const color1 = parts[1] || '#00A8CC';
       const color2 = parts[2] || '#0081A7';

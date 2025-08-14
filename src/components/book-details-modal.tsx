@@ -39,16 +39,35 @@ export function BookDetailsModal({ book, onClose }: BookDetailsModalProps) {
     return () => document.removeEventListener('keydown', handleEscape);
   }, [onClose]);
 
-  // Handle backdrop click
+  // Handle backdrop click - only close on intentional clicks, not touches
   const handleBackdropClick = (e: React.MouseEvent) => {
-    if (e.target === e.currentTarget) {
+    if (e.target === e.currentTarget && e.detail !== 0) {
+      // e.detail === 0 indicates a programmatic or touch event, not a real click
       onClose();
     }
   };
 
+  // Stop touch event propagation to prevent interference with parent handlers
+  const handleTouchStart = (e: React.TouchEvent) => {
+    e.stopPropagation();
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    e.stopPropagation();
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    e.stopPropagation();
+  };
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={handleBackdropClick}>
-      <div className="animate-fade-in-up max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-3xl bg-white shadow-mega">
+      <div 
+        className="animate-fade-in-up max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-3xl bg-white shadow-mega"
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+      >
         {/* Header */}
         <div className="sticky top-0 z-10 flex items-center justify-between border-b border-gray-200 bg-white/95 p-6 backdrop-blur-sm">
           <h2 className="text-2xl font-black text-text-primary">Book Details</h2>

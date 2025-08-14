@@ -3,6 +3,9 @@
  * Vibrant, saturated colors with dramatic typography, bold outlines, and smooth microanimations
  */
 
+/* Design System Book Cover Gradients */
+@import '../styles/book-cover-gradients.css';
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -482,4 +485,23 @@
     transform: translateZ(0);
     -webkit-transform: translateZ(0);
   }
+}
+
+/* Gen Z Animations */
+@keyframes pulse-slow {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.8;
+  }
+}
+
+.animate-pulse-slow {
+  animation: pulse-slow 4s ease-in-out infinite;
+}
+
+/* Gradient background size utility */
+.bg-size-200 {
+  background-size: 200% 200%;
 }

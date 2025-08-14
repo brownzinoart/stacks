@@ -2,7 +2,7 @@
 
 import { useState, useCallback, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { aiRecommendationService } from '@/lib/ai-recommendation-service'
+import { adaptiveAIService } from '@/lib/ai-service-adaptive'
 import FullTakeoverLoader, { ENHANCED_LOADING_STAGES } from '@/components/full-takeover-loader'
 import { hapticFeedback, isMobile } from '@/lib/mobile-utils'
 import AnimatedPlaceholder from '@/components/animated-placeholder'
@@ -17,16 +17,16 @@ const MOOD_OPTIONS = [
 ]
 
 const PLACEHOLDER_EXAMPLES = [
-  "What's your vibe? ✨ (drop any book mood, genre, or random thought)",
-  "Fantasy books with strong female leads",
+  "What's your vibe? ✨",
+  "Fantasy with strong leads",
   "Sci-fi like Dune but shorter",
-  "Something funny for my commute",
-  "Books that will make me cry",
-  "Non-fiction about productivity",
-  "Mysteries set in small towns",
-  "Romance without the drama",
-  "Historical fiction during WWII",
-  "Self-help for entrepreneurs"
+  "Funny books for commute",
+  "Books that make me cry",
+  "Productivity guides",
+  "Small town mysteries",
+  "Romance without drama",
+  "WWII historical fiction",
+  "Entrepreneur self-help"
 ]
 
 export default function AIPromptInput() {
@@ -41,6 +41,7 @@ export default function AIPromptInput() {
   
   const router = useRouter()
 
+
   // Determine if animated placeholder should be active
   const isPlaceholderActive = !isFocused && !inputValue.trim() && !isLoading
 
@@ -51,14 +52,17 @@ export default function AIPromptInput() {
 
   // Handle mood selection
   const handleMoodClick = useCallback(async (mood: string) => {
+    console.log('🎭 [MOOD CLICK] Mood clicked:', mood)
     clearError()
     setSelectedMood(mood)
     if (isMobile()) await hapticFeedback('medium')
     
     // Handle surprise me differently
     if (mood === 'surprise') {
+      console.log('🎲 [MOOD CLICK] Surprise mood, calling startSearch')
       startSearch('Surprise me with a great book recommendation')
     } else {
+      console.log('😊 [MOOD CLICK] Regular mood, calling startSearch with:', `I'm feeling ${mood} today, recommend me some books`)
       // Automatically start search when mood is selected
       startSearch(`I'm feeling ${mood} today, recommend me some books`)
     }
@@ -67,17 +71,45 @@ export default function AIPromptInput() {
   // Handle form submission
   const handleSubmit = useCallback((e: React.FormEvent) => {
     e.preventDefault()
+    console.log('🔥 [FORM SUBMIT] Form submitted with input:', inputValue)
     clearError()
     
     const searchQuery = inputValue.trim()
-    if (!searchQuery) return
+    if (!searchQuery) {
+      console.log('❌ [FORM SUBMIT] Empty search query, returning')
+      return
+    }
     
+    console.log('✅ [FORM SUBMIT] Valid query, calling startSearch:', searchQuery)
     startSearch(searchQuery)
   }, [inputValue, clearError])
 
   // Single, clean search function
+  // Hide loading when navigating away (for successful searches)
+  useEffect(() => {
+    const handleRouteChange = () => {
+      if (isLoading) {
+        console.log('🔄 [NAVIGATION] Route changed, hiding loading overlay')
+        setIsLoading(false)
+        setCurrentStage(0)
+        setProgress(0)
+      }
+    }
+
+    // This effect will trigger when the component unmounts (navigation)
+    return () => {
+      handleRouteChange()
+    }
+  }, [isLoading])
+
   const startSearch = useCallback(async (query: string) => {
-    if (isLoading) return // Prevent double submissions
+    console.log('🚀 [START SEARCH] Function called with query:', query)
+    console.log('🚀 [START SEARCH] Current isLoading state:', isLoading)
+    
+    if (isLoading) {
+      console.log('⚠️ [START SEARCH] Already loading, preventing double submission')
+      return // Prevent double submissions
+    }
     
     console.log('🔍 [NEW AI SEARCH] Starting search for:', query)
     
@@ -86,23 +118,37 @@ export default function AIPromptInput() {
     setProgress(0)
     setError(null)
 
+    const startTime = Date.now()
+    const MINIMUM_LOADING_TIME = 2000 // 2 seconds minimum display
+    
+    console.log('🔧 [SEARCH SETUP] Loading state set, starting try block')
+
     try {
       // Single timeout - let AI complete its work (21-22 seconds + network)
       const timeoutPromise = new Promise<never>((_, reject) =>
         setTimeout(() => reject(new Error('Search timed out after 90 seconds')), 90000)
       )
 
+      // Stage 1: Analyzing request
+      setCurrentStage(0)
+      setProgress(10)
+      await new Promise(resolve => setTimeout(resolve, 500)) // Show stage briefly
+      
       // Progress callback for loading stages
       const onProgress = (stage: number, progressValue: number) => {
         console.log(`📊 [SEARCH PROGRESS] Stage ${stage}, Progress: ${progressValue}%`)
-        setCurrentStage(stage)
-        setProgress(progressValue)
+        setCurrentStage(Math.min(stage + 1, ENHANCED_LOADING_STAGES.length - 1)) // Offset by 1
+        setProgress(Math.max(progressValue, 25)) // Ensure progress never goes backwards
       }
 
+      // Stage 2: AI search
+      setCurrentStage(1)
+      setProgress(25)
+
       // Call AI service with proper progress tracking
-      const aiPromise = aiRecommendationService.getSmartRecommendations({
+      const aiPromise = adaptiveAIService.getSmartRecommendations({
         userInput: query,
-        onProgress: (stage: number, progress?: number) => onProgress(stage, progress || 0)
+        onProgress: (stage: number, progress?: number) => onProgress(stage, progress || 25)
       })
 
       console.log('⏱️ [SEARCH] Waiting for AI response (up to 90 seconds)...')
@@ -121,9 +167,34 @@ export default function AIPromptInput() {
         throw new Error('AI returned invalid result structure')
       }
 
-      // Store result and navigate
-      localStorage.setItem('stacks_recommendations', JSON.stringify(result))
+      // Stage 3: Final processing & navigation
+      setCurrentStage(ENHANCED_LOADING_STAGES.length - 1)
+      setProgress(90)
+      
+      // Store result and navigate - ensure format matches expectations
+      const storageData = {
+        ...result,
+        userInput: query,
+        timestamp: new Date().toISOString()
+      };
+      localStorage.setItem('stacks_recommendations', JSON.stringify(storageData))
       console.log('💾 [SEARCH] Results stored, navigating to recommendations page')
+      console.log('💾 [SEARCH] Stored data structure:', {
+        hasCategories: !!storageData.categories,
+        categoryCount: storageData.categories?.length,
+        userInput: storageData.userInput
+      })
+      
+      setProgress(100)
+      
+      // Ensure minimum loading time has passed
+      const elapsedTime = Date.now() - startTime
+      const remainingTime = Math.max(0, MINIMUM_LOADING_TIME - elapsedTime)
+      
+      if (remainingTime > 0) {
+        console.log(`⏱️ [LOADER] Waiting ${remainingTime}ms to meet minimum display time`)
+        await new Promise(resolve => setTimeout(resolve, remainingTime))
+      }
       
       router.push('/stacks-recommendations')
 
@@ -141,12 +212,29 @@ export default function AIPromptInput() {
       
       setError(errorMessage)
       
-    } finally {
+      // Hide loading on error
       setIsLoading(false)
       setCurrentStage(0)
       setProgress(0)
+      
+    } finally {
+      // Cleanup handled in catch block for errors, or after navigation for success
     }
   }, [isLoading, router])
+
+  // Check for pending search from sessionStorage on mount
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const pendingSearch = sessionStorage.getItem('pendingSearch')
+      if (pendingSearch) {
+        console.log('🔄 [PENDING SEARCH] Found pending search:', pendingSearch)
+        sessionStorage.removeItem('pendingSearch') // Clear it immediately
+        setInputValue(pendingSearch)
+        // Auto-trigger the search
+        startSearch(pendingSearch)
+      }
+    }
+  }, [startSearch])
 
   return (
     <>
@@ -192,7 +280,7 @@ export default function AIPromptInput() {
               onFocus={() => setIsFocused(true)}
               onBlur={() => setIsFocused(false)}
               placeholder="" // Handled by AnimatedPlaceholder
-              className="w-full rounded-3xl border-2 border-white/30 bg-white/95 backdrop-blur-xl px-8 py-6 text-xl font-bold placeholder-gray-500 focus:border-white focus:outline-none focus:ring-4 focus:ring-white/30 transition-all duration-300 shadow-[0_8px_32px_rgba(0,0,0,0.1),inset_0_1px_0_rgba(255,255,255,0.6)] focus:shadow-[0_20px_40px_rgba(59,130,246,0.3),inset_0_1px_0_rgba(255,255,255,0.8),0_0_0_4px_rgba(59,130,246,0.2)] focus:bg-white/98 focus:scale-[1.02] text-text-primary"
+              className="w-full rounded-3xl border-2 border-white/30 bg-white/95 backdrop-blur-xl px-4 py-4 text-base sm:px-6 sm:py-5 sm:text-lg md:px-8 md:py-6 md:text-xl font-bold placeholder-gray-500 focus:border-white focus:outline-none focus:ring-4 focus:ring-white/30 transition-all duration-300 shadow-[0_8px_32px_rgba(0,0,0,0.1),inset_0_1px_0_rgba(255,255,255,0.6)] focus:shadow-[0_20px_40px_rgba(59,130,246,0.3),inset_0_1px_0_rgba(255,255,255,0.8),0_0_0_4px_rgba(59,130,246,0.2)] focus:bg-white/98 focus:scale-[1.02] text-text-primary"
               disabled={isLoading}
             />
             <AnimatedPlaceholder

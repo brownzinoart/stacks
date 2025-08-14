@@ -90,7 +90,7 @@ export default function AnimatedPlaceholder({
       aria-hidden="true"
     >
       <span
-        className={`pl-8 text-xl font-bold text-gray-500 ${animationClasses}`}
+        className={`pl-4 text-base sm:pl-6 sm:text-lg md:pl-8 md:text-xl font-bold text-gray-500 ${animationClasses} truncate max-w-full`}
         style={{
           // Ensure consistent positioning with input text
           lineHeight: '1.5'

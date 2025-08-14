@@ -210,7 +210,10 @@ export async function formatFallbackRecommendations(userInput: string) {
   // Ensure each category has at least one book
   categories.forEach((category, index) => {
     if (category.books.length === 0) {
-      category.books = [enhancedBooks[index] || enhancedBooks[0]];
+      const fallbackBook = enhancedBooks[index] || enhancedBooks[0];
+      if (fallbackBook) {
+        category.books = [fallbackBook];
+      }
     }
   });
   

@@ -4,7 +4,7 @@
   "private": true,
   "description": "Modern library web app with AI-powered book discovery",
   "scripts": {
-    "dev": "next dev --turbopack -H 0.0.0.0",
+    "dev": "PORT=3001 next dev --turbopack -H 0.0.0.0",
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
@@ -19,8 +19,10 @@
     "audit:performance": "node scripts/performance-audit.js",
     "prepare": "husky",
     "ios:setup": "chmod +x scripts/ios-dev.sh && ./scripts/ios-dev.sh setup",
+    "ios:deploy": "chmod +x scripts/ios-setup.sh && ./scripts/ios-setup.sh",
     "ios:dev": "chmod +x scripts/ios-dev.sh && ./scripts/ios-dev.sh start",
     "ios:build": "chmod +x scripts/ios-dev.sh && ./scripts/ios-dev.sh build",
+    "ios:build-static": "chmod +x scripts/build-ios.sh && ./scripts/build-ios.sh",
     "ios:open": "npx cap open ios",
     "ios:run": "npx cap run ios",
     "ios:sync": "npx cap sync ios",
@@ -28,7 +30,10 @@
     "ios:logs": "chmod +x scripts/ios-dev.sh && ./scripts/ios-dev.sh logs",
     "ios:fix": "python3 agents/ios-dev-agent.py fix",
     "ios:monitor": "python3 agents/ios-dev-agent.py monitor",
-    "ios:ip": "chmod +x scripts/ios-dev.sh && ./scripts/ios-dev.sh ip"
+    "ios:ip": "chmod +x scripts/ios-dev.sh && ./scripts/ios-dev.sh ip",
+    "ai:setup": "chmod +x scripts/setup-ios-ai.sh && ./scripts/setup-ios-ai.sh",
+    "ai:test": "node scripts/test-ai-services.js",
+    "ai:test-web": "open test-ios-ai.html"
   },
   "dependencies": {
     "@capacitor/app": "^7.0.1",

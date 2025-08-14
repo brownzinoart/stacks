@@ -7,6 +7,7 @@
 
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
+import { DesignSystemGradientCover } from './design-system-gradient-cover';
 
 interface BookCoverProps {
   title: string;
@@ -29,24 +30,10 @@ export function BookCoverSimple({
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
 
-  // Generate a consistent gradient fallback
+  // Generate a consistent gradient fallback using design system
   const generateGradient = () => {
-    const hash = (title + author).split('').reduce((acc, char) => {
-      return (acc << 5) - acc + char.charCodeAt(0);
-    }, 0);
-    
-    const gradients = [
-      'from-blue-400 to-purple-600',
-      'from-green-400 to-blue-500',
-      'from-purple-400 to-pink-600',
-      'from-yellow-400 to-red-500',
-      'from-pink-400 to-purple-500',
-      'from-indigo-400 to-purple-500',
-      'from-teal-400 to-blue-600',
-      'from-orange-400 to-red-600'
-    ];
-    
-    return gradients[Math.abs(hash) % gradients.length];
+    // This will be replaced by the DesignSystemGradientCover component
+    return '';
   };
 
   useEffect(() => {
@@ -54,7 +41,7 @@ export function BookCoverSimple({
     if (coverUrl && coverUrl.startsWith('http')) {
       setImageUrl(coverUrl);
       setIsLoading(false);
-    } else if (coverUrl && coverUrl.startsWith('gradient:')) {
+    } else if (coverUrl && (coverUrl.startsWith('gradient:') || coverUrl.startsWith('gradient-ds:'))) {
       // It's already a gradient placeholder
       setHasError(true);
       setIsLoading(false);
@@ -86,22 +73,15 @@ export function BookCoverSimple({
     }
   }, [title, author, coverUrl, isbn, isLoading]);
 
-  const gradient = generateGradient();
-
-  // Show gradient placeholder
+  // Show design system gradient placeholder
   if (hasError || !imageUrl) {
     return (
-      <div 
-        className={`relative bg-gradient-to-br ${gradient} ${className}`}
-        style={{ aspectRatio: '2/3' }}
-      >
-        <div className="absolute inset-0 flex flex-col items-center justify-center p-4 text-white">
-          <div className="text-center">
-            <div className="text-xs font-bold opacity-90 line-clamp-2">{title}</div>
-            <div className="text-[10px] opacity-75 mt-1">{author}</div>
-          </div>
-        </div>
-      </div>
+      <DesignSystemGradientCover 
+        title={title}
+        author={author}
+        className={className}
+        showText={true}
+      />
     );
   }
 
@@ -109,7 +89,14 @@ export function BookCoverSimple({
   return (
     <div className={`relative ${className}`} style={{ aspectRatio: '2/3' }}>
       {isLoading && (
-        <div className={`absolute inset-0 bg-gradient-to-br ${gradient} animate-pulse`} />
+        <div className="absolute inset-0">
+          <DesignSystemGradientCover 
+            title={title}
+            author={author}
+            className="w-full h-full animate-pulse"
+            showText={false}
+          />
+        </div>
       )}
       <Image
         src={imageUrl}
