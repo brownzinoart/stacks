@@ -181,10 +181,10 @@ class CriticalResourceManager {
         routes: ['/explore', '/stacks-recommendations']
       },
       '/explore': {
-        routes: ['/community', '/ar-discovery'],
+        routes: ['/community', '/discover'],
         scripts: ['/_next/static/chunks/pages/explore.js']
       },
-      '/ar-discovery': {
+      '/discover': {
         scripts: [
           '/_next/static/chunks/ar-service.js',
           '/_next/static/chunks/tesseract.js'

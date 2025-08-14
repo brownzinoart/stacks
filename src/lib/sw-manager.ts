@@ -195,7 +195,7 @@ class AdvancedServiceWorkerManager implements ServiceWorkerManager {
     // Define prefetch rules based on current page
     const prefetchRules: Record<string, string[]> = {
       '/home': ['/explore', '/stacks-recommendations'],
-      '/explore': ['/community', '/ar-discovery'],
+      '/explore': ['/community', '/discover'],
       '/community': ['/profile', '/home'],
       '/profile': ['/home', '/explore']
     };

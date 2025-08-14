@@ -25,7 +25,7 @@ const CACHE_EXPIRY = {
 const CRITICAL_ASSETS = ['/', '/manifest.json', '/icon-192.png', '/icon-512.png', '/home', '/explore'];
 
 // Resources to prefetch after initial load
-const PREFETCH_ASSETS = ['/community', '/profile', '/ar-discovery'];
+const PREFETCH_ASSETS = ['/community', '/profile', '/discover'];
 
 class AdvancedServiceWorker {
   constructor() {

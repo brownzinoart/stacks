@@ -700,7 +700,11 @@ fastify.setErrorHandler((error, request, reply) => {
 // CORS configuration for development
 if (process.env.NODE_ENV === 'development') {
   fastify.register(require('@fastify/cors'), {
-    origin: ['http://localhost:3001', 'http://127.0.0.1:3001', 'http://192.168.86.190:3001'],
+    origin: [
+      'http://localhost:3001', 'http://127.0.0.1:3001', 'http://192.168.86.190:3001',
+      'http://localhost:4000', 'http://127.0.0.1:4000', 'http://192.168.86.190:4000',
+      'http://localhost:4001', 'http://127.0.0.1:4001', 'http://192.168.86.190:4001'
+    ],
     credentials: true,
   });
 }
@@ -708,7 +712,7 @@ if (process.env.NODE_ENV === 'development') {
 // Start server
 const start = async () => {
   try {
-    const port = process.env.PORT || 3001;
+    const port = process.env.PORT || 4001;
     const host = process.env.HOST || '0.0.0.0';
 
     await fastify.listen({ port, host });

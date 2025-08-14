@@ -7,11 +7,15 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ### Essential Commands
 
 ```bash
-# Frontend development (Next.js with Turbopack)
-npm run dev              # Start at http://localhost:3000 with Turbopack, binds to 0.0.0.0
+# RECOMMENDED: Start both servers with consistent ports (SINGLE COMMAND)
+npm run dev:all          # Starts frontend (4000) + backend (4001) with clean cache
 
-# Backend development (Fastify API server)
-npm run backend:dev      # Start API server at 0.0.0.0:3001
+# OR start individually:
+# Frontend development (Next.js with Turbopack) - PORT 4000
+npm run dev              # Start at http://localhost:4000 with Turbopack, binds to 0.0.0.0
+
+# Backend development (Fastify API server) - PORT 4001
+npm run backend:dev      # Start API server at 0.0.0.0:4001
 
 # Build for production
 npm run build            # Production build with Next.js

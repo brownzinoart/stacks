@@ -6,7 +6,7 @@ import { test, expect } from '@playwright/test';
 
 test.describe('AR Discovery Features', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('/ar-discovery');
+    await page.goto('/discover');
   });
 
   test('should load AR discovery page successfully', async ({ page }) => {

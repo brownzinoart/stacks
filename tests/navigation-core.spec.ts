@@ -13,7 +13,7 @@ test.describe('Core Navigation', () => {
     await expect(page.locator('.fixed.bottom-0')).toBeVisible();
 
     // Check all 4 navigation items are present
-    const navLinks = page.locator('a[href="/home"], a[href="/ar-discovery"], a[href="/community"], a[href="/profile"]');
+    const navLinks = page.locator('a[href="/home"], a[href="/discover"], a[href="/community"], a[href="/profile"]');
     await expect(navLinks).toHaveCount(4);
   });
 
@@ -21,8 +21,8 @@ test.describe('Core Navigation', () => {
     await page.goto('/home');
 
     // Test navigation to each page
-    await page.locator('a[href="/ar-discovery"]').click();
-    await expect(page).toHaveURL('/ar-discovery');
+    await page.locator('a[href="/discover"]').click();
+    await expect(page).toHaveURL('/discover');
 
     await page.locator('a[href="/community"]').click();
     await expect(page).toHaveURL('/community');
@@ -41,7 +41,7 @@ test.describe('Core Navigation', () => {
     await expect(page.getByText('NEXT?')).toBeVisible();
 
     // Test AR discovery page
-    await page.goto('/ar-discovery');
+    await page.goto('/discover');
     await expect(page.getByText('AR BOOK')).toBeVisible();
     await expect(page.getByText('DISCOVERY')).toBeVisible();
 

@@ -12,7 +12,7 @@ test.describe('Smoke Tests', () => {
     expect(homeResponse?.status()).toBe(200);
 
     // Test AR discovery page loads
-    const arResponse = await page.goto('/ar-discovery');
+    const arResponse = await page.goto('/discover');
     expect(arResponse?.status()).toBe(200);
 
     // Test community page loads

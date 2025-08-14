@@ -21,8 +21,8 @@ test.describe('Home Page', () => {
     await page.goto('/home');
 
     // Check for iOS tab bar navigation elements with updated names
+    await expect(page.getByRole('link', { name: /Home/i })).toBeVisible();
     await expect(page.getByRole('link', { name: /Discover/i })).toBeVisible();
-    await expect(page.getByRole('link', { name: /Library/i })).toBeVisible();
     await expect(page.getByRole('link', { name: /Community/i })).toBeVisible();
     await expect(page.getByRole('link', { name: /Progress/i })).toBeVisible();
   });
@@ -79,9 +79,9 @@ test.describe('Home Page', () => {
   test('should navigate between pages', async ({ page }) => {
     await page.goto('/home');
 
-    // Navigate to Library (AR Discovery) page
-    await page.getByRole('link', { name: /Library/i }).click();
-    await expect(page).toHaveURL('/ar-discovery');
+    // Navigate to Discover page
+    await page.getByRole('link', { name: /Discover/i }).click();
+    await expect(page).toHaveURL('/discover');
     await expect(page.getByRole('heading', { name: /AR BOOK.*DISCOVERY/i })).toBeVisible();
 
     // Navigate to Community page

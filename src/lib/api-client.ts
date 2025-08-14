@@ -16,7 +16,7 @@ const API_CONFIG = {
     keyEnv: 'NEXT_PUBLIC_ANTHROPIC_API_KEY',
   },
   backend: {
-    url: process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3001',
+    url: process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:4001',
   },
 };
 

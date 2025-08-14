@@ -17,7 +17,7 @@ export function OptimizedAppShell({ children }: { children: React.ReactNode }) {
       '/home': ['/api/user/preferences'],
       '/explore': ['/api/books/trending', '/api/books/categories'],
       '/community': ['/api/community/posts', '/api/community/recommendations'],
-      '/ar-discovery': ['/api/library/nearby', '/api/books/availability']
+      '/discover': ['/api/library/nearby', '/api/books/availability']
     };
     
     return endpointMap[path] || [];

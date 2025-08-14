@@ -33,14 +33,15 @@ export function getApiBaseUrl(): string {
 
   if (isCapacitor()) {
     // Mobile app - use your computer's IP address
-    // IMPORTANT: Update this to your computer's actual IP address
-    const devServerIp = '192.168.86.190'; // Your Mac's IP from earlier
-    const actualPort = '3001';
-    const baseUrl = `http://${devServerIp}:${actualPort}`;
+    // These ports are defined in ports.config.js - update there to change across the entire app
+    const devServerIp = '192.168.86.190'; // Your Mac's IP address  
+    const backendPort = '4001'; // Backend API server port
+    const baseUrl = `http://${devServerIp}:${backendPort}`;
     
     console.log('[API Config] Using mobile base URL:', baseUrl);
-    console.log('[API Config] Dev server should be running with: npm run dev');
-    console.log('[API Config] Make sure your dev server is accessible from your phone');
+    console.log('[API Config] Backend server should be running on port 4001');
+    console.log('[API Config] Frontend server should be running on port 4000');  
+    console.log('[API Config] Use "npm run dev:all" to start both servers correctly');
     return baseUrl;
   }
 

@@ -8,21 +8,51 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { clsx } from 'clsx';
+import { useEffect, useState } from 'react';
 
-// Modern icon representations - Discovery-first strategy
+// Modern icon representations - Home-centered strategy
 const navigationItems = [
   { name: 'Learning', href: '/learning', icon: '▲', color: 'primary-blue' },
-  { name: 'Library', href: '/ar-discovery', icon: '▣', color: 'primary-teal' },
-  { name: 'Discover', href: '/home', icon: '◈', color: 'primary-purple', isHome: true },
+  { name: 'Discover', href: '/discover', icon: '◈', color: 'primary-purple' },
+  { name: 'Home', href: '/home', icon: '▣', color: 'primary-teal', isHome: true },
   { name: 'Community', href: '/events', icon: '◆', color: 'primary-orange' },
   { name: 'Kids', href: '/kids', icon: '★', color: 'primary-pink' },
 ];
 
+// Detect if running in Capacitor (mobile app)
+const isCapacitor = () => {
+  if (typeof window === 'undefined') return false;
+  return !!(
+    window.Capacitor ||
+    (window as any).Capacitor ||
+    window.location.protocol === 'capacitor:' ||
+    window.location.protocol === 'ionic:'
+  );
+};
+
 export const NativeIOSTabBar = () => {
   const pathname = usePathname();
+  const [isCapacitorEnv, setIsCapacitorEnv] = useState(false);
+  const [currentPath, setCurrentPath] = useState('');
+
+  useEffect(() => {
+    const capacitorMode = isCapacitor();
+    setIsCapacitorEnv(capacitorMode);
+    
+    if (capacitorMode) {
+      // In Capacitor, use window.location.pathname and parse it
+      const path = window.location.pathname;
+      // Remove /index.html suffix and handle root case
+      const cleanPath = path.replace('/index.html', '') || '/';
+      setCurrentPath(cleanPath);
+    } else {
+      // In web mode, use Next.js pathname
+      setCurrentPath(pathname);
+    }
+  }, [pathname]);
 
   // Debug logging for tab highlighting
-  console.log('Current pathname:', pathname);
+  console.log('Current pathname:', currentPath, 'Capacitor:', isCapacitorEnv, 'Raw pathname:', pathname);
 
   // Vibrant Gen Z color styling
   const getTabStyles = (color: string, isActive: boolean, isHome: boolean = false) => {
@@ -57,7 +87,7 @@ export const NativeIOSTabBar = () => {
       >
         <div className="flex items-center justify-center gap-1 px-1 py-3">
           {navigationItems.map((item) => {
-            const isActive = pathname === item.href;
+            const isActive = currentPath === item.href;
             const isHome = item.isHome || false;
 
             // Debug which tab is active
@@ -65,19 +95,20 @@ export const NativeIOSTabBar = () => {
               console.log('Active tab:', item.name, 'href:', item.href, 'pathname:', pathname);
             }
 
-            return (
-              <Link
-                key={item.name}
-                href={item.href}
-                className={clsx(
-                  'flex flex-1 flex-col items-center justify-center transition-all duration-300',
-                  'rounded-3xl px-1 py-3',
-                  'transform hover:scale-105 active:scale-95',
-                  isActive ? 'shadow-card' : isHome ? 'opacity-85' : 'opacity-70',
-                  isHome ? '-translate-y-2' : ''
-                )}
-                style={getTabStyles(item.color, isActive, isHome)}
-              >
+            // Use HTML navigation for Capacitor, Next.js Link for web
+            const linkProps = {
+              className: clsx(
+                'flex flex-1 flex-col items-center justify-center transition-all duration-300',
+                'rounded-3xl px-1 py-3',
+                'transform hover:scale-105 active:scale-95',
+                isActive ? 'shadow-card' : isHome ? 'opacity-85' : 'opacity-70',
+                isHome ? '-translate-y-2' : ''
+              ),
+              style: getTabStyles(item.color, isActive, isHome)
+            };
+
+            const linkContent = (
+              <>
                 {/* Icon */}
                 <div
                   className={clsx(
@@ -98,6 +129,31 @@ export const NativeIOSTabBar = () => {
                 >
                   {item.name}
                 </span>
+              </>
+            );
+
+            if (isCapacitorEnv) {
+              // Use standard HTML link for Capacitor
+              const htmlHref = `${item.href}/index.html`;
+              return (
+                <a
+                  key={item.name}
+                  {...linkProps}
+                  href={htmlHref}
+                >
+                  {linkContent}
+                </a>
+              );
+            }
+
+            // Use Next.js Link for web
+            return (
+              <Link
+                key={item.name}
+                {...linkProps}
+                href={item.href}
+              >
+                {linkContent}
               </Link>
             );
           })}
