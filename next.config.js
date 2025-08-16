@@ -1,14 +1,20 @@
 /**
  * Next.js configuration for Stacks - Modern Library Web App
- * Enables App Router, TypeScript strict mode, PWA capabilities, and mobile testing
+ * Pages Router configuration - eliminates RSC compatibility issues with Capacitor
  */
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // Always use static export for consistent web/mobile behavior
+  // Enable static export for iOS
   output: 'export',
-  // Force static navigation to avoid RSC fetch errors
   skipTrailingSlashRedirect: true,
+  
+  // Allow cross-origin requests from iOS device
+  devIndicators: {
+    allowedHosts: ['192.168.86.190', 'localhost'],
+  },
+  
+  // Pages Router doesn't need RSC experimental flags
   // Disable image optimization for static export
   images: {
     unoptimized: true,
@@ -51,7 +57,7 @@ const nextConfig = {
     }
     return config;
   },
-  // Security headers for production
+  // Security headers for production, CORS for development
   async headers() {
     const headers = [];
 
@@ -86,12 +92,30 @@ const nextConfig = {
           },
         ],
       });
+    } else {
+      // Development CORS headers for iOS
+      headers.push({
+        source: '/(.*)',
+        headers: [
+          {
+            key: 'Access-Control-Allow-Origin',
+            value: '*',
+          },
+          {
+            key: 'Access-Control-Allow-Methods',
+            value: 'GET, POST, PUT, DELETE, OPTIONS',
+          },
+          {
+            key: 'Access-Control-Allow-Headers',
+            value: 'Content-Type, Authorization',
+          },
+        ],
+      });
     }
 
     return headers;
   },
-  // Enable trailing slash for static export compatibility
-  trailingSlash: true,
+  trailingSlash: true, // Required for static export
   // Updated Turbopack configuration
   turbopack: {
     rules: {

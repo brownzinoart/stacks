@@ -8,7 +8,14 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { clsx } from 'clsx';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
+import { useIOSPreloader } from '@/lib/ios-preloader';
+import { 
+  isCapacitor, 
+  getCurrentPathInIOS, 
+  isCurrentPath, 
+  handleIOSNavigation 
+} from '@/lib/ios-navigation';
 
 // Modern icon representations - Home-centered strategy
 const navigationItems = [
@@ -19,37 +26,59 @@ const navigationItems = [
   { name: 'Kids', href: '/kids', icon: '★', color: 'primary-pink' },
 ];
 
-// Detect if running in Capacitor (mobile app)
-const isCapacitor = () => {
-  if (typeof window === 'undefined') return false;
-  return !!(
-    window.Capacitor ||
-    (window as any).Capacitor ||
-    window.location.protocol === 'capacitor:' ||
-    window.location.protocol === 'ionic:'
-  );
-};
+// Capacitor detection moved to ios-navigation.ts
 
 export const NativeIOSTabBar = () => {
   const pathname = usePathname();
   const [isCapacitorEnv, setIsCapacitorEnv] = useState(false);
   const [currentPath, setCurrentPath] = useState('');
+  const [pressedTab, setPressedTab] = useState<string | null>(null);
+  const [isTransitioning, setIsTransitioning] = useState(false);
+  const { preloadPage } = useIOSPreloader();
 
   useEffect(() => {
     const capacitorMode = isCapacitor();
     setIsCapacitorEnv(capacitorMode);
     
     if (capacitorMode) {
-      // In Capacitor, use window.location.pathname and parse it
-      const path = window.location.pathname;
-      // Remove /index.html suffix and handle root case
-      const cleanPath = path.replace('/index.html', '') || '/';
-      setCurrentPath(cleanPath);
+      // Use the centralized iOS navigation service
+      setCurrentPath(getCurrentPathInIOS());
     } else {
       // In web mode, use Next.js pathname
-      setCurrentPath(pathname);
+      setCurrentPath(pathname || '/home');
     }
   }, [pathname]);
+
+  // Navigation handler - uses iOS service for Capacitor
+  const handleTabPress = useCallback((href: string) => {
+    if (isTransitioning) return;
+    
+    setPressedTab(href);
+    setIsTransitioning(true);
+    
+    // Clear pressed state after visual feedback
+    setTimeout(() => {
+      setPressedTab(null);
+    }, 100);
+    
+    // Handle navigation based on environment
+    if (isCapacitorEnv) {
+      // Use iOS navigation service - prevents RSC navigation
+      handleIOSNavigation(href, preloadPage);
+    }
+    
+    // Clear transitioning state after navigation
+    setTimeout(() => {
+      setIsTransitioning(false);
+    }, 500);
+  }, [isTransitioning, isCapacitorEnv, preloadPage]);
+
+  const handleTabHover = useCallback((href: string) => {
+    // Preload on hover for better UX
+    if (isCapacitorEnv) {
+      preloadPage(href);
+    }
+  }, [isCapacitorEnv, preloadPage]);
 
   // Debug logging for tab highlighting
   console.log('Current pathname:', currentPath, 'Capacitor:', isCapacitorEnv, 'Raw pathname:', pathname);
@@ -77,7 +106,7 @@ export const NativeIOSTabBar = () => {
   };
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-50">
+    <div className="native-ios-tabs fixed bottom-0 left-0 right-0 z-50">
       {/* Ultra Bold Gen Z Tab Bar */}
       <div
         className="border-t border-gray-200/30 bg-bg-light/95 shadow-mega backdrop-blur-xl"
@@ -87,24 +116,33 @@ export const NativeIOSTabBar = () => {
       >
         <div className="flex items-center justify-center gap-1 px-1 py-3">
           {navigationItems.map((item) => {
-            const isActive = currentPath === item.href;
+            // Use centralized path checking for consistency
+            const isActive = isCapacitorEnv 
+              ? isCurrentPath(item.href, currentPath)
+              : currentPath === item.href || (item.href === '/home' && (currentPath === '/' || currentPath === ''));
             const isHome = item.isHome || false;
+            const isPressed = pressedTab === item.href;
 
             // Debug which tab is active
             if (isActive) {
               console.log('Active tab:', item.name, 'href:', item.href, 'pathname:', pathname);
             }
 
-            // Use HTML navigation for Capacitor, Next.js Link for web
+            // Enhanced link props with smooth transitions
             const linkProps = {
               className: clsx(
-                'flex flex-1 flex-col items-center justify-center transition-all duration-300',
+                'flex flex-1 flex-col items-center justify-center',
                 'rounded-3xl px-1 py-3',
-                'transform hover:scale-105 active:scale-95',
+                'tab-instant-feedback',
+                'transform transition-all duration-300',
+                isPressed && 'tab-pressed',
                 isActive ? 'shadow-card' : isHome ? 'opacity-85' : 'opacity-70',
-                isHome ? '-translate-y-2' : ''
+                isHome ? '-translate-y-2' : '',
+                isTransitioning && isActive && 'transition-loading'
               ),
-              style: getTabStyles(item.color, isActive, isHome)
+              style: getTabStyles(item.color, isActive, isHome),
+              onTouchStart: () => handleTabPress(item.href),
+              onMouseEnter: () => handleTabHover(item.href)
             };
 
             const linkContent = (
@@ -133,16 +171,16 @@ export const NativeIOSTabBar = () => {
             );
 
             if (isCapacitorEnv) {
-              // Use standard HTML link for Capacitor
-              const htmlHref = `${item.href}/index.html`;
+              // Use button for iOS - navigation handled by handleTabPress
               return (
-                <a
+                <button
                   key={item.name}
                   {...linkProps}
-                  href={htmlHref}
+                  type="button"
+                  onClick={() => handleTabPress(item.href)}
                 >
                   {linkContent}
-                </a>
+                </button>
               );
             }
 

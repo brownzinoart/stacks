@@ -5,18 +5,17 @@
 
 'use client';
 
-const mockNewReleases = [
-  { title: 'The Midnight Library', author: 'Matt Haig', genre: 'Fiction' },
-  { title: 'Klara and the Sun', author: 'Kazuo Ishiguro', genre: 'Sci-Fi' },
-  { title: 'The Four Winds', author: 'Kristin Hannah', genre: 'Historical' },
-  { title: 'Project Hail Mary', author: 'Andy Weir', genre: 'Sci-Fi' },
-  { title: 'Malibu Rising', author: 'Taylor Jenkins Reid', genre: 'Fiction' },
-  { title: 'The Push', author: 'Ashley Audrain', genre: 'Thriller' },
+const mockBooks = [
+  { title: 'Iron Flame', author: 'Rebecca Yarros', genre: 'Fantasy' },
+  { title: 'Fourth Wing', author: 'Rebecca Yarros', genre: 'Fantasy' },
+  { title: 'Happy Place', author: 'Emily Henry', genre: 'Romance' },
+  { title: 'The Atlas Six', author: 'Olivie Blake', genre: 'Dark Academia' },
+  { title: 'Lessons in Chemistry', author: 'Bonnie Garmus', genre: 'Fiction' },
+  { title: 'Tomorrow, and Tomorrow, and Tomorrow', author: 'Gabrielle Zevin', genre: 'Fiction' },
 ];
 
 export const NewReleases = () => {
   const handleBookClick = (book: any) => {
-    // TODO: Navigate to book details
     console.log('Opening book:', book.title);
   };
 
@@ -32,8 +31,8 @@ export const NewReleases = () => {
         </div>
 
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          {mockNewReleases.map((book, index) => (
-            <button
+          {mockBooks.map((book, index) => (
+              <button
               key={index}
               onClick={() => handleBookClick(book)}
               className="pop-element touch-feedback mobile-touch rounded-2xl bg-white p-4 text-left transition-all duration-300 hover:scale-105 hover:bg-primary-green hover:shadow-[0_8px_30px_rgb(0,0,0,0.3)] focus:outline-none focus:ring-4 focus:ring-text-primary/20 sm:p-6"
@@ -45,7 +44,7 @@ export const NewReleases = () => {
                   {book.genre}
                 </div>
               </div>
-            </button>
+              </button>
           ))}
         </div>
 

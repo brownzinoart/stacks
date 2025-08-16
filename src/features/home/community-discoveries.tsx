@@ -13,6 +13,7 @@ const mockCommunityBooks = [
     id: 1,
     title: 'The Atlas Six',
     author: 'Olivie Blake',
+    coverUrl: '/demo book covers/the_atlas_six.jpg',
     discoveredBy: 12,
     locationTag: 'Campus Library',
   },
@@ -20,6 +21,7 @@ const mockCommunityBooks = [
     id: 2,
     title: 'Babel',
     author: 'R.F. Kuang',
+    coverUrl: '/demo book covers/babel.jpg',
     discoveredBy: 8,
     locationTag: 'Downtown Branch',
   },
@@ -27,6 +29,7 @@ const mockCommunityBooks = [
     id: 3,
     title: 'The Midnight Library',
     author: 'Matt Haig',
+    coverUrl: '/demo book covers/the_midnight_library.jpg',
     discoveredBy: 15,
     locationTag: 'Your Area',
   },
@@ -67,7 +70,13 @@ export const CommunityDiscoveries = () => {
               onClick={() => handleBookClick(book)}
               className="outline-bold-thin touch-feedback mobile-touch flex w-full items-start gap-4 rounded-2xl border-2 border-transparent bg-white/20 p-4 backdrop-blur-sm transition-all duration-300 hover:scale-[1.02] hover:border-white/30 hover:bg-white/30 hover:shadow-[0_8px_30px_rgb(0,0,0,0.2)] sm:gap-6 sm:p-6"
             >
-              <BookCover title={book.title} author={book.author} className="h-20 w-14 sm:h-24 sm:w-16" />
+              <BookCover 
+                title={book.title} 
+                author={book.author} 
+                coverUrl={book.coverUrl}
+                className="h-20 w-14 sm:h-24 sm:w-16"
+                showSource={false}
+              />
 
               <div className="min-w-0 flex-1 text-left">
                 <h3 className="mb-1 text-base font-black leading-tight text-white sm:mb-2 sm:text-lg">{book.title}</h3>

@@ -1,11 +1,11 @@
 'use client'
 
 import { useState, useCallback, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
 import { adaptiveAIService } from '@/lib/ai-service-adaptive'
 import FullTakeoverLoader, { ENHANCED_LOADING_STAGES } from '@/components/full-takeover-loader'
 import { hapticFeedback, isMobile } from '@/lib/mobile-utils'
 import AnimatedPlaceholder from '@/components/animated-placeholder'
+import { isCapacitor, navigateInIOS } from '@/lib/ios-navigation'
 
 const MOOD_OPTIONS = [
   { mood: 'adventurous', label: '🗺️ Adventurous', color: 'bg-primary-orange' },
@@ -38,8 +38,6 @@ export default function AIPromptInput() {
   const [progress, setProgress] = useState(0)
   const [error, setError] = useState<string | null>(null)
   const [isFocused, setIsFocused] = useState(false)
-  
-  const router = useRouter()
 
 
   // Determine if animated placeholder should be active
@@ -196,7 +194,13 @@ export default function AIPromptInput() {
         await new Promise(resolve => setTimeout(resolve, remainingTime))
       }
       
-      router.push('/stacks-recommendations')
+      // Use static navigation for both iOS and web to avoid RSC issues
+      if (isCapacitor()) {
+        navigateInIOS('/stacks-recommendations')
+      } else {
+        // Use direct navigation for web too - avoids RSC payload issues
+        window.location.href = '/stacks-recommendations'
+      }
 
     } catch (error: any) {
       console.error('❌ [SEARCH ERROR]', error)
@@ -220,7 +224,7 @@ export default function AIPromptInput() {
     } finally {
       // Cleanup handled in catch block for errors, or after navigation for success
     }
-  }, [isLoading, router])
+  }, [isLoading])
 
   // Check for pending search from sessionStorage on mount
   useEffect(() => {

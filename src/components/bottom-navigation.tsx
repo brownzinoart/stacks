@@ -8,8 +8,15 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { clsx } from 'clsx';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { Compass, Library, Users, TrendingUp, GraduationCap, Star } from 'lucide-react';
+import { useIOSPreloader } from '@/lib/ios-preloader';
+import { 
+  isCapacitor, 
+  getCurrentPathInIOS, 
+  isCurrentPath, 
+  handleIOSNavigation 
+} from '@/lib/ios-navigation';
 
 // Navigation items configuration - Home-centered strategy
 const navigationItems = [
@@ -20,55 +27,86 @@ const navigationItems = [
   { name: 'Kids', href: '/kids', icon: Star },
 ];
 
-// Detect if running in Capacitor (mobile app)
-const isCapacitor = () => {
-  if (typeof window === 'undefined') return false;
-  return !!(
-    window.Capacitor ||
-    (window as any).Capacitor ||
-    window.location.protocol === 'capacitor:' ||
-    window.location.protocol === 'ionic:'
-  );
-};
+// Capacitor detection moved to ios-navigation.ts
 
 export const BottomNavigation = () => {
   const pathname = usePathname();
   const [isCapacitorEnv, setIsCapacitorEnv] = useState(false);
   const [currentPath, setCurrentPath] = useState('');
+  const [pressedTab, setPressedTab] = useState<string | null>(null);
+  const [isTransitioning, setIsTransitioning] = useState(false);
+  const { preloadPage } = useIOSPreloader();
 
   useEffect(() => {
     const capacitorMode = isCapacitor();
     setIsCapacitorEnv(capacitorMode);
     
     if (capacitorMode) {
-      // In Capacitor, use window.location.pathname and parse it
-      const path = window.location.pathname;
-      // Remove /index.html suffix and handle root case
-      const cleanPath = path.replace('/index.html', '') || '/';
-      setCurrentPath(cleanPath);
+      // Use the centralized iOS navigation service
+      setCurrentPath(getCurrentPathInIOS());
     } else {
       // In web mode, use Next.js pathname
-      setCurrentPath(pathname);
+      setCurrentPath(pathname || '/home');
     }
   }, [pathname]);
 
+  // Navigation handler - uses iOS service for Capacitor
+  const handleTabPress = useCallback((href: string) => {
+    if (isTransitioning) return;
+    
+    setPressedTab(href);
+    setIsTransitioning(true);
+    
+    // Clear pressed state after visual feedback
+    setTimeout(() => {
+      setPressedTab(null);
+    }, 100);
+    
+    // Handle navigation based on environment
+    if (isCapacitorEnv) {
+      // Use iOS navigation service - prevents RSC navigation
+      handleIOSNavigation(href, preloadPage);
+    }
+    
+    // Clear transitioning state after navigation
+    setTimeout(() => {
+      setIsTransitioning(false);
+    }, 500);
+  }, [isTransitioning, isCapacitorEnv, preloadPage]);
+
+  const handleTabHover = useCallback((href: string) => {
+    // Preload on hover for better UX
+    if (isCapacitorEnv) {
+      preloadPage(href);
+    }
+  }, [isCapacitorEnv, preloadPage]);
+
   return (
-    <nav className="pb-safe fixed bottom-0 left-0 right-0 z-50 border-t border-gray-200 bg-white">
+    <nav className="bottom-navigation pb-safe fixed bottom-0 left-0 right-0 z-50 border-t border-gray-200 bg-white">
       <div className="grid grid-cols-5 gap-1 px-2 py-2">
         {navigationItems.map((item) => {
           const Icon = item.icon;
-          const isActive = currentPath === item.href;
+          // Use centralized path checking for consistency
+          const isActive = isCapacitorEnv 
+            ? isCurrentPath(item.href, currentPath)
+            : currentPath === item.href || (item.href === '/home' && (currentPath === '/' || currentPath === ''));
           const isHome = item.isHome || false;
+          const isPressed = pressedTab === item.href;
 
-          // Common link props and content
+          // Enhanced link props with smooth transitions
           const linkProps = {
             className: clsx(
-              'flex flex-col items-center justify-center rounded-lg px-1 py-2 transition-all duration-200',
+              'flex flex-col items-center justify-center rounded-lg px-1 py-2',
+              'tab-instant-feedback transition-all duration-200',
+              isPressed && 'tab-pressed',
               isActive
                 ? 'bg-primary-yellow text-text-primary'
                 : 'text-gray-500 hover:bg-gray-50 hover:text-text-primary',
-              isHome ? '-translate-y-1 transform' : ''
-            )
+              isHome ? '-translate-y-1 transform' : '',
+              isTransitioning && isActive && 'transition-loading'
+            ),
+            onTouchStart: () => handleTabPress(item.href),
+            onMouseEnter: () => handleTabHover(item.href)
           };
 
           const linkContent = (
@@ -88,16 +126,16 @@ export const BottomNavigation = () => {
           );
 
           if (isCapacitorEnv) {
-            // Use standard HTML link for Capacitor
-            const htmlHref = `${item.href}/index.html`;
+            // Use button for iOS - navigation handled by handleTabPress
             return (
-              <a
+              <button
                 key={item.name}
                 {...linkProps}
-                href={htmlHref}
+                type="button"
+                onClick={() => handleTabPress(item.href)}
               >
                 {linkContent}
-              </a>
+              </button>
             );
           }
 

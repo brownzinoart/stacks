@@ -19,7 +19,7 @@ const isCapacitor = () => {
 export function getApiBaseUrl(): string {
   if (typeof window === 'undefined') {
     // Server-side rendering
-    return process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
+    return process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
   }
 
   // Log detection info
@@ -32,20 +32,19 @@ export function getApiBaseUrl(): string {
   });
 
   if (isCapacitor()) {
-    // Mobile app - use your computer's IP address
-    // These ports are defined in ports.config.js - update there to change across the entire app
+    // Mobile app - use your computer's IP address for Next.js dev server
     const devServerIp = '192.168.86.190'; // Your Mac's IP address  
-    const backendPort = '4001'; // Backend API server port
-    const baseUrl = `http://${devServerIp}:${backendPort}`;
+    const frontendPort = '4000'; // Next.js dev server port
+    const baseUrl = `http://${devServerIp}:${frontendPort}`;
     
     console.log('[API Config] Using mobile base URL:', baseUrl);
-    console.log('[API Config] Backend server should be running on port 4001');
-    console.log('[API Config] Frontend server should be running on port 4000');  
-    console.log('[API Config] Use "npm run dev:all" to start both servers correctly');
+    console.log('[API Config] Next.js server should be running on port 4000');
+    console.log('[API Config] Use "npm run dev" to start the server');
+    console.log('[API Config] All APIs now routed through Next.js /api routes');
     return baseUrl;
   }
 
-  // Web browser
+  // Web browser (if needed) - all APIs through Next.js
   const baseUrl = process.env.NEXT_PUBLIC_API_URL || '';
   console.log('[API Config] Using web base URL:', baseUrl);
   return baseUrl;

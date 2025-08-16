@@ -11,6 +11,17 @@ import { useState, useEffect, memo } from 'react';
 import NextImage from 'next/image';
 import { generateDesignSystemGradientUrl, parseDesignSystemGradientUrl, DesignSystemGradientCover } from './design-system-gradient-cover';
 
+// Detect if running in Capacitor (iOS offline mode)
+const isCapacitor = () => {
+  if (typeof window === 'undefined') return false;
+  return !!(
+    window.Capacitor ||
+    (window as any).Capacitor ||
+    window.location.protocol === 'capacitor:' ||
+    window.location.protocol === 'ionic:'
+  );
+};
+
 interface BookCoverProps {
   title: string;
   author: string;
@@ -216,6 +227,50 @@ const BookCover = memo(({
 
     if (isRealCover) {
       // Real book cover from Google Books or Open Library
+      console.log(`🌐 [BookCover] Rendering REAL cover for "${title}": ${coverState.url}`);
+      
+      // Use native HTML img for iOS/Capacitor to avoid WebView rendering issues
+      if (isCapacitor()) {
+        console.log(`📱 [BookCover] Using native HTML img for iOS: "${title}"`);
+        return (
+          <>
+            <img
+              src={coverState.url}
+              alt={`${title} by ${author}`}
+              className="absolute inset-0 w-full h-full object-cover"
+              onError={(e) => {
+                console.error('❌ [BookCover] Native img load error for:', coverState.url);
+                const target = e.target as HTMLImageElement;
+                target.style.display = 'none';
+                
+                // Immediate fallback to gradient for iOS
+                console.log(`🎨 [BookCover] iOS img failed, using gradient fallback for "${title}"`);
+                const fallbackUrl = generateDesignSystemGradientUrl(title, author);
+                
+                setCoverState(prev => ({
+                  ...prev,
+                  url: fallbackUrl,
+                  source: 'ios_img_fallback',
+                  confidence: 100,
+                  error: 'iOS native img failed, using gradient'
+                }));
+              }}
+              onLoad={() => {
+                console.log(`✅ [BookCover] Native img loaded successfully for "${title}"`);
+                setCoverState(prev => ({ ...prev, loadSuccess: true, error: undefined }));
+              }}
+            />
+            <div className="absolute inset-0 bg-gradient-to-br from-transparent via-transparent to-black/20" />
+            {showSource && (
+              <div className="absolute top-0 right-0 bg-blue-600 text-white text-xs px-1 rounded-bl">
+                iOS IMG
+              </div>
+            )}
+          </>
+        );
+      }
+      
+      // Use Next.js Image for web browsers
       return (
         <>
           <NextImage
