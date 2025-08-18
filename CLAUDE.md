@@ -2,6 +2,22 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## 🎯 CRITICAL: Product Strategy Pivot
+
+**READ FIRST**: The application is undergoing a major strategic pivot from library-focused discovery to social/community book discovery. 
+
+📋 **Review**: [`docs/CONTENT_STRATEGY.md`](docs/CONTENT_STRATEGY.md) - Complete product strategy and feature roadmap
+
+**Key Changes**:
+- **Core Feature**: StackSnap (OCR-based book recognition) → Camera + OCR + Interactive Overlay
+- **Audience**: Gen Z/BookTok community → social sharing and viral discovery  
+- **Features**: Community discovery, pace tracking, social integration
+- **Simplified Launch**: **NO AR STACK** - Focus on camera → OCR → overlay workflow
+
+**Preserve**: Gorgeous design system, mobile architecture, AI infrastructure, camera capabilities
+**Evolve**: Library features → Social/community features
+**Removed**: Full AR implementation (too complex for launch)
+
 ## Development Commands
 
 ### Essential Commands
@@ -68,6 +84,8 @@ This is a Next.js 15 progressive web app for AI-powered library book discovery w
 - **iOS**: Xcode project in `/ios/App/` and `/mobile/ios/App/`
 - **Config**: Live reload dev server configured in `mobile/capacitor.config.ts`
 - **Build**: Static export (`output: 'export'`) for mobile app packaging
+- **Camera**: Capacitor Camera API for StackSnap photo capture
+- **OCR**: Tesseract.js for client-side book title/author recognition
 
 ### AI Model Strategy
 

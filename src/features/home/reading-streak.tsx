@@ -65,8 +65,8 @@ export const ReadingStreak = () => {
   };
 
   return (
-    <div className="pop-element-lg relative overflow-hidden rounded-3xl bg-primary-purple p-8 shadow-[0_10px_40px_rgb(0,0,0,0.3)] sm:p-12">
-      <div className="relative z-10 space-y-6 sm:space-y-8">
+    <div className="pop-element-lg relative overflow-hidden rounded-3xl bg-primary-purple p-6 shadow-[0_10px_40px_rgb(0,0,0,0.3)] sm:p-8">
+      <div className="relative z-10 space-y-4 sm:space-y-6">
         <div className="relative">
           {/* Status Badge */}
           <div
@@ -77,10 +77,10 @@ export const ReadingStreak = () => {
             {isOnTrack ? 'ON TRACK!' : 'CATCH UP!'}
           </div>
 
-          <h1 className="mb-4 text-huge font-black leading-extra-tight text-text-primary sm:mb-6">
+          <h1 className="mb-3 text-2xl md:text-3xl font-black leading-extra-tight text-text-primary sm:mb-4">
             <span className="text-primary-yellow">READING</span>
             <br />
-            <span className="text-mega">PLAN</span>
+            <span className="text-3xl md:text-4xl">PLAN</span>
           </h1>
 
           {/* Simple Book Card with External Link */}
@@ -94,47 +94,47 @@ export const ReadingStreak = () => {
               </button>
             </div>
 
-            <div className="outline-bold-thin rounded-2xl bg-white/20 p-6 backdrop-blur-sm sm:p-8">
-              <div className="flex items-start gap-4 sm:gap-6">
+            <div className="outline-bold-thin rounded-2xl bg-white/20 p-4 backdrop-blur-sm sm:p-6">
+              <div className="flex items-start gap-3 sm:gap-4">
                 <BookCover
                   title={readingPlan.currentBook.title}
                   author={readingPlan.currentBook.author}
-                  className="h-24 w-16 sm:h-28 sm:w-20"
+                  className="h-20 w-14 sm:h-24 sm:w-16"
                 />
 
                 <div className="min-w-0 flex-1">
-                  <h3 className="mb-2 text-lg font-black leading-tight text-text-primary sm:text-xl">
+                  <h3 className="mb-2 text-base font-black leading-tight text-text-primary sm:text-lg">
                     {readingPlan.currentBook.title}
                   </h3>
-                  <p className="text-sm font-bold text-text-secondary sm:text-base">{readingPlan.currentBook.author}</p>
+                  <p className="text-sm font-bold text-text-secondary">{readingPlan.currentBook.author}</p>
                 </div>
               </div>
             </div>
           </div>
 
           {/* At-a-Glance Metrics */}
-          <div className="mb-6 grid grid-cols-2 gap-4">
-            <div className="shadow-backdrop rounded-2xl bg-primary-orange p-4 text-center text-white">
-              <div className="text-2xl font-black sm:text-3xl">{daysRemaining}</div>
-              <div className="text-xs font-bold uppercase sm:text-sm">Days Left to Return</div>
+          <div className="mb-4 grid grid-cols-2 gap-3">
+            <div className="shadow-backdrop rounded-2xl bg-primary-orange p-3 text-center text-white">
+              <div className="text-xl font-black sm:text-2xl">{daysRemaining}</div>
+              <div className="text-xs font-bold uppercase">Days Left to Return</div>
             </div>
-            <div className="shadow-backdrop rounded-2xl bg-primary-yellow p-4 text-center text-text-primary">
-              <div className="text-2xl font-black sm:text-3xl">{averagePagesPerDay}</div>
-              <div className="text-xs font-bold uppercase sm:text-sm">Pages per Day</div>
+            <div className="shadow-backdrop rounded-2xl bg-primary-yellow p-3 text-center text-text-primary">
+              <div className="text-xl font-black sm:text-2xl">{averagePagesPerDay}</div>
+              <div className="text-xs font-bold uppercase">Pages per Day</div>
             </div>
           </div>
         </div>
 
         {/* Overall Progress */}
-        <div className="space-y-3 sm:space-y-4">
+        <div className="space-y-3">
           <div className="flex items-end justify-between">
-            <span className="text-base font-bold text-text-primary sm:text-lg">Book Progress</span>
+            <span className="text-sm font-bold text-text-primary sm:text-base">Book Progress</span>
             <div className="text-right">
-              <div className="text-xl font-black text-text-primary sm:text-2xl">
+              <div className="text-lg font-black text-text-primary sm:text-xl">
                 {pagesRead}
-                <span className="text-lg">/{totalPages}</span>
+                <span className="text-base">/{totalPages}</span>
               </div>
-              <div className="text-sm font-bold text-text-primary/80">pages read</div>
+              <div className="text-xs font-bold text-text-primary/80">pages read</div>
             </div>
           </div>
 
@@ -147,15 +147,15 @@ export const ReadingStreak = () => {
         </div>
 
         {/* Today's Progress */}
-        <div className="space-y-3 sm:space-y-4">
+        <div className="space-y-3">
           <div className="flex items-end justify-between">
-            <span className="text-base font-bold text-text-primary sm:text-lg">Today&apos;s Progress</span>
+            <span className="text-sm font-bold text-text-primary sm:text-base">Today&apos;s Progress</span>
             <div className="text-right">
-              <div className="text-xl font-black text-text-primary sm:text-2xl">
+              <div className="text-lg font-black text-text-primary sm:text-xl">
                 {todayPagesRead}
-                <span className="text-lg">/{averagePagesPerDay}</span>
+                <span className="text-base">/{averagePagesPerDay}</span>
               </div>
-              <div className="text-sm font-bold text-text-primary/80">pages today</div>
+              <div className="text-xs font-bold text-text-primary/80">pages today</div>
             </div>
           </div>
 
@@ -167,11 +167,11 @@ export const ReadingStreak = () => {
           </div>
 
           {todayPagesRead >= averagePagesPerDay ? (
-            <div className="shadow-backdrop rounded-full bg-primary-green px-4 py-2 text-center text-text-primary sm:px-6 sm:py-3">
-              <span className="text-base font-black sm:text-lg">AVERAGE BEATEN!</span>
+            <div className="shadow-backdrop rounded-full bg-primary-green px-4 py-2 text-center text-text-primary">
+              <span className="text-sm font-black sm:text-base">AVERAGE BEATEN!</span>
             </div>
           ) : (
-            <p className="text-center text-base font-bold text-text-primary sm:text-lg">
+            <p className="text-center text-sm font-bold text-text-primary sm:text-base">
               Just {averagePagesPerDay - todayPagesRead} more pages to hit average!
             </p>
           )}
@@ -181,19 +181,19 @@ export const ReadingStreak = () => {
         <div className="flex gap-2">
           <button
             onClick={() => handleQuickLog(5)}
-            className="touch-feedback flex-1 rounded-full bg-white/80 px-3 py-2 text-sm font-bold text-text-primary transition-transform hover:scale-105"
+            className="touch-feedback flex-1 rounded-full bg-white/80 px-3 py-3 text-sm font-bold text-text-primary transition-transform hover:scale-105 min-h-touch-md focus:outline-none focus:ring-2 focus:ring-primary-blue focus:ring-offset-2"
           >
             +5 PAGES
           </button>
           <button
             onClick={() => handleQuickLog(10)}
-            className="touch-feedback flex-1 rounded-full bg-white/80 px-3 py-2 text-sm font-bold text-text-primary transition-transform hover:scale-105"
+            className="touch-feedback flex-1 rounded-full bg-white/80 px-3 py-3 text-sm font-bold text-text-primary transition-transform hover:scale-105 min-h-touch-md focus:outline-none focus:ring-2 focus:ring-primary-blue focus:ring-offset-2"
           >
             +10 PAGES
           </button>
           <button
             onClick={() => setShowLogForm(!showLogForm)}
-            className="touch-feedback flex-1 rounded-full bg-white/80 px-3 py-2 text-sm font-bold text-text-primary transition-transform hover:scale-105"
+            className="touch-feedback flex-1 rounded-full bg-white/80 px-3 py-3 text-sm font-bold text-text-primary transition-transform hover:scale-105 min-h-touch-md focus:outline-none focus:ring-2 focus:ring-primary-blue focus:ring-offset-2"
           >
             +CUSTOM
           </button>
@@ -209,14 +209,14 @@ export const ReadingStreak = () => {
                 value={pagesToLog}
                 onChange={(e) => setPagesToLog(e.target.value)}
                 placeholder="Pages read..."
-                className="outline-bold-thin flex-1 rounded-full bg-white/80 px-4 py-2 text-center font-bold text-text-primary"
+                className="outline-bold-thin flex-1 rounded-full bg-white/80 px-4 py-2 text-center font-bold text-text-primary text-base focus:outline-none focus:ring-2 focus:ring-primary-blue focus:ring-offset-2"
                 min="1"
                 max="100"
               />
               <button
                 onClick={handleLogPages}
                 disabled={!pagesToLog || isLogging}
-                className="touch-feedback rounded-full bg-primary-blue px-6 py-2 text-sm font-black text-white transition-transform hover:scale-105 disabled:opacity-50"
+                className="touch-feedback rounded-full bg-primary-blue px-6 py-3 text-sm font-black text-white transition-transform hover:scale-105 disabled:opacity-50 min-h-touch-md focus:outline-none focus:ring-2 focus:ring-primary-blue focus:ring-offset-2"
               >
                 {isLogging ? 'LOGGING...' : 'LOG'}
               </button>
@@ -234,14 +234,14 @@ export const ReadingStreak = () => {
                 value={newBook.title}
                 onChange={(e) => setNewBook({ ...newBook, title: e.target.value })}
                 placeholder="What book are you reading?"
-                className="outline-bold-thin w-full rounded-full bg-white px-4 py-3 font-bold text-text-primary"
+                className="outline-bold-thin w-full rounded-full bg-white px-4 py-3 font-bold text-text-primary text-base focus:outline-none focus:ring-2 focus:ring-primary-blue focus:ring-offset-2"
               />
               <input
                 type="text"
                 value={newBook.author}
                 onChange={(e) => setNewBook({ ...newBook, author: e.target.value })}
                 placeholder="Who's the author?"
-                className="outline-bold-thin w-full rounded-full bg-white px-4 py-3 font-bold text-text-primary"
+                className="outline-bold-thin w-full rounded-full bg-white px-4 py-3 font-bold text-text-primary text-base focus:outline-none focus:ring-2 focus:ring-primary-blue focus:ring-offset-2"
               />
               <div className="grid grid-cols-2 gap-3">
                 <input
@@ -249,13 +249,13 @@ export const ReadingStreak = () => {
                   value={newBook.totalPages}
                   onChange={(e) => setNewBook({ ...newBook, totalPages: e.target.value })}
                   placeholder="Total pages"
-                  className="outline-bold-thin rounded-full bg-white px-4 py-3 text-center font-bold text-text-primary"
+                  className="outline-bold-thin rounded-full bg-white px-4 py-3 text-center font-bold text-text-primary text-base focus:outline-none focus:ring-2 focus:ring-primary-blue focus:ring-offset-2"
                 />
                 <input
                   type="date"
                   value={newBook.dueDate}
                   onChange={(e) => setNewBook({ ...newBook, dueDate: e.target.value })}
-                  className="outline-bold-thin rounded-full bg-white px-4 py-3 text-center font-bold text-text-primary"
+                  className="outline-bold-thin rounded-full bg-white px-4 py-3 text-center font-bold text-text-primary text-base focus:outline-none focus:ring-2 focus:ring-primary-blue focus:ring-offset-2"
                 />
               </div>
               <div className="flex items-center gap-3 rounded-full bg-white px-4 py-3">
@@ -275,13 +275,13 @@ export const ReadingStreak = () => {
                     setShowAddBookForm(false);
                     setNewBook({ title: '', author: '', totalPages: '', dueDate: '', isLibraryBook: false });
                   }}
-                  className="touch-feedback flex-1 rounded-full bg-primary-green px-6 py-3 text-lg font-black text-white transition-transform hover:scale-105"
+                  className="touch-feedback flex-1 rounded-full bg-primary-green px-6 py-3 text-base font-black text-white transition-transform hover:scale-105 min-h-touch-lg focus:outline-none focus:ring-2 focus:ring-primary-green focus:ring-offset-2"
                 >
                   START READING
                 </button>
                 <button
                   onClick={() => setShowAddBookForm(false)}
-                  className="touch-feedback rounded-full border-2 border-text-primary px-6 py-3 text-lg font-black text-text-primary transition-transform hover:scale-105"
+                  className="touch-feedback rounded-full border-2 border-text-primary px-6 py-3 text-base font-black text-text-primary transition-transform hover:scale-105 min-h-touch-lg focus:outline-none focus:ring-2 focus:ring-primary-blue focus:ring-offset-2"
                 >
                   CANCEL
                 </button>

@@ -10,6 +10,7 @@ import { usePathname } from 'next/navigation';
 import { clsx } from 'clsx';
 import { useEffect, useState, useCallback } from 'react';
 import { useIOSPreloader } from '@/lib/ios-preloader';
+import { useClientEnvironment, useSafePathname } from '@/hooks/use-hydration-safe';
 import { 
   isCapacitor, 
   getCurrentPathInIOS, 
@@ -19,35 +20,25 @@ import {
 
 // Modern icon representations - Home-centered strategy
 const navigationItems = [
-  { name: 'Learning', href: '/learning', icon: '▲', color: 'primary-blue' },
-  { name: 'Discover', href: '/discover', icon: '◈', color: 'primary-purple' },
+  { name: 'Learn', href: '/learn', icon: '▲', color: 'primary-purple' },
+  { name: 'Discover', href: '/discover', icon: '◈', color: 'primary-blue' },
   { name: 'Home', href: '/home', icon: '▣', color: 'primary-teal', isHome: true },
-  { name: 'Community', href: '/events', icon: '◆', color: 'primary-orange' },
-  { name: 'Kids', href: '/kids', icon: '★', color: 'primary-pink' },
+  { name: 'MyStacks', href: '/mystacks', icon: '◆', color: 'primary-orange' },
+  { name: 'StacksTalk', href: '/stackstalk', icon: '★', color: 'primary-pink' },
 ];
 
 // Capacitor detection moved to ios-navigation.ts
 
 export const NativeIOSTabBar = () => {
   const pathname = usePathname();
-  const [isCapacitorEnv, setIsCapacitorEnv] = useState(false);
-  const [currentPath, setCurrentPath] = useState('');
+  const { isCapacitor: isCapacitorEnv, isHydrated, hasExtensionInterference } = useClientEnvironment();
+  const { currentPath } = useSafePathname(pathname || '/home');
   const [pressedTab, setPressedTab] = useState<string | null>(null);
   const [isTransitioning, setIsTransitioning] = useState(false);
   const { preloadPage } = useIOSPreloader();
 
-  useEffect(() => {
-    const capacitorMode = isCapacitor();
-    setIsCapacitorEnv(capacitorMode);
-    
-    if (capacitorMode) {
-      // Use the centralized iOS navigation service
-      setCurrentPath(getCurrentPathInIOS());
-    } else {
-      // In web mode, use Next.js pathname
-      setCurrentPath(pathname || '/home');
-    }
-  }, [pathname]);
+  // Environment detection is now handled by useClientEnvironment hook
+  // Path management is handled by useSafePathname hook
 
   // Navigation handler - uses iOS service for Capacitor
   const handleTabPress = useCallback((href: string) => {
@@ -65,6 +56,9 @@ export const NativeIOSTabBar = () => {
     if (isCapacitorEnv) {
       // Use iOS navigation service - prevents RSC navigation
       handleIOSNavigation(href, preloadPage);
+    } else {
+      // For web mode, use Next.js router
+      window.location.href = href;
     }
     
     // Clear transitioning state after navigation
@@ -80,8 +74,7 @@ export const NativeIOSTabBar = () => {
     }
   }, [isCapacitorEnv, preloadPage]);
 
-  // Debug logging for tab highlighting
-  console.log('Current pathname:', currentPath, 'Capacitor:', isCapacitorEnv, 'Raw pathname:', pathname);
+  // Navigation state ready
 
   // Vibrant Gen Z color styling
   const getTabStyles = (color: string, isActive: boolean, isHome: boolean = false) => {
@@ -95,7 +88,7 @@ export const NativeIOSTabBar = () => {
         'primary-teal': { backgroundColor: '#14B8A6', color: '#FFFFFF' },
       };
       const baseStyle = activeStyles[color as keyof typeof activeStyles] || {};
-      return isHome ? { ...baseStyle, transform: 'scale(1.05)', boxShadow: '0 8px 25px rgba(0,0,0,0.3)' } : baseStyle;
+      return isHome ? { ...baseStyle, transform: 'scale(1.02)', boxShadow: '0 8px 25px rgba(0,0,0,0.3)' } : baseStyle;
     }
     
     if (isHome) {
@@ -105,43 +98,88 @@ export const NativeIOSTabBar = () => {
     return { color: '#8B5CF6' };
   };
 
+  // Show loading state during hydration
+  if (!isHydrated) {
+    return (
+      <div className="native-ios-tabs fixed bottom-0 left-0 right-0 z-50">
+        <div
+          className="border-t border-gray-200/30 bg-bg-light/95 shadow-mega backdrop-blur-xl"
+          style={{
+            paddingBottom: 'env(safe-area-inset-bottom)',
+          }}
+        >
+          <div className="flex items-center justify-center gap-1 px-1 py-3">
+            {navigationItems.map((item) => (
+              <div
+                key={item.name}
+                className="flex flex-1 flex-col items-center justify-center rounded-3xl px-1 py-3 opacity-50"
+              >
+                <div className="mb-1 text-xl font-black text-gray-400">
+                  {item.icon}
+                </div>
+                <span className="text-xs font-medium text-gray-400">
+                  {item.name}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="native-ios-tabs fixed bottom-0 left-0 right-0 z-50">
+    <div className="native-ios-tabs fixed bottom-0 left-0 right-0 z-50" suppressHydrationWarning>
       {/* Ultra Bold Gen Z Tab Bar */}
       <div
         className="border-t border-gray-200/30 bg-bg-light/95 shadow-mega backdrop-blur-xl"
         style={{
           paddingBottom: 'env(safe-area-inset-bottom)',
         }}
+        suppressHydrationWarning
       >
-        <div className="flex items-center justify-center gap-1 px-1 py-3">
+        <div className="flex items-center justify-center gap-1 px-1 py-3" suppressHydrationWarning>
           {navigationItems.map((item) => {
-            // Use centralized path checking for consistency
-            const isActive = isCapacitorEnv 
-              ? isCurrentPath(item.href, currentPath)
-              : currentPath === item.href || (item.href === '/home' && (currentPath === '/' || currentPath === ''));
+            // Use centralized path checking for consistency - only after hydration
+            const isActive = isHydrated 
+              ? (isCapacitorEnv 
+                  ? isCurrentPath(item.href, currentPath)
+                  : currentPath === item.href || (item.href === '/home' && (currentPath === '/' || currentPath === '')))
+              : item.href === '/home'; // Default to home active during SSR
             const isHome = item.isHome || false;
             const isPressed = pressedTab === item.href;
 
-            // Debug which tab is active
-            if (isActive) {
-              console.log('Active tab:', item.name, 'href:', item.href, 'pathname:', pathname);
-            }
+            // Tab is active
 
-            // Enhanced link props with smooth transitions
+            // Enhanced link props with smooth transitions and accessibility
+            const sharedClassName = clsx(
+              'flex flex-1 flex-col items-center justify-center',
+              'rounded-3xl px-1 py-3',
+              'tab-instant-feedback',
+              'transform transition-all duration-300',
+              'min-h-touch-md min-w-touch-md', // Ensure 44px touch targets
+              'focus:outline-none focus:ring-2 focus:ring-primary-blue focus:ring-offset-1',
+              isPressed && 'tab-pressed',
+              isActive ? 'shadow-card' : isHome ? 'opacity-85' : 'opacity-70',
+              isHome ? '-translate-y-2' : '',
+              isTransitioning && isActive && 'transition-loading'
+            );
+            
+            const sharedStyle = getTabStyles(item.color, isActive, isHome);
+            
+            // Props for buttons (Capacitor mode)
+            const buttonProps = {
+              className: sharedClassName,
+              style: sharedStyle,
+              type: 'button' as const,
+              onClick: () => handleTabPress(item.href),
+              onMouseEnter: () => handleTabHover(item.href)
+            };
+            
+            // Props for links (web mode) - NO onTouchStart to avoid conflicts
             const linkProps = {
-              className: clsx(
-                'flex flex-1 flex-col items-center justify-center',
-                'rounded-3xl px-1 py-3',
-                'tab-instant-feedback',
-                'transform transition-all duration-300',
-                isPressed && 'tab-pressed',
-                isActive ? 'shadow-card' : isHome ? 'opacity-85' : 'opacity-70',
-                isHome ? '-translate-y-2' : '',
-                isTransitioning && isActive && 'transition-loading'
-              ),
-              style: getTabStyles(item.color, isActive, isHome),
-              onTouchStart: () => handleTabPress(item.href),
+              className: sharedClassName,
+              style: sharedStyle,
               onMouseEnter: () => handleTabHover(item.href)
             };
 
@@ -151,8 +189,8 @@ export const NativeIOSTabBar = () => {
                 <div
                   className={clsx(
                     'mb-1 transition-all duration-300',
-                    isHome ? 'text-2xl font-black' : 'text-xl font-black',
-                    isActive ? 'scale-110 transform' : isHome ? 'scale-105 transform' : ''
+                    'text-lg font-black', // Consistent icon sizing
+                    isActive ? 'scale-110 transform' : isHome ? 'scale-102 transform' : ''
                   )}
                 >
                   {item.icon}
@@ -175,21 +213,21 @@ export const NativeIOSTabBar = () => {
               return (
                 <button
                   key={item.name}
-                  {...linkProps}
-                  type="button"
-                  onClick={() => handleTabPress(item.href)}
+                  {...buttonProps}
+                  suppressHydrationWarning
                 >
                   {linkContent}
                 </button>
               );
             }
 
-            // Use Next.js Link for web
+            // Use Next.js Link for web - clean Link without conflicting event handlers
             return (
               <Link
                 key={item.name}
-                {...linkProps}
                 href={item.href}
+                {...linkProps}
+                suppressHydrationWarning
               >
                 {linkContent}
               </Link>

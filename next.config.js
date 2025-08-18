@@ -14,6 +14,15 @@ const nextConfig = {
     allowedHosts: ['192.168.86.190', 'localhost'],
   },
   
+  // Disable caching in development to prevent persistent cache issues
+  ...(process.env.NODE_ENV === 'development' && {
+    experimental: {
+      turbo: {
+        memoryLimit: 2048,
+      },
+    },
+  }),
+  
   // Pages Router doesn't need RSC experimental flags
   // Disable image optimization for static export
   images: {
@@ -40,6 +49,9 @@ const nextConfig = {
   // Enable webpack bundle analyzer in development
   webpack: (config, { dev, isServer }) => {
     if (dev && !isServer) {
+      // Disable webpack caching in development
+      config.cache = false;
+      
       // Add bundle analyzer for debugging
       config.optimization = {
         ...config.optimization,
@@ -93,7 +105,7 @@ const nextConfig = {
         ],
       });
     } else {
-      // Development CORS headers for iOS
+      // Development CORS headers for iOS + Cache busting
       headers.push({
         source: '/(.*)',
         headers: [
@@ -108,6 +120,18 @@ const nextConfig = {
           {
             key: 'Access-Control-Allow-Headers',
             value: 'Content-Type, Authorization',
+          },
+          {
+            key: 'Cache-Control',
+            value: 'no-cache, no-store, must-revalidate',
+          },
+          {
+            key: 'Pragma',
+            value: 'no-cache',
+          },
+          {
+            key: 'Expires',
+            value: '0',
           },
         ],
       });

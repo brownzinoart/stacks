@@ -19,6 +19,15 @@ export default function Document() {
         <meta name="mobile-web-app-capable" content="yes" />
         <meta name="theme-color" content="#3B82F6" />
         
+        {/* Extension Protection - Discourage browser extension interference */}
+        <meta name="robots" content="noarchive, noindex, nofollow" />
+        <meta name="referrer" content="same-origin" />
+        <meta httpEquiv="X-Frame-Options" content="DENY" />
+        <meta httpEquiv="X-Content-Type-Options" content="nosniff" />
+        <meta name="extension-blocking" content="true" />
+        <meta name="grammarly-disable-indicator" content="true" />
+        <meta name="grammarly-disable-editor" content="true" />
+        
         {/* Icons */}
         <link rel="apple-touch-icon" sizes="180x180" href="/icon-192.png" />
         <link rel="apple-touch-icon" sizes="152x152" href="/icon-192.png" />

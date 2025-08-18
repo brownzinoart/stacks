@@ -10,6 +10,24 @@ module.exports = {
     './src/components/**/*.{js,ts,jsx,tsx,mdx}',
     './src/features/**/*.{js,ts,jsx,tsx,mdx}',
     './src/app/**/*.{js,ts,jsx,tsx,mdx}',
+    './pages/**/*.{js,ts,jsx,tsx,mdx}',
+  ],
+  safelist: [
+    // Ensure all gradient combinations are generated
+    'bg-gradient-to-br',
+    'from-primary-blue',
+    'to-primary-teal',
+    'from-primary-purple', 
+    'to-primary-pink',
+    'from-primary-orange',
+    'from-primary-green',
+    'text-gray-900',
+    'text-white',
+    // Complete gradient classes
+    'bg-gradient-to-br from-primary-blue to-primary-teal',
+    'bg-gradient-to-br from-primary-purple to-primary-pink',
+    'bg-gradient-to-br from-primary-orange to-primary-pink', 
+    'bg-gradient-to-br from-primary-green to-primary-teal',
   ],
   theme: {
     extend: {
@@ -45,6 +63,10 @@ module.exports = {
       spacing: {
         card: '32px',
         'safe-area-inset-top': 'env(safe-area-inset-top)',
+        // Accessibility touch targets
+        'touch-sm': '36px',
+        'touch-md': '44px', 
+        'touch-lg': '52px',
       },
       fontWeight: {
         'extra-bold': '800',
@@ -52,8 +74,11 @@ module.exports = {
       },
       fontSize: {
         mega: ['clamp(2rem, 8vw, 4rem)', { lineHeight: '0.85', letterSpacing: '-0.03em' }],
-        huge: ['clamp(1.5rem, 6vw, 3rem)', { lineHeight: '0.9', letterSpacing: '-0.02em' }],
-        'xl-bold': ['1.5rem', { lineHeight: '1.2', letterSpacing: '-0.02em' }],
+        huge: ['clamp(1.5rem, 4vw, 2rem)', { lineHeight: '0.9', letterSpacing: '-0.02em' }], // Reduced for mobile
+        'xl-bold': ['1.25rem', { lineHeight: '1.2', letterSpacing: '-0.02em' }], // Reduced for mobile
+        // Responsive text sizes for mobile optimization
+        'text-responsive-xl': ['1.25rem', { lineHeight: '1.4' }],
+        'text-responsive-lg': ['1.125rem', { lineHeight: '1.4' }],
       },
       letterSpacing: {
         'super-tight': '-0.03em',
@@ -72,6 +97,20 @@ module.exports = {
         'safe-area-inset-right': 'env(safe-area-inset-right)',
         'safe-area-inset-bottom': 'env(safe-area-inset-bottom)',
         'safe-area-inset-left': 'env(safe-area-inset-left)',
+      },
+      // Accessibility design tokens
+      minHeight: {
+        'touch-sm': '36px',
+        'touch-md': '44px',
+        'touch-lg': '52px',
+      },
+      minWidth: {
+        'touch-sm': '36px', 
+        'touch-md': '44px',
+        'touch-lg': '52px',
+      },
+      aspectRatio: {
+        '4/3': '4 / 3',
       },
     },
   },

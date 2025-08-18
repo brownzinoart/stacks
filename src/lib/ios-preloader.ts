@@ -31,9 +31,10 @@ class IOSPreloader {
   private readonly tabOrder = [
     '/',
     '/home',
+    '/learn',
     '/discover', 
-    '/explore',
-    '/profile'
+    '/mystacks',
+    '/stackstalk'
   ]
 
   constructor() {
