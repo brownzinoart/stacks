@@ -6,6 +6,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useRouter } from 'next/router'
 import { MobileLayout } from '@/components/mobile-layout'
 import { NavigationCard } from '@/components/navigation-card'
 import { CommunityDiscoveries } from '@/features/home/community-discoveries'
@@ -61,12 +62,181 @@ const TRENDING_HASHTAGS = [
   { tag: '#Productivity', count: '398K', color: 'bg-primary-green' }
 ]
 
+// Inspirational search prompts that rotate to help users
+const SEARCH_PROMPTS = [
+  "I'm stressed, need something calming",
+  "books like Dune but shorter", 
+  "Taylor Swift feels",
+  "dark academia vibes",
+  "make me cry happy tears",
+  "witchy autumn energy",
+  "books that feel like summer",
+  "something mind-bending",
+  "cozy mystery night",
+  "enemies to lovers please"
+]
+
 export default function DiscoverPage() {
+  const router = useRouter()
   const [userLocation, setUserLocation] = useState('San Francisco Bay Area')
+  const [searchQuery, setSearchQuery] = useState('')
+  const [isLoading, setIsLoading] = useState(false)
+  const [currentPromptIndex, setCurrentPromptIndex] = useState(0)
+  const [isTransitioning, setIsTransitioning] = useState(false)
+  
+  // Rotate prompts every 4 seconds with smooth crossfade
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setIsTransitioning(true)
+      
+      // Complete fade out, then change text, then fade in
+      setTimeout(() => {
+        setCurrentPromptIndex((prev) => (prev + 1) % SEARCH_PROMPTS.length)
+      }, 800) // Change text after complete fade out
+      
+      setTimeout(() => {
+        setIsTransitioning(false)
+      }, 1000) // Start fade in after text change
+    }, 4000)
+    
+    return () => clearInterval(interval)
+  }, [])
+  
+  const handleSearch = async () => {
+    if (!searchQuery.trim()) return
+    
+    setIsLoading(true)
+    // Navigate to search results page with the query
+    router.push(`/search-results?q=${encodeURIComponent(searchQuery)}`)
+  }
+  
+  const handleMoodSearch = async (mood: string) => {
+    setIsLoading(true)
+    // Navigate to search results page with mood query
+    const moodQuery = `I'm feeling ${mood.toLowerCase()} and want book recommendations`
+    router.push(`/search-results?q=${encodeURIComponent(moodQuery)}`)
+  }
   
   return (
     <MobileLayout>
       <div className="p-4 space-y-6">
+        {/* WHAT'S NEXT - Lead Feature Card */}
+        <section>
+          <div className="hero-feature-card hero-card-green">
+            <div className="hero-card-content">
+              <div className="flex items-start justify-between">
+                <div>
+                  <h1 className="hero-card-title-large">
+                    <span className="text-pink-300">WHAT'S</span>
+                    <br />
+                    <span>NEXT?</span>
+                  </h1>
+                </div>
+                <div className="rounded-full bg-black px-3 py-2 text-sm font-black text-white sm:px-4" style={{border: '2px solid #000'}}>
+                  AI POWERED
+                </div>
+              </div>
+
+              <p className="hero-card-subtitle">
+                Tell us what you're into! Get instant recommendations for your next read!
+              </p>
+
+              {/* AI Search Input */}
+              <div className="hero-card-inner-white">
+                <div className="space-y-4">
+                  <div className="relative">
+                    <input
+                      type="text"
+                      placeholder=""
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="hero-search-input"
+                      onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
+                    />
+                    {/* Animated placeholder overlay */}
+                    {!searchQuery && (
+                      <div 
+                        className={`absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none text-gray-500 font-bold text-base transition-opacity duration-[800ms] ease-in-out select-none ${
+                          isTransitioning ? 'opacity-0' : 'opacity-100'
+                        }`}
+                        style={{ paddingLeft: '0px', paddingTop: '1px' }}
+                      >
+                        <span className="text-gray-400 font-normal">try: </span>
+                        {SEARCH_PROMPTS[currentPromptIndex]}
+                      </div>
+                    )}
+                  </div>
+                  
+                  <button
+                    onClick={handleSearch}
+                    disabled={!searchQuery.trim() || isLoading}
+                    className="hero-search-button"
+                  >
+                    {isLoading ? (
+                      <div className="flex items-center justify-center">
+                        <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
+                        Finding Your Perfect Match...
+                      </div>
+                    ) : (
+                      'Find Next Read'
+                    )}
+                  </button>
+                </div>
+              </div>
+
+              {/* Mood Buttons Section - Matching the image */}
+              <div className="grid grid-cols-2 gap-3 sm:gap-4">
+                <button
+                  onClick={() => handleMoodSearch('Funny')}
+                  disabled={isLoading}
+                  className="hero-mood-button-funny"
+                >
+                  <div className="text-xl mb-1 font-black">FUNNY</div>
+                </button>
+                
+                <button
+                  onClick={() => handleMoodSearch('Mind-blowing')}
+                  disabled={isLoading}
+                  className="hero-mood-button-mindblowing"
+                >
+                  <div className="text-xl mb-1 font-black">MIND-BLOWING</div>
+                </button>
+                
+                <button
+                  onClick={() => handleMoodSearch('Love Story')}
+                  disabled={isLoading}
+                  className="hero-mood-button-lovestory"
+                >
+                  <div className="text-xl mb-1 font-black">LOVE STORY</div>
+                </button>
+                
+                <button
+                  onClick={() => handleMoodSearch('Magical')}
+                  disabled={isLoading}
+                  className="hero-mood-button-magical"
+                >
+                  <div className="text-xl mb-1 font-black">MAGICAL</div>
+                </button>
+              </div>
+            </div>
+
+            {/* Decorative elements - Same pattern as other hero cards */}
+            <div className="animate-float absolute left-4 top-6 z-0 h-12 w-12 rounded-full bg-primary-teal opacity-25 sm:h-16 sm:w-16" />
+            <div className="animate-float-delayed absolute bottom-6 right-4 z-0 h-10 w-10 rounded-full bg-primary-orange opacity-30 sm:h-14 sm:w-14" />
+            <div className="animate-float-slow absolute right-8 top-2 z-0 h-8 w-8 rounded-full bg-primary-blue opacity-35 sm:h-12 sm:w-12" />
+            <div className="animate-float sm:h-18 sm:w-18 absolute bottom-8 left-6 z-0 h-14 w-14 rounded-full bg-primary-yellow opacity-20" />
+            <div className="animate-float-delayed absolute left-2 top-10 z-0 h-6 w-6 rounded-full bg-primary-pink opacity-40 sm:h-8 sm:w-8" />
+            <div className="animate-float-slow absolute bottom-4 left-2 z-0 h-10 w-10 rounded-full bg-primary-purple opacity-30 sm:h-12 sm:w-12" />
+          </div>
+        </section>
+
+        {/* More Ways to Discover */}
+        <section>
+          <h2 className="text-xl font-black text-text-primary mb-4">
+            📈 More Ways to Discover
+          </h2>
+        </section>
+
         {/* What People Are Reading in Your Area */}
         <section>
           <h2 className="text-xl-bold font-black text-text-primary mb-4">
