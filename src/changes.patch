@@ -1,0 +1,16 @@
+```diff
+diff --git a/src/hello.py b/src/hello.py
+new file mode 100644
+index 0000000..e2d8b9c
+--- /dev/null
++++ b/src/hello.py
+@@ -0,0 +1,7 @@
++from flask import Flask, jsonify
++
++app = Flask(__name__)
++
++@app.route('/health', methods=['GET'])
++def health():
++    return jsonify({"status": "healthy"})
+```
+
