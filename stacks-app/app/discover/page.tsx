@@ -3,6 +3,7 @@
 import { useState } from "react";
 import SearchBar from "@/components/SearchBar";
 import BookSection from "@/components/BookSection";
+import VibeChips from "@/components/VibeChips";
 import { mockBooks } from "@/lib/mockData";
 
 export default function DiscoverPage() {
@@ -31,6 +32,7 @@ export default function DiscoverPage() {
             placeholder="Taylor Swift vibes, books like Severance..."
           />
         </div>
+        <VibeChips onVibeClick={handleSearch} />
       </div>
 
       {/* Search Results or Discovery Sections */}
