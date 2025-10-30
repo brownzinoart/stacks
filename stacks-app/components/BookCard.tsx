@@ -19,8 +19,8 @@ export default function BookCard({ book, size = "medium" }: BookCardProps) {
         <p className="text-white font-black text-sm">BOOK</p>
 
         {/* Genre Badge Overlay */}
-        {book.genres[0] && (
-          <div className="absolute top-2 right-2 bg-black/80 border-2 border-white px-2 py-1">
+        {book.genres.length > 0 && (
+          <div className="absolute top-2 right-2 bg-black/80 border-4 border-white px-2 py-1">
             <p className="text-white font-black text-xs uppercase">
               {book.genres[0]}
             </p>
