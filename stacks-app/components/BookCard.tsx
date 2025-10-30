@@ -1,3 +1,4 @@
+import Image from "next/image";
 import { Book } from "@/lib/mockData";
 
 interface BookCardProps {
@@ -15,12 +16,18 @@ export default function BookCard({ book, size = "medium" }: BookCardProps) {
   return (
     <div className={`${sizeClasses[size]} flex-shrink-0`}>
       {/* Book Cover */}
-      <div className="relative w-full aspect-[2/3] bg-gradient-secondary flex items-center justify-center border-4 border-black dark:border-white shadow-brutal mb-3">
-        <p className="text-white font-black text-sm">BOOK</p>
+      <div className="relative w-full aspect-[2/3] bg-gradient-secondary border-4 border-black dark:border-white shadow-brutal rounded-xl mb-3 overflow-hidden">
+        <Image
+          src={book.cover}
+          alt={`${book.title} by ${book.author}`}
+          fill
+          className="object-cover"
+          sizes="(max-width: 768px) 160px, 192px"
+        />
 
         {/* Genre Badge Overlay */}
         {book.genres.length > 0 && (
-          <div className="absolute top-2 right-2 bg-black/80 border-4 border-white px-2 py-1">
+          <div className="absolute top-2 right-2 bg-black/80 border-3 border-white px-2 py-1 z-10 rounded-lg">
             <p className="text-white font-black text-xs uppercase">
               {book.genres[0]}
             </p>
