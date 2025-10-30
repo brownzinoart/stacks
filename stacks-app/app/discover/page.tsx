@@ -39,13 +39,19 @@ export default function DiscoverPage() {
       <div className="py-6">
         {searchQuery ? (
           <div className="px-4">
-            <div className="bg-gradient-info border-4 border-black dark:border-white shadow-brutal p-6 text-center">
-              <p className="font-black text-white text-lg uppercase">
-                Search results for "{searchQuery}"
+            <div className="bg-gradient-accent border-4 border-black dark:border-white shadow-brutal p-8 text-center">
+              <p className="font-black text-white text-2xl uppercase mb-2">
+                "{searchQuery}"
               </p>
-              <p className="text-white text-sm mt-2">
-                (Search functionality coming soon)
+              <p className="text-white text-base font-semibold mb-6">
+                Natural language search coming soon! We'll find books that match this vibe.
               </p>
+              <button
+                onClick={() => setSearchQuery("")}
+                className="px-6 py-3 bg-white text-black border-3 border-black font-black uppercase text-sm shadow-brutal-sm hover:shadow-brutal transition-all"
+              >
+                Back to Discover
+              </button>
             </div>
           </div>
         ) : (
