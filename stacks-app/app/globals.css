@@ -1,0 +1,75 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 250 250 250;
+    --foreground: 0 0 0;
+  }
+
+  .dark {
+    --background: 26 26 26;
+    --foreground: 255 255 255;
+  }
+
+  body {
+    @apply bg-light-primary dark:bg-dark-primary text-light-text dark:text-dark-text;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+}
+
+@layer components {
+  /* Brutalist button */
+  .btn-brutal {
+    @apply relative font-black uppercase tracking-wider px-6 py-3
+           bg-white dark:bg-dark-secondary text-black dark:text-white
+           border-4 border-black dark:border-white
+           shadow-brutal hover:shadow-brutal-hover
+           transition-all duration-150 active:translate-x-1 active:translate-y-1;
+  }
+
+  /* Card with border */
+  .card-brutal {
+    @apply bg-white dark:bg-dark-secondary
+           border-4 border-black dark:border-white
+           shadow-brutal;
+  }
+
+  /* Bottom nav height constant */
+  .pb-nav {
+    @apply pb-20;
+  }
+
+  /* ===== Brutalist Component Utilities ===== */
+  /* Use these classes to ensure design system compliance */
+
+  /* Brutalist input */
+  .input-brutal {
+    @apply w-full px-4 py-3 font-semibold text-base
+           bg-white dark:bg-dark-secondary
+           border-4 border-black dark:border-white
+           rounded-xl shadow-brutal-sm
+           focus:outline-none focus:shadow-brutal
+           transition-all duration-150;
+  }
+
+  /* Brutalist badge */
+  .badge-brutal {
+    @apply inline-block px-4 py-2
+           font-black text-sm uppercase tracking-tight
+           border-3 border-black dark:border-white
+           rounded-xl shadow-brutal-sm
+           transition-all;
+  }
+
+  /* Floating Action Button */
+  .fab-brutal {
+    @apply w-16 h-16 rounded-full
+           border-4 border-black dark:border-white
+           shadow-brutal-sm hover:shadow-brutal
+           flex items-center justify-center
+           transition-all duration-150
+           active:translate-x-1 active:translate-y-1;
+  }
+}
