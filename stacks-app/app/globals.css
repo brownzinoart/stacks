@@ -58,7 +58,7 @@
   .badge-brutal {
     @apply inline-block px-4 py-2
            font-black text-sm uppercase tracking-tight
-           border-3 border-black dark:border-white
+           border-[3px] border-black dark:border-white
            rounded-xl shadow-brutal-sm
            transition-all;
   }

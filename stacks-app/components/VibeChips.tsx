@@ -23,7 +23,7 @@ export default function VibeChips({ onVibeClick }: VibeChipsProps) {
           <button
             key={vibe}
             onClick={() => onVibeClick(vibe)}
-            className="px-4 py-2 bg-white dark:bg-dark-secondary border-3 border-black dark:border-white shadow-brutal-sm rounded-xl font-black text-sm uppercase tracking-tight hover:shadow-brutal transition-all whitespace-nowrap"
+            className="badge-brutal hover:shadow-brutal whitespace-nowrap"
           >
             {vibe}
           </button>

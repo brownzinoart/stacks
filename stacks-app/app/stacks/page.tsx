@@ -134,7 +134,7 @@ export default function StacksPage() {
       </div>
 
       {/* Floating Action Button */}
-      <button className="fixed bottom-24 right-6 w-16 h-16 bg-gradient-primary border-4 border-black dark:border-white shadow-brutal-sm rounded-full flex items-center justify-center hover:shadow-brutal transition-all z-50">
+      <button className="fixed bottom-24 right-6 fab-brutal bg-gradient-primary z-50">
         <Plus className="w-8 h-8 text-white stroke-[3]" />
       </button>
     </div>
