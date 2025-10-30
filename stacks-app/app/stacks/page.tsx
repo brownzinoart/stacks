@@ -21,7 +21,7 @@ function StackSection({ title, stacks }: { title: string; stacks: typeof mockSta
             return (
               <div
                 key={stack.id}
-                className="w-64 bg-white dark:bg-dark-secondary border-4 border-black dark:border-white shadow-brutal rounded-xl flex-shrink-0"
+                className="w-64 bg-white dark:bg-dark-secondary border-4 border-black dark:border-white shadow-brutal rounded-[20px] flex-shrink-0"
               >
                 {/* Stack Image */}
                 <div className="relative w-full aspect-square bg-gradient-accent flex items-center justify-center border-b-4 border-black dark:border-white">
@@ -81,15 +81,15 @@ export default function StacksPage() {
 
           {/* Stats Row */}
           <div className="grid grid-cols-3 gap-3">
-            <div className="bg-gradient-primary border-4 border-black dark:border-white shadow-brutal-sm rounded-xl p-3 text-center">
+            <div className="bg-gradient-primary border-4 border-black dark:border-white shadow-brutal-sm rounded-[20px] p-3 text-center">
               <p className="font-black text-2xl text-white">24</p>
               <p className="font-black text-xs uppercase tracking-wider text-white">Stacks</p>
             </div>
-            <div className="bg-gradient-accent border-4 border-black dark:border-white shadow-brutal-sm rounded-xl p-3 text-center">
+            <div className="bg-gradient-accent border-4 border-black dark:border-white shadow-brutal-sm rounded-[20px] p-3 text-center">
               <p className="font-black text-2xl text-white">156</p>
               <p className="font-black text-xs uppercase tracking-wider text-white">Likes</p>
             </div>
-            <div className="bg-gradient-success border-4 border-black dark:border-white shadow-brutal-sm rounded-xl p-3 text-center">
+            <div className="bg-gradient-success border-4 border-black dark:border-white shadow-brutal-sm rounded-[20px] p-3 text-center">
               <p className="font-black text-2xl text-white">89</p>
               <p className="font-black text-xs uppercase tracking-wider text-white">Books</p>
             </div>

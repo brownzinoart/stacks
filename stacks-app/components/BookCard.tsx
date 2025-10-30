@@ -16,7 +16,7 @@ export default function BookCard({ book, size = "medium" }: BookCardProps) {
   return (
     <div className={`${sizeClasses[size]} flex-shrink-0`}>
       {/* Book Cover */}
-      <div className="relative w-full aspect-[2/3] bg-gradient-secondary border-4 border-black dark:border-white shadow-brutal rounded-xl mb-3 overflow-hidden">
+      <div className="relative w-full aspect-[2/3] bg-gradient-secondary border-4 border-black dark:border-white shadow-brutal rounded-[20px] mb-3 overflow-hidden">
         <Image
           src={book.cover}
           alt={`${book.title} by ${book.author}`}

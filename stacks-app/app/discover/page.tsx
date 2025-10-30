@@ -39,7 +39,7 @@ export default function DiscoverPage() {
       <div className="py-6">
         {searchQuery ? (
           <div className="px-4">
-            <div className="bg-gradient-accent border-4 border-black dark:border-white shadow-brutal p-8 text-center">
+            <div className="bg-gradient-accent border-4 border-black dark:border-white shadow-brutal rounded-[20px] p-8 text-center">
               <p className="font-black text-white text-2xl uppercase mb-2">
                 "{searchQuery}"
               </p>
