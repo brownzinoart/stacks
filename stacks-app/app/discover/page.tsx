@@ -11,7 +11,6 @@ export default function DiscoverPage() {
   const handleSearch = (query: string) => {
     setSearchQuery(query);
     // TODO: Implement actual search logic with API
-    console.log("Searching for:", query);
   };
 
   // Filter books by genre for different sections
