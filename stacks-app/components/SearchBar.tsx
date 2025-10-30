@@ -28,7 +28,7 @@ export default function SearchBar({ onSearch, placeholder = "Search books, vibes
           placeholder={placeholder}
           aria-label="Search books, authors, and vibes"
           autoComplete="off"
-          className="w-full px-4 py-3 pl-12 font-semibold text-base bg-white dark:bg-dark-secondary border-4 border-black dark:border-white shadow-brutal-sm focus:outline-none focus:shadow-brutal transition-all"
+          className="w-full px-4 py-3 pl-12 font-semibold text-base bg-white dark:bg-dark-secondary border-4 border-black dark:border-white shadow-brutal-sm rounded-xl focus:outline-none focus:shadow-brutal transition-all"
         />
         <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 stroke-[2.5] text-black dark:text-white" />
       </div>
