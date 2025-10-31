@@ -47,6 +47,7 @@ const config: Config = {
       boxShadow: {
         brutal: "8px 8px 0 0 rgb(var(--shadow-color))",
         "brutal-sm": "4px 4px 0 0 rgb(var(--shadow-color))",
+        "brutal-card": "6px 6px 0 0 rgb(var(--shadow-color))",
         "brutal-hover": "12px 12px 0 0 rgb(var(--shadow-color))",
         "brutal-badge": "3px 3px 0 0 rgb(var(--shadow-color))",
         "brutal-focus": "5px 5px 0 0 rgb(var(--shadow-color))",
