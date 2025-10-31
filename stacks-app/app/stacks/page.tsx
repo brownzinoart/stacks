@@ -21,7 +21,7 @@ function StackSection({ title, stacks }: { title: string; stacks: typeof mockSta
             return (
               <div
                 key={stack.id}
-                className="w-64 bg-white dark:bg-dark-secondary border-4 border-black dark:border-white shadow-brutal rounded-[20px] flex-shrink-0"
+                className="w-64 bg-white dark:bg-dark-secondary border-4 border-black dark:border-white shadow-brutal rounded-[20px] flex-shrink-0 overflow-hidden"
               >
                 {/* Stack Image */}
                 <div className="relative w-full aspect-square bg-gradient-accent flex items-center justify-center border-b-4 border-black dark:border-white">
