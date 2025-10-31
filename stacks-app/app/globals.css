@@ -6,11 +6,13 @@
   :root {
     --background: 250 250 250;
     --foreground: 0 0 0;
+    --shadow-color: 0 0 0;
   }
 
   .dark {
     --background: 26 26 26;
     --foreground: 255 255 255;
+    --shadow-color: 255 255 255;
   }
 
   body {
@@ -27,7 +29,7 @@
            border-4 border-black dark:border-white
            shadow-brutal-sm
            hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-brutal
-           active:translate-x-0.5 active:translate-y-0.5 active:shadow-[2px_2px_0_0_#000000]
+           active:translate-x-0.5 active:translate-y-0.5 active:shadow-brutal-active
            transition-all duration-150;
   }
 
