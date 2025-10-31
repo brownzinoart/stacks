@@ -49,6 +49,7 @@ const config: Config = {
         "brutal-sm": "4px 4px 0 0 #000000",
         "brutal-hover": "12px 12px 0 0 #000000",
         "brutal-badge": "3px 3px 0 0 #000000",
+        "brutal-focus": "5px 5px 0 0 #000000",
       },
     },
   },
