@@ -223,6 +223,60 @@ Use these classes from `app/globals.css` for consistency:
 - `.fab-brutal` - Floating action buttons
 - `.card-brutal` - Card containers with borders and shadows
 
+### Design System Exact Specifications
+
+**Critical: ALL components MUST match `design_system/atomic_design_system_with_mobile.html` exactly.**
+
+#### Border Radius
+- Cards (desktop): `border-radius: 20px` → use `rounded-[20px]`
+- Cards (mobile): `border-radius: 20px` → use `rounded-[20px]`
+- Inputs/Buttons: `border-radius: 12px` → use `rounded-xl`
+- Badges: `border-radius: 12px` → use `rounded-xl`
+- Pill badges: `border-radius: 50px` → use `rounded-[50px]`
+- Avatars/FAB: `border-radius: 50%` → use `rounded-full`
+
+#### Shadows
+- Cards: `box-shadow: 6px 6px 0px` → use `shadow-brutal`
+- Buttons: `box-shadow: 4px 4px 0px` → use `shadow-brutal-sm`
+- Badges: `box-shadow: 3px 3px 0px` → use `shadow-brutal-badge`
+- Input focus: `box-shadow: 5px 5px 0px` → use `shadow-brutal-focus`
+- Dark mode: Shadows automatically switch to white
+
+#### Border Thickness
+- Cards (desktop): `border: 5px solid` → use `border-[5px]`
+- Cards (mobile): `border: 4px solid` → use `border-4`
+- Inputs/Buttons: `border: 4px solid` → use `border-4`
+- Badges: `border: 3px solid` → use `border-[3px]`
+- Bottom nav: `border-top: 5px solid` → use `border-t-[5px]`
+- FAB: `border: 5px solid` → use `border-[5px]`
+
+#### Button Padding
+- Standard: `padding: 18px 36px` → use `px-9 py-[18px]`
+- Touch (mobile): `padding: 20px 40px; min-height: 56px` → use `px-10 py-5 min-h-[56px]`
+
+#### Input Padding
+- All inputs: `padding: 18px 20px` → use `px-5 py-[18px]`
+
+#### Typography Sizes
+- H1 Desktop: `64px` / `font-weight: 900` / `letter-spacing: -2px`
+- H1 Mobile: `40px` / `font-weight: 900` / `letter-spacing: -1.5px`
+- H2 Desktop: `48px` / `font-weight: 900` / `letter-spacing: -1px`
+- H2 Mobile: `32px` / `font-weight: 900` / `letter-spacing: -1px`
+- H3: `32px` / `font-weight: 800` / uppercase
+- Body: `18px` / `font-weight: 500` → use `text-lg font-medium`
+- Label: `14px` / `font-weight: 900` / uppercase → use `text-sm font-black uppercase`
+- Stat value: `36px` / `font-weight: 900` → use `text-4xl font-black`
+
+#### Interactive States
+- Button hover: `transform: translate(-2px, -2px); box-shadow: 6px 6px 0px`
+- Button active: `transform: translate(2px, 2px); box-shadow: 2px 2px 0px`
+- Input focus: `transform: translate(-1px, -1px); box-shadow: 5px 5px 0px`
+
+#### Spacing
+- Card padding: `36px` (desktop) / `24px` (mobile)
+- Section gaps: `24px` → use `mb-6` or `gap-6`
+- Bottom nav clearance: `100px` → use `pb-24`
+
 ### Common Patterns
 
 **Creating a New Page:**
