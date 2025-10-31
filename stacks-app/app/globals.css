@@ -59,7 +59,7 @@
     @apply inline-block px-4 py-2
            font-black text-sm uppercase tracking-tight
            border-[3px] border-black dark:border-white
-           rounded-xl shadow-brutal-sm
+           rounded-xl shadow-brutal-badge
            transition-all;
   }
 
