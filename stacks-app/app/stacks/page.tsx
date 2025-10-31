@@ -82,16 +82,16 @@ export default function StacksPage() {
           {/* Stats Row */}
           <div className="grid grid-cols-3 gap-3">
             <div className="bg-gradient-primary border-4 border-black dark:border-white shadow-brutal-sm rounded-[20px] p-3 text-center">
-              <p className="font-black text-4xl text-white">24</p>
-              <p className="font-black text-xs uppercase tracking-wider text-white">Stacks</p>
+              <p className="font-black text-4xl text-black dark:text-white">24</p>
+              <p className="font-black text-xs uppercase tracking-wider text-gray-600 dark:text-gray-400">Stacks</p>
             </div>
             <div className="bg-gradient-accent border-4 border-black dark:border-white shadow-brutal-sm rounded-[20px] p-3 text-center">
-              <p className="font-black text-4xl text-white">156</p>
-              <p className="font-black text-xs uppercase tracking-wider text-white">Likes</p>
+              <p className="font-black text-4xl text-black dark:text-white">156</p>
+              <p className="font-black text-xs uppercase tracking-wider text-gray-600 dark:text-gray-400">Likes</p>
             </div>
             <div className="bg-gradient-success border-4 border-black dark:border-white shadow-brutal-sm rounded-[20px] p-3 text-center">
-              <p className="font-black text-4xl text-white">89</p>
-              <p className="font-black text-xs uppercase tracking-wider text-white">Books</p>
+              <p className="font-black text-4xl text-black dark:text-white">89</p>
+              <p className="font-black text-xs uppercase tracking-wider text-gray-600 dark:text-gray-400">Books</p>
             </div>
           </div>
         </div>
