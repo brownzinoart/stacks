@@ -25,8 +25,10 @@
     @apply relative font-black uppercase tracking-wider px-9 py-[18px]
            bg-white dark:bg-dark-secondary text-black dark:text-white
            border-4 border-black dark:border-white
-           shadow-brutal hover:shadow-brutal-hover
-           transition-all duration-150 active:translate-x-1 active:translate-y-1;
+           shadow-brutal-sm
+           hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-brutal
+           active:translate-x-0.5 active:translate-y-0.5 active:shadow-[2px_2px_0_0_#000000]
+           transition-all duration-150;
   }
 
   /* Brutalist touch button (mobile) */
@@ -70,7 +72,8 @@
            font-black text-sm uppercase tracking-tight
            border-[3px] border-black dark:border-white
            rounded-xl shadow-brutal-badge
-           transition-all;
+           hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-brutal-sm
+           transition-all duration-150;
   }
 
   /* Floating Action Button */
@@ -78,8 +81,9 @@
     @apply w-16 h-16 rounded-full
            border-4 border-black dark:border-white
            shadow-brutal-sm hover:shadow-brutal
+           hover:-translate-x-0.5 hover:-translate-y-0.5
+           active:translate-x-0.5 active:translate-y-0.5 active:shadow-brutal-sm
            flex items-center justify-center
-           transition-all duration-150
-           active:translate-x-1 active:translate-y-1;
+           transition-all duration-150;
   }
 }

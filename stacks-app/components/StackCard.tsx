@@ -103,17 +103,17 @@ export default function StackCard({ stack, user, globalVizEnabled = false }: Sta
       {/* Action Buttons */}
       <div className="flex items-center justify-between px-4 py-3 border-b-4 border-black dark:border-white">
         <div className="flex items-center gap-5">
-          <button className="hover:opacity-70 transition">
+          <button className="hover:opacity-70 hover:-translate-y-0.5 transition-all">
             <Heart className="w-8 h-8 stroke-[3]" />
           </button>
-          <button className="hover:opacity-70 transition">
+          <button className="hover:opacity-70 hover:-translate-y-0.5 transition-all">
             <MessageCircle className="w-8 h-8 stroke-[3]" />
           </button>
-          <button className="hover:opacity-70 transition">
+          <button className="hover:opacity-70 hover:-translate-y-0.5 transition-all">
             <Send className="w-8 h-8 stroke-[3]" />
           </button>
         </div>
-        <button className="hover:opacity-70 transition">
+        <button className="hover:opacity-70 hover:-translate-y-0.5 transition-all">
           <Bookmark className="w-8 h-8 stroke-[3]" />
         </button>
       </div>
