@@ -22,10 +22,20 @@
 @layer components {
   /* Brutalist button */
   .btn-brutal {
-    @apply relative font-black uppercase tracking-wider px-6 py-3
+    @apply relative font-black uppercase tracking-wider px-9 py-[18px]
            bg-white dark:bg-dark-secondary text-black dark:text-white
            border-4 border-black dark:border-white
            shadow-brutal hover:shadow-brutal-hover
+           transition-all duration-150 active:translate-x-1 active:translate-y-1;
+  }
+
+  /* Brutalist touch button (mobile) */
+  .btn-brutal-touch {
+    @apply relative font-black uppercase tracking-wider px-10 py-5
+           min-h-[56px]
+           bg-white dark:bg-dark-secondary text-black dark:text-white
+           border-4 border-black dark:border-white
+           rounded-xl shadow-brutal-sm hover:shadow-brutal
            transition-all duration-150 active:translate-x-1 active:translate-y-1;
   }
 
@@ -46,7 +56,7 @@
 
   /* Brutalist input */
   .input-brutal {
-    @apply w-full px-4 py-3 font-semibold text-base
+    @apply w-full px-5 py-[18px] font-semibold text-base
            bg-white dark:bg-dark-secondary
            border-4 border-black dark:border-white
            rounded-xl shadow-brutal-sm
