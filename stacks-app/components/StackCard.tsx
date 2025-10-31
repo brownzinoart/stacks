@@ -129,7 +129,7 @@ export default function StackCard({ stack, user, globalVizEnabled = false }: Sta
           <Link href={`/profile/${user.id}`} className="font-black mr-2 uppercase">
             {user.username}
           </Link>
-          <span className="font-semibold">{stack.caption}</span>
+          <span className="font-semibold text-lg">{stack.caption}</span>
         </p>
       </div>
 
