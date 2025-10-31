@@ -52,7 +52,7 @@
 
   /* Bottom nav height constant */
   .pb-nav {
-    @apply pb-20;
+    @apply pb-24;
   }
 
   /* ===== Brutalist Component Utilities ===== */

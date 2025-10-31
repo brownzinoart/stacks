@@ -62,7 +62,7 @@ export default function StacksPage() {
   const displayStacks = mockStacks;
 
   return (
-    <div className="min-h-screen bg-white dark:bg-dark-primary pb-20">
+    <div className="min-h-screen bg-white dark:bg-dark-primary pb-24">
       {/* Profile Header */}
       <div className="border-b-4 border-black dark:border-white bg-white dark:bg-dark-secondary">
         <div className="max-w-lg mx-auto px-4 py-6">

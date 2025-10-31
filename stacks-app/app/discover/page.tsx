@@ -20,7 +20,7 @@ export default function DiscoverPage() {
   const literaryBooks = mockBooks.filter(b => b.genres.includes("Literary Fiction"));
 
   return (
-    <div className="min-h-screen bg-white dark:bg-dark-primary pb-20">
+    <div className="min-h-screen bg-white dark:bg-dark-primary pb-24">
       {/* Search Header */}
       <div className="sticky top-0 z-40 bg-white dark:bg-dark-secondary border-b-4 border-black dark:border-white">
         <div className="max-w-lg mx-auto px-4 py-4">

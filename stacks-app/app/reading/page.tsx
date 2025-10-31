@@ -1,6 +1,6 @@
 export default function ReadingPage() {
   return (
-    <div className="min-h-screen bg-light-primary dark:bg-dark-primary">
+    <div className="min-h-screen bg-light-primary dark:bg-dark-primary pb-24">
       {/* Header */}
       <header className="sticky top-0 z-40 bg-white dark:bg-dark-secondary border-b-4 border-black dark:border-white">
         <div className="px-4 py-4">
