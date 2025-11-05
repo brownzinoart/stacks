@@ -127,4 +127,13 @@
            hover:shadow-[-12px_12px_0_0_rgb(var(--shadow-color))];
   }
 
+  /* MotherDuck Animated Link Underline */
+  .link-motherduck {
+    @apply relative inline-block
+           border-b-[0.09em] border-light-border dark:border-dark-border
+           mb-px
+           transition-all duration-150
+           hover:border-b-[0.18em] hover:mb-0;
+  }
+
 }
