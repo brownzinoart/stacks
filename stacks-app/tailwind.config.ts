@@ -90,6 +90,22 @@ const config: Config = {
         '5': '5px',  // Heavy (cards, CTAs)
         '3': '3px',  // Medium (badges)
       },
+      // MotherDuck Responsive Grid System
+      gridTemplateColumns: {
+        // MotherDuck responsive grids
+        'motherduck-mobile': '1fr',
+        'motherduck-tablet': 'repeat(2, 1fr)',
+        'motherduck-desktop': 'repeat(4, 1fr)',
+        'motherduck-6col': 'repeat(6, 1fr)',
+      },
+      gap: {
+        // MotherDuck gap scale
+        '2': '8px',
+        '4': '16px',
+        '6': '24px',
+        '8': '32px',
+        '10': '40px',
+      },
     },
   },
   plugins: [],

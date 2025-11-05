@@ -173,4 +173,21 @@
     @apply opacity-0;
   }
 
+  /* ===== MotherDuck Responsive Grid System ===== */
+
+  /* MotherDuck Responsive Content Grid */
+  .grid-motherduck-content {
+    @apply grid gap-6
+           grid-cols-1
+           md:grid-cols-2
+           lg:grid-cols-4;
+  }
+
+  /* MotherDuck Featured Grid (2-col on tablet+) */
+  .grid-motherduck-featured {
+    @apply grid gap-8
+           grid-cols-1
+           md:grid-cols-2;
+  }
+
 }
