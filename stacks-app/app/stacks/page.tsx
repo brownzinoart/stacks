@@ -9,7 +9,7 @@ type TabType = "my-stacks" | "liked" | "saved";
 function StackSection({ title, stacks }: { title: string; stacks: typeof mockStacks }) {
   return (
     <div className="mb-6">
-      <h2 className="font-black text-lg uppercase tracking-tighter px-4 mb-4">
+      <h2 className="text-h2-mobile md:text-h2-tablet lg:text-h2-desktop font-black uppercase px-4 mb-4">
         {title}
       </h2>
       <div className="overflow-x-auto px-4">
@@ -70,7 +70,7 @@ export default function StacksPage() {
           <div className="flex items-center gap-4 mb-6">
             <div className="w-20 h-20 rounded-full bg-gradient-primary border-4 border-black dark:border-white shadow-brutal-badge" />
             <div className="flex-1">
-              <h1 className="font-black text-xl uppercase tracking-tighter mb-1">
+              <h1 className="text-h2-mobile md:text-h2-tablet lg:text-h2-desktop font-black uppercase mb-1">
                 {currentUser.username}
               </h1>
               <p className="text-sm font-semibold text-gray-600 dark:text-gray-400">
