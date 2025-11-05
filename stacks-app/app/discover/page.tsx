@@ -48,7 +48,7 @@ export default function DiscoverPage() {
               </p>
               <button
                 onClick={() => setSearchQuery("")}
-                className="px-9 py-[18px] bg-white text-black border-3 border-black rounded-xl font-black uppercase text-sm shadow-brutal-sm hover:shadow-brutal transition-all"
+                className="btn-motherduck-secondary"
               >
                 Back to Discover
               </button>
