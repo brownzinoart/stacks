@@ -47,13 +47,14 @@
            active:-translate-x-0.5 active:translate-y-0.5;
   }
 
-  /* Card with border - Heavy 5px borders */
+  /* MotherDuck-style Card with Scale + Shadow Expansion */
   .card-brutal {
     @apply bg-light-secondary dark:bg-dark-secondary
            border-[5px] border-light-border dark:border-dark-border
            rounded-[20px] shadow-brutal-card
-           hover:translate-x-0.5 hover:-translate-y-0.5 hover:shadow-[-10px_10px_0_0_rgb(var(--shadow-color))]
-           transition-all duration-200;
+           transition-all duration-200 ease-in-out
+           hover:scale-[1.02] hover:shadow-[-10px_10px_0_0_rgb(var(--shadow-color))]
+           active:scale-[0.98];
   }
 
   /* Bottom nav height constant */
