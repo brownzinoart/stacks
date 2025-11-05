@@ -47,7 +47,7 @@ export default function StackCard({ stack, user, globalVizEnabled = false }: Sta
   const vizActive = globalVizEnabled || localVizEnabled;
 
   return (
-    <article className="mb-6 bg-white dark:bg-dark-secondary border-4 border-black dark:border-white shadow-brutal rounded-[20px]">
+    <article className="card-brutal mb-6">
       {/* Header - Profile + Menu */}
       <div className="flex items-center justify-between px-4 py-3 border-b-4 border-black dark:border-white">
         <div className="flex items-center gap-3">
