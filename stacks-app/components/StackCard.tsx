@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { Heart, MessageCircle, Send, Bookmark, MoreHorizontal, Eye, EyeOff } from "lucide-react";
 import { Stack, User, MatchLevel } from "@/lib/mockData";
+import { useScrollAnimation } from "@/lib/useScrollAnimation";
 
 interface StackCardProps {
   stack: Stack;
@@ -45,9 +46,10 @@ const formatDate = (dateString: string): string => {
 export default function StackCard({ stack, user, globalVizEnabled = false }: StackCardProps) {
   const [localVizEnabled, setLocalVizEnabled] = useState(false);
   const vizActive = globalVizEnabled || localVizEnabled;
+  const ref = useScrollAnimation("up");
 
   return (
-    <article className="card-brutal">
+    <article ref={ref} className="card-brutal">
       {/* Header - Profile + Menu */}
       <div className="flex items-center justify-between px-4 py-3 border-b-4 border-black dark:border-white">
         <div className="flex items-center gap-3">
