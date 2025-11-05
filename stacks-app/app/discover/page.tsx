@@ -3,6 +3,7 @@
 import { useState } from "react";
 import SearchBar from "@/components/SearchBar";
 import BookSection from "@/components/BookSection";
+import BookCard from "@/components/BookCard";
 import VibeChips from "@/components/VibeChips";
 import { mockBooks } from "@/lib/mockData";
 
@@ -74,8 +75,21 @@ export default function DiscoverPage() {
               <BookSection title="Literary Fiction" books={literaryBooks} size="medium" />
             )}
 
-            {/* All Books */}
-            <BookSection title="Explore All" books={mockBooks} size="small" />
+            {/* All Books - Grid Layout */}
+            <div className="mb-8">
+              <h2 className="font-black text-xl uppercase tracking-tighter px-4 mb-4">
+                Explore All
+              </h2>
+              <div className="px-4">
+                <div className="grid-motherduck-content">
+                  {mockBooks.map((book) => (
+                    <div key={book.id} className="w-full">
+                      <BookCard book={book} size="small" />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
           </>
         )}
       </div>
