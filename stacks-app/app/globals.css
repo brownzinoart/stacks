@@ -136,4 +136,41 @@
            hover:border-b-[0.18em] hover:mb-0;
   }
 
+  /* ===== MotherDuck Scroll Animations ===== */
+
+  @keyframes scrollFadeUp {
+    from {
+      opacity: 0;
+      transform: translateY(100px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes scrollFadeDown {
+    from {
+      opacity: 0;
+      transform: translateY(-100px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .scroll-animate-up {
+    animation: scrollFadeUp 0.6s ease-out forwards;
+  }
+
+  .scroll-animate-down {
+    animation: scrollFadeDown 0.6s ease-out forwards;
+  }
+
+  /* Initial state before animation triggers */
+  .scroll-animate-initial {
+    @apply opacity-0;
+  }
+
 }
