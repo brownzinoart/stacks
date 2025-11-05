@@ -54,7 +54,7 @@ export default function StackCard({ stack, user, globalVizEnabled = false }: Sta
       <div className="flex items-center justify-between px-4 py-3 border-b-4 border-black dark:border-white">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-full bg-gradient-primary border-4 border-black dark:border-white shadow-brutal-sm" />
-          <Link href={`/profile/${user.id}`} className="font-black text-base uppercase tracking-tight">
+          <Link href={`/profile/${user.id}`} className="link-motherduck font-black text-base uppercase tracking-tight">
             {user.username}
           </Link>
         </div>
@@ -128,7 +128,7 @@ export default function StackCard({ stack, user, globalVizEnabled = false }: Sta
       {/* Caption */}
       <div className="px-4 pb-3">
         <p className="text-base leading-snug">
-          <Link href={`/profile/${user.id}`} className="font-black mr-2 uppercase">
+          <Link href={`/profile/${user.id}`} className="link-motherduck font-black mr-2 uppercase">
             {user.username}
           </Link>
           <span className="font-semibold text-lg">{stack.caption}</span>
