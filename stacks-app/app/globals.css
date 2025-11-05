@@ -4,9 +4,10 @@
 
 @layer base {
   :root {
-    --background: 250 250 250;
-    --foreground: 0 0 0;
-    --shadow-color: 0 0 0;
+    /* v2.0 Warm neutral background */
+    --background: 244 239 234; /* #F4EFEA */
+    --foreground: 56 56 56;    /* #383838 */
+    --shadow-color: 56 56 56;  /* #383838 */
   }
 
   .dark {
@@ -22,14 +23,16 @@
 }
 
 @layer components {
-  /* Brutalist button */
+  /* ===== v2.0 Brutalist Components with Offset Shadows ===== */
+
+  /* Brutalist button - Heavy borders (5px) for CTAs */
   .btn-brutal {
     @apply relative font-black uppercase tracking-wider px-9 py-[18px]
-           bg-white dark:bg-dark-secondary text-black dark:text-white
-           border-4 border-black dark:border-white
-           shadow-brutal-sm
-           hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-brutal
-           active:translate-x-0.5 active:translate-y-0.5 active:shadow-brutal-active
+           bg-white dark:bg-dark-secondary text-light-text dark:text-dark-text
+           border-[5px] border-light-border dark:border-dark-border
+           rounded-xl shadow-brutal-button
+           hover:translate-x-0.5 hover:-translate-y-0.5 hover:shadow-brutal-button-hover
+           active:-translate-x-0.5 active:translate-y-0.5 active:shadow-brutal-active
            transition-all duration-150;
   }
 
@@ -37,17 +40,20 @@
   .btn-brutal-touch {
     @apply relative font-black uppercase tracking-wider px-10 py-5
            min-h-[56px]
-           bg-white dark:bg-dark-secondary text-black dark:text-white
-           border-4 border-black dark:border-white
-           rounded-xl shadow-brutal-sm hover:shadow-brutal
-           transition-all duration-150 active:translate-x-1 active:translate-y-1;
+           bg-white dark:bg-dark-secondary text-light-text dark:text-dark-text
+           border-[5px] border-light-border dark:border-dark-border
+           rounded-xl shadow-brutal-button hover:shadow-brutal-button-hover
+           transition-all duration-150
+           active:-translate-x-0.5 active:translate-y-0.5;
   }
 
-  /* Card with border */
+  /* Card with border - Heavy 5px borders */
   .card-brutal {
-    @apply bg-white dark:bg-dark-secondary
-           border-4 border-black dark:border-white
-           shadow-brutal;
+    @apply bg-light-secondary dark:bg-dark-secondary
+           border-[5px] border-light-border dark:border-dark-border
+           rounded-[20px] shadow-brutal-card
+           hover:translate-x-0.5 hover:-translate-y-0.5 hover:shadow-[-10px_10px_0_0_rgb(var(--shadow-color))]
+           transition-all duration-200;
   }
 
   /* Bottom nav height constant */
@@ -55,37 +61,69 @@
     @apply pb-24;
   }
 
-  /* ===== Brutalist Component Utilities ===== */
-  /* Use these classes to ensure design system compliance */
+  /* ===== v2.0 Component Utilities ===== */
 
-  /* Brutalist input */
+  /* Brutalist input - Light borders (2px) for subtlety */
   .input-brutal {
     @apply w-full px-5 py-[18px] font-semibold text-base
-           bg-white dark:bg-dark-secondary
-           border-4 border-black dark:border-white
-           rounded-xl shadow-brutal-sm
-           focus:outline-none focus:-translate-x-px focus:-translate-y-px focus:shadow-brutal-focus
+           bg-light-secondary dark:bg-dark-secondary
+           text-light-text dark:text-dark-text
+           border-2 border-light-borderSecondary dark:border-dark-borderSecondary
+           rounded-xl shadow-brutal-badge
+           focus:outline-none focus:translate-x-px focus:-translate-y-px
+           focus:shadow-brutal-input-focus focus:border-accent-cyan
            transition-all duration-150;
   }
 
-  /* Brutalist badge */
+  /* Brutalist badge - Medium borders (3px) */
   .badge-brutal {
     @apply inline-block px-4 py-2
            font-black text-sm uppercase tracking-tight
-           border-[3px] border-black dark:border-white
+           border-[3px] border-light-border dark:border-dark-border
            rounded-xl shadow-brutal-badge
-           hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-brutal-sm
+           hover:translate-x-px hover:-translate-y-px hover:shadow-[-4px_4px_0_0_rgb(var(--shadow-color))]
            transition-all duration-150;
   }
 
-  /* Floating Action Button */
+  /* Floating Action Button - Heavy borders */
   .fab-brutal {
     @apply w-16 h-16 rounded-full
-           border-[5px] border-black dark:border-white
-           shadow-brutal-sm hover:shadow-brutal
-           hover:-translate-x-0.5 hover:-translate-y-0.5
-           active:translate-x-0.5 active:translate-y-0.5 active:shadow-brutal-sm
+           border-[5px] border-light-border dark:border-dark-border
+           shadow-brutal-button hover:shadow-brutal-button-hover
+           hover:translate-x-0.5 hover:-translate-y-0.5
+           active:-translate-x-0.5 active:translate-y-0.5 active:shadow-brutal-badge
            flex items-center justify-center
            transition-all duration-150;
   }
+
+  /* ===== MotherDuck Button Micro-interactions ===== */
+
+  /* MotherDuck Primary CTA Button */
+  .btn-motherduck-primary {
+    @apply inline-block px-[22px] py-[16.5px]
+           font-black uppercase text-base
+           bg-accent-cyan text-light-text dark:text-dark-text
+           border-2 border-light-border dark:border-dark-border
+           rounded-xl
+           transition-all duration-[120ms] ease-in-out
+           hover:translate-x-[7px] hover:-translate-y-[7px]
+           active:bg-accent-cyanHover
+           shadow-[-5px_5px_0_0_rgb(var(--shadow-color))]
+           hover:shadow-[-12px_12px_0_0_rgb(var(--shadow-color))];
+  }
+
+  /* MotherDuck Secondary Button */
+  .btn-motherduck-secondary {
+    @apply inline-block px-[22px] py-[16.5px]
+           font-black uppercase text-base
+           bg-light-primary dark:bg-dark-primary text-light-text dark:text-dark-text
+           border-2 border-light-border dark:border-dark-border
+           rounded-xl
+           transition-all duration-[120ms] ease-in-out
+           hover:translate-x-[7px] hover:-translate-y-[7px]
+           active:bg-[#E1D6CB] dark:active:bg-dark-secondary
+           shadow-[-5px_5px_0_0_rgb(var(--shadow-color))]
+           hover:shadow-[-12px_12px_0_0_rgb(var(--shadow-color))];
+  }
+
 }
