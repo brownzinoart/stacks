@@ -74,9 +74,16 @@ const config: Config = {
       },
       // v2.0 Spacing - Generous breathing room
       spacing: {
-        '18': '4.5rem',   // 72px
-        '22': '5.5rem',   // 88px
-        '26': '6.5rem',   // 104px
+        '18': '4.5rem',   // 72px (existing)
+        '22': '5.5rem',   // 88px (existing)
+        '26': '6.5rem',   // 104px (existing)
+        // MotherDuck spacing additions
+        '14': '3.5rem',   // 56px - section spacing
+        '20': '5rem',     // 80px - large gaps
+        '28': '7rem',     // 112px - major section breaks
+        '32': '8rem',     // 128px - hero spacing
+        '35': '8.75rem',  // 140px - bottom padding mobile
+        '40': '10rem',    // 160px - major vertical rhythm
       },
       // v2.0 Border Widths - Contextual hierarchy
       borderWidth: {
