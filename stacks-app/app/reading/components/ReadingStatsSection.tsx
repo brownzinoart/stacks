@@ -9,6 +9,7 @@ import HeroDivider from "./HeroDivider";
 import ReadingPaceChart from "./charts/ReadingPaceChart";
 import GenreDistributionChart from "./charts/GenreDistributionChart";
 import TopAuthorsChart from "./charts/TopAuthorsChart";
+import ReadingSpeedCards from "./ReadingSpeedCards";
 
 export default function ReadingStatsSection() {
   const [timePeriod, setTimePeriod] = useState<"all" | "year" | "month">("year");
@@ -54,6 +55,14 @@ export default function ReadingStatsSection() {
       <GenreDistributionChart data={stats.topGenres} />
 
       <TopAuthorsChart data={stats.topAuthors} />
+
+      <HeroDivider
+        title="Speed Reader Status"
+        subtitle={`You crushed ${stats.fastestBook.title} in just ${stats.fastestBook.days} days at ${stats.fastestBook.pagesPerDay} pages/day!`}
+        gradient="success"
+      />
+
+      <ReadingSpeedCards stats={stats} />
 
       {/* Fun Facts */}
       {funFacts.length > 0 && (
