@@ -439,3 +439,138 @@ export function getUserById(id: string): User | undefined {
 export function getBookById(id: string): Book | undefined {
   return mockBooks.find((b) => b.id === id);
 }
+
+// Mock Reading Progress with patterns
+export const mockReadingProgressEnhanced: ReadingProgressEnhanced[] = [
+  // The Cruel Prince - Speed read (3 days)
+  {
+    id: "rp-1",
+    bookId: "book-7",
+    userId: "user-1",
+    startDate: new Date("2024-03-15"),
+    finishedDate: new Date("2024-03-18"),
+    currentPage: 370,
+    totalPages: 370,
+    status: "finished",
+    userRating: 5,
+    dailyCheckIns: [
+      { date: new Date("2024-03-15"), pagesRead: 120, timeOfDay: "night" },
+      { date: new Date("2024-03-16"), pagesRead: 125, timeOfDay: "night" },
+      { date: new Date("2024-03-17"), pagesRead: 125, timeOfDay: "evening" },
+    ]
+  },
+  // Fourth Wing - Currently reading
+  {
+    id: "rp-2",
+    bookId: "book-1",
+    userId: "user-1",
+    startDate: new Date("2024-10-25"),
+    finishedDate: null,
+    currentPage: 139,
+    totalPages: 498,
+    status: "reading",
+    dailyCheckIns: [
+      { date: new Date("2024-10-25"), pagesRead: 45, timeOfDay: "night" },
+      { date: new Date("2024-10-26"), pagesRead: 38, timeOfDay: "evening" },
+      { date: new Date("2024-10-28"), pagesRead: 56, timeOfDay: "night" },
+    ]
+  },
+  // Six of Crows - Recent finish
+  {
+    id: "rp-3",
+    bookId: "book-6",
+    userId: "user-1",
+    startDate: new Date("2024-11-05"),
+    finishedDate: new Date("2024-11-15"),
+    currentPage: 465,
+    totalPages: 465,
+    status: "finished",
+    userRating: 5,
+    dailyCheckIns: [
+      { date: new Date("2024-11-05"), pagesRead: 50, timeOfDay: "night" },
+      { date: new Date("2024-11-06"), pagesRead: 48, timeOfDay: "night" },
+      { date: new Date("2024-11-07"), pagesRead: 45, timeOfDay: "evening" },
+      { date: new Date("2024-11-08"), pagesRead: 52, timeOfDay: "night" },
+      { date: new Date("2024-11-09"), pagesRead: 46, timeOfDay: "night" },
+      { date: new Date("2024-11-10"), pagesRead: 49, timeOfDay: "night" },
+      { date: new Date("2024-11-11"), pagesRead: 51, timeOfDay: "evening" },
+      { date: new Date("2024-11-12"), pagesRead: 42, timeOfDay: "night" },
+      { date: new Date("2024-11-13"), pagesRead: 40, timeOfDay: "night" },
+      { date: new Date("2024-11-15"), pagesRead: 42, timeOfDay: "afternoon" },
+    ]
+  },
+  // A Court of Thorns and Roses
+  {
+    id: "rp-4",
+    bookId: "book-2",
+    userId: "user-1",
+    startDate: new Date("2024-11-01"),
+    finishedDate: new Date("2024-11-08"),
+    currentPage: 419,
+    totalPages: 419,
+    status: "finished",
+    userRating: 4,
+    dailyCheckIns: [
+      { date: new Date("2024-11-01"), pagesRead: 60, timeOfDay: "night" },
+      { date: new Date("2024-11-02"), pagesRead: 58, timeOfDay: "night" },
+      { date: new Date("2024-11-03"), pagesRead: 62, timeOfDay: "evening" },
+      { date: new Date("2024-11-04"), pagesRead: 55, timeOfDay: "night" },
+      { date: new Date("2024-11-06"), pagesRead: 65, timeOfDay: "night" },
+      { date: new Date("2024-11-07"), pagesRead: 59, timeOfDay: "night" },
+      { date: new Date("2024-11-08"), pagesRead: 60, timeOfDay: "afternoon" },
+    ]
+  },
+  // The Song of Achilles
+  {
+    id: "rp-5",
+    bookId: "book-4",
+    userId: "user-1",
+    startDate: new Date("2024-10-20"),
+    finishedDate: new Date("2024-11-02"),
+    currentPage: 352,
+    totalPages: 352,
+    status: "finished",
+    userRating: 5,
+    dailyCheckIns: [
+      { date: new Date("2024-10-20"), pagesRead: 30, timeOfDay: "night" },
+      { date: new Date("2024-10-21"), pagesRead: 28, timeOfDay: "evening" },
+      { date: new Date("2024-10-22"), pagesRead: 25, timeOfDay: "night" },
+      { date: new Date("2024-10-23"), pagesRead: 32, timeOfDay: "afternoon" },
+      { date: new Date("2024-10-25"), pagesRead: 27, timeOfDay: "night" },
+      { date: new Date("2024-10-26"), pagesRead: 30, timeOfDay: "night" },
+      { date: new Date("2024-10-28"), pagesRead: 28, timeOfDay: "evening" },
+      { date: new Date("2024-10-29"), pagesRead: 26, timeOfDay: "night" },
+      { date: new Date("2024-10-31"), pagesRead: 34, timeOfDay: "night" },
+      { date: new Date("2024-11-01"), pagesRead: 32, timeOfDay: "night" },
+      { date: new Date("2024-11-02"), pagesRead: 60, timeOfDay: "afternoon" },
+    ]
+  },
+  // The Secret History - Slow read
+  {
+    id: "rp-6",
+    bookId: "book-3",
+    userId: "user-1",
+    startDate: new Date("2024-08-15"),
+    finishedDate: new Date("2024-09-05"),
+    currentPage: 559,
+    totalPages: 559,
+    status: "finished",
+    userRating: 4,
+    dailyCheckIns: [
+      { date: new Date("2024-08-15"), pagesRead: 28, timeOfDay: "night" },
+      { date: new Date("2024-08-16"), pagesRead: 25, timeOfDay: "evening" },
+      { date: new Date("2024-08-18"), pagesRead: 30, timeOfDay: "afternoon" },
+      { date: new Date("2024-08-20"), pagesRead: 27, timeOfDay: "night" },
+      { date: new Date("2024-08-22"), pagesRead: 26, timeOfDay: "night" },
+      { date: new Date("2024-08-24"), pagesRead: 29, timeOfDay: "evening" },
+      { date: new Date("2024-08-26"), pagesRead: 25, timeOfDay: "night" },
+      { date: new Date("2024-08-28"), pagesRead: 28, timeOfDay: "night" },
+      { date: new Date("2024-08-30"), pagesRead: 24, timeOfDay: "afternoon" },
+      { date: new Date("2024-09-01"), pagesRead: 30, timeOfDay: "night" },
+      { date: new Date("2024-09-02"), pagesRead: 27, timeOfDay: "evening" },
+      { date: new Date("2024-09-03"), pagesRead: 26, timeOfDay: "night" },
+      { date: new Date("2024-09-04"), pagesRead: 32, timeOfDay: "night" },
+      { date: new Date("2024-09-05"), pagesRead: 202, timeOfDay: "night" }, // Marathon finish
+    ]
+  },
+];
