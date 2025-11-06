@@ -25,7 +25,7 @@
 @layer components {
   /* ===== v2.0 Brutalist Components with Offset Shadows ===== */
 
-  /* Brutalist button - Heavy borders (5px) for CTAs */
+  /* Brutalist button - Heavy borders (5px) for CTAs (v2.0) */
   .btn-brutal {
     @apply relative font-black uppercase tracking-wider px-9 py-[18px]
            bg-white dark:bg-dark-secondary text-light-text dark:text-dark-text
@@ -47,14 +47,11 @@
            active:-translate-x-0.5 active:translate-y-0.5;
   }
 
-  /* MotherDuck-style Card with Scale + Shadow Expansion */
+  /* MotherDuck-style Card with Scale + Shadow Expansion (v2.0) */
   .card-brutal {
     @apply bg-light-secondary dark:bg-dark-secondary
            border-[5px] border-light-border dark:border-dark-border
-           rounded-[20px] shadow-brutal-card
-           transition-all duration-200 ease-in-out
-           hover:scale-[1.02] hover:shadow-[-10px_10px_0_0_rgb(var(--shadow-color))]
-           active:scale-[0.98];
+           rounded-[20px] shadow-brutal-card;
   }
 
   /* Bottom nav height constant */
@@ -64,7 +61,7 @@
 
   /* ===== v2.0 Component Utilities ===== */
 
-  /* Brutalist input - Light borders (2px) for subtlety */
+  /* Brutalist input - Light borders (2px) for subtlety (v2.0) */
   .input-brutal {
     @apply w-full px-5 py-[18px] font-semibold text-base
            bg-light-secondary dark:bg-dark-secondary
@@ -76,7 +73,7 @@
            transition-all duration-150;
   }
 
-  /* Brutalist badge - Medium borders (3px) */
+  /* Brutalist badge - Medium borders (3px) (v2.0) */
   .badge-brutal {
     @apply inline-block px-4 py-2
            font-black text-sm uppercase tracking-tight
@@ -188,6 +185,15 @@
     @apply grid gap-8
            grid-cols-1
            md:grid-cols-2;
+  }
+
+  /* Hide scrollbars while maintaining scroll functionality */
+  .scrollbar-hide {
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none; /* IE/Edge */
+  }
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none; /* Chrome/Safari/Opera */
   }
 
 }

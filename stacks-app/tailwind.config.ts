@@ -32,11 +32,11 @@ const config: Config = {
           border: "#ffffff",
           borderSecondary: "#444444",
         },
-        // v2.0 Accent Colors
+        // v2.0 Accent Colors (Updated to match design system)
         accent: {
           cyan: "#6FC2FF",
           cyanHover: "#2BA5FF",
-          yellow: "#EAC435",      // Softer golden yellow
+          yellow: "#EAC435",      // v2.0: Softer golden yellow (was bright neon)
           coral: "#FF7169",
           teal: "#53DBC9",
           purple: "#667eea",
@@ -72,14 +72,13 @@ const config: Config = {
         "brutal-input-focus": "-5px 5px 0 0 #6FC2FF",
         "brutal-active": "-2px 2px 0 0 rgb(var(--shadow-color))",
       },
-      // v2.0 Spacing - Generous breathing room
+      // v2.0 Spacing - Generous breathing room (MotherDuck-inspired)
       spacing: {
-        '18': '4.5rem',   // 72px (existing)
-        '22': '5.5rem',   // 88px (existing)
-        '26': '6.5rem',   // 104px (existing)
-        // MotherDuck spacing additions
         '14': '3.5rem',   // 56px - section spacing
+        '18': '4.5rem',   // 72px - large spacing
         '20': '5rem',     // 80px - large gaps
+        '22': '5.5rem',   // 88px - extra large
+        '26': '6.5rem',   // 104px - major spacing
         '28': '7rem',     // 112px - major section breaks
         '32': '8rem',     // 128px - hero spacing
         '35': '8.75rem',  // 140px - bottom padding mobile
@@ -89,6 +88,7 @@ const config: Config = {
       borderWidth: {
         '5': '5px',  // Heavy (cards, CTAs)
         '3': '3px',  // Medium (badges)
+        '2': '2px',  // Light (inputs, dividers)
       },
       // MotherDuck Responsive Grid System
       gridTemplateColumns: {

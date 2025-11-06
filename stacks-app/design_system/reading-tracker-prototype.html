@@ -1,0 +1,793 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Reading Tracker - Prototype</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #f5f5f0;
+      padding: 20px;
+    }
+
+    .container {
+      max-width: 640px;
+      margin: 0 auto;
+    }
+
+    .page-title {
+      font-size: 32px;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: -1px;
+      margin-bottom: 24px;
+      text-align: center;
+    }
+
+    .section-title {
+      font-size: 20px;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: -0.5px;
+      margin-bottom: 16px;
+      padding-left: 4px;
+    }
+
+    /* Reading Progress Card */
+    .reading-card {
+      background: white;
+      border: 5px solid black;
+      border-radius: 20px;
+      box-shadow: 6px 6px 0 0 black;
+      padding: 24px;
+      margin-bottom: 24px;
+    }
+
+    .book-header {
+      display: flex;
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+
+    .book-cover {
+      width: 64px;
+      height: 96px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      border: 4px solid black;
+      border-radius: 8px;
+      box-shadow: 3px 3px 0 0 black;
+      flex-shrink: 0;
+    }
+
+    .book-info {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+
+    .book-title {
+      font-size: 18px;
+      font-weight: 900;
+      text-transform: uppercase;
+      line-height: 1.2;
+      margin-bottom: 4px;
+    }
+
+    .book-author {
+      font-size: 14px;
+      font-weight: 600;
+      color: #666;
+    }
+
+    /* Progress Bar */
+    .progress-section {
+      margin-bottom: 20px;
+    }
+
+    .progress-bar-container {
+      position: relative;
+      width: 100%;
+      height: 20px;
+      background: #e5e7eb;
+      border: 4px solid black;
+      border-radius: 12px;
+      overflow: hidden;
+      margin-bottom: 8px;
+    }
+
+    .progress-bar-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #10b981 0%, #06b6d4 100%);
+      transition: width 0.3s ease;
+    }
+
+    .progress-percentage {
+      position: absolute;
+      right: 8px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 12px;
+      font-weight: 900;
+      color: black;
+    }
+
+    .progress-text {
+      font-size: 14px;
+      font-weight: 700;
+      color: #666;
+    }
+
+    /* Pace Badge */
+    .pace-badge {
+      display: inline-block;
+      padding: 12px 20px;
+      border: 4px solid black;
+      border-radius: 12px;
+      box-shadow: 4px 4px 0 0 black;
+      font-size: 14px;
+      font-weight: 900;
+      text-transform: uppercase;
+      margin-bottom: 20px;
+      color: white;
+    }
+
+    .pace-badge.ahead {
+      background: #10b981;
+    }
+
+    .pace-badge.on-track {
+      background: #f59e0b;
+    }
+
+    .pace-badge.behind {
+      background: #ef4444;
+    }
+
+    .pace-badge.crushing {
+      background: linear-gradient(135deg, #8b5cf6 0%, #ec4899 100%);
+    }
+
+    /* Goal Stats */
+    .goal-stats {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-bottom: 20px;
+      padding: 16px;
+      background: #f9fafb;
+      border: 3px solid black;
+      border-radius: 12px;
+    }
+
+    .goal-stat {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 14px;
+      font-weight: 700;
+    }
+
+    .goal-icon {
+      font-size: 16px;
+    }
+
+    .goal-value {
+      font-weight: 900;
+      color: #000;
+    }
+
+    /* Time Comparison */
+    .time-comparison {
+      padding: 16px;
+      background: #fef3c7;
+      border: 3px solid #f59e0b;
+      border-radius: 12px;
+      margin-bottom: 20px;
+    }
+
+    .comparison-title {
+      font-size: 12px;
+      font-weight: 900;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+      color: #92400e;
+    }
+
+    .comparison-text {
+      font-size: 14px;
+      font-weight: 600;
+      line-height: 1.4;
+      color: #000;
+    }
+
+    /* Check-In Widget */
+    .check-in-widget {
+      padding: 20px;
+      background: #e0f2fe;
+      border: 4px solid #0284c7;
+      border-radius: 12px;
+      box-shadow: 4px 4px 0 0 #0284c7;
+    }
+
+    .check-in-title {
+      font-size: 14px;
+      font-weight: 900;
+      text-transform: uppercase;
+      margin-bottom: 12px;
+    }
+
+    .input-group {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    .page-input {
+      flex: 1;
+      padding: 12px 16px;
+      font-size: 18px;
+      font-weight: 900;
+      border: 4px solid black;
+      border-radius: 8px;
+      background: white;
+      text-align: center;
+    }
+
+    .quick-buttons {
+      display: flex;
+      gap: 8px;
+    }
+
+    .quick-btn {
+      padding: 8px 16px;
+      font-size: 14px;
+      font-weight: 900;
+      background: white;
+      border: 3px solid black;
+      border-radius: 8px;
+      box-shadow: 2px 2px 0 0 black;
+      cursor: pointer;
+      transition: all 0.1s;
+    }
+
+    .quick-btn:hover {
+      transform: translate(-1px, -1px);
+      box-shadow: 3px 3px 0 0 black;
+    }
+
+    .quick-btn:active {
+      transform: translate(1px, 1px);
+      box-shadow: 1px 1px 0 0 black;
+    }
+
+    .log-button {
+      width: 100%;
+      padding: 16px;
+      font-size: 16px;
+      font-weight: 900;
+      text-transform: uppercase;
+      color: white;
+      background: #0284c7;
+      border: 4px solid black;
+      border-radius: 12px;
+      box-shadow: 4px 4px 0 0 black;
+      cursor: pointer;
+      transition: all 0.1s;
+    }
+
+    .log-button:hover {
+      transform: translate(-2px, -2px);
+      box-shadow: 6px 6px 0 0 black;
+    }
+
+    .log-button:active {
+      transform: translate(2px, 2px);
+      box-shadow: 2px 2px 0 0 black;
+    }
+
+    /* Finished Books Section */
+    .finished-section {
+      margin-top: 48px;
+    }
+
+    .finished-card {
+      background: white;
+      border: 4px solid black;
+      border-radius: 12px;
+      box-shadow: 4px 4px 0 0 black;
+      padding: 16px;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .finished-icon {
+      width: 40px;
+      height: 40px;
+      background: #10b981;
+      border: 3px solid black;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      flex-shrink: 0;
+    }
+
+    .finished-info {
+      flex: 1;
+    }
+
+    .finished-title {
+      font-size: 16px;
+      font-weight: 900;
+      text-transform: uppercase;
+      margin-bottom: 4px;
+    }
+
+    .finished-meta {
+      font-size: 12px;
+      font-weight: 600;
+      color: #666;
+    }
+
+    .finished-rating {
+      font-size: 16px;
+    }
+
+    /* Celebration Modal */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.8);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      padding: 20px;
+    }
+
+    .modal-overlay.active {
+      display: flex;
+    }
+
+    .celebration-modal {
+      background: white;
+      border: 5px solid black;
+      border-radius: 20px;
+      box-shadow: 8px 8px 0 0 black;
+      padding: 32px;
+      max-width: 400px;
+      width: 100%;
+      text-align: center;
+    }
+
+    .celebration-title {
+      font-size: 32px;
+      font-weight: 900;
+      text-transform: uppercase;
+      margin-bottom: 16px;
+    }
+
+    .celebration-emoji {
+      font-size: 48px;
+      margin-bottom: 16px;
+    }
+
+    .celebration-book {
+      font-size: 20px;
+      font-weight: 900;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+
+    .celebration-days {
+      font-size: 16px;
+      font-weight: 600;
+      color: #666;
+      margin-bottom: 24px;
+    }
+
+    .celebration-stats {
+      background: #f9fafb;
+      border: 3px solid black;
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 24px;
+      text-align: left;
+    }
+
+    .celebration-stat {
+      font-size: 14px;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+
+    .celebration-stat:last-child {
+      margin-bottom: 0;
+    }
+
+    .rating-section {
+      margin-bottom: 24px;
+    }
+
+    .rating-title {
+      font-size: 14px;
+      font-weight: 900;
+      text-transform: uppercase;
+      margin-bottom: 12px;
+    }
+
+    .rating-buttons {
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+    }
+
+    .rating-btn {
+      padding: 12px 20px;
+      font-size: 24px;
+      background: white;
+      border: 3px solid black;
+      border-radius: 12px;
+      box-shadow: 3px 3px 0 0 black;
+      cursor: pointer;
+      transition: all 0.1s;
+    }
+
+    .rating-btn:hover {
+      transform: translate(-1px, -1px);
+      box-shadow: 4px 4px 0 0 black;
+    }
+
+    .rating-btn.selected {
+      background: #fef3c7;
+      border-color: #f59e0b;
+    }
+
+    .modal-actions {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .modal-btn {
+      padding: 16px;
+      font-size: 14px;
+      font-weight: 900;
+      text-transform: uppercase;
+      border: 4px solid black;
+      border-radius: 12px;
+      box-shadow: 4px 4px 0 0 black;
+      cursor: pointer;
+      transition: all 0.1s;
+    }
+
+    .modal-btn.primary {
+      background: #10b981;
+      color: white;
+    }
+
+    .modal-btn.secondary {
+      background: white;
+      color: black;
+    }
+
+    .modal-btn:hover {
+      transform: translate(-2px, -2px);
+      box-shadow: 6px 6px 0 0 black;
+    }
+
+    /* Responsive */
+    @media (max-width: 640px) {
+      body {
+        padding: 12px;
+      }
+
+      .reading-card {
+        padding: 16px;
+      }
+
+      .book-header {
+        gap: 12px;
+      }
+
+      .book-cover {
+        width: 56px;
+        height: 84px;
+      }
+
+      .book-title {
+        font-size: 16px;
+      }
+    }
+
+    /* Demo Controls */
+    .demo-controls {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      padding: 16px;
+      background: #fef3c7;
+      border: 4px solid black;
+      border-radius: 12px;
+      box-shadow: 4px 4px 0 0 black;
+      z-index: 999;
+    }
+
+    .demo-btn {
+      display: block;
+      width: 100%;
+      padding: 12px;
+      margin-bottom: 8px;
+      font-size: 12px;
+      font-weight: 900;
+      text-transform: uppercase;
+      background: white;
+      border: 3px solid black;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+
+    .demo-btn:last-child {
+      margin-bottom: 0;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1 class="page-title">📚 Reading Tracker</h1>
+
+    <!-- Currently Reading Section -->
+    <section>
+      <h2 class="section-title">Currently Reading</h2>
+
+      <!-- Book 1: The Cruel Prince -->
+      <div class="reading-card">
+        <div class="book-header">
+          <div class="book-cover"></div>
+          <div class="book-info">
+            <div class="book-title">The Cruel Prince</div>
+            <div class="book-author">Holly Black</div>
+          </div>
+        </div>
+
+        <div class="progress-section">
+          <div class="progress-bar-container">
+            <div class="progress-bar-fill" style="width: 52%;"></div>
+            <div class="progress-percentage">52%</div>
+          </div>
+          <div class="progress-text">194 / 370 pages</div>
+        </div>
+
+        <div class="pace-badge ahead">🔥 AHEAD BY 3 DAYS</div>
+
+        <div class="goal-stats">
+          <div class="goal-stat">
+            <span class="goal-icon">🎯</span>
+            <span>Target: <span class="goal-value">Nov 30, 2024</span></span>
+          </div>
+          <div class="goal-stat">
+            <span class="goal-icon">📊</span>
+            <span>Daily Goal: <span class="goal-value">12 pages/day</span></span>
+          </div>
+          <div class="goal-stat">
+            <span class="goal-icon">⚡</span>
+            <span>Current Streak: <span class="goal-value">7 days</span></span>
+          </div>
+        </div>
+
+        <div class="time-comparison">
+          <div class="comparison-title">💡 TODAY'S VIBE CHECK:</div>
+          <div class="comparison-text">
+            That's like watching <strong>1 episode of Stranger Things</strong> instead of scrolling
+          </div>
+        </div>
+
+        <div class="check-in-widget">
+          <div class="check-in-title">TODAY'S CHECK-IN:</div>
+          <div class="input-group">
+            <label style="font-weight: 700;">Pages read:</label>
+            <input type="number" class="page-input" value="20" placeholder="0">
+          </div>
+          <div class="quick-buttons">
+            <button class="quick-btn" onclick="addPages(10)">+10</button>
+            <button class="quick-btn" onclick="addPages(25)">+25</button>
+            <button class="quick-btn" onclick="addPages(50)">+50</button>
+          </div>
+          <button class="log-button" onclick="logProgress()">Log Progress</button>
+        </div>
+      </div>
+
+      <!-- Book 2: Fourth Wing -->
+      <div class="reading-card">
+        <div class="book-header">
+          <div class="book-cover" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);"></div>
+          <div class="book-info">
+            <div class="book-title">Fourth Wing</div>
+            <div class="book-author">Rebecca Yarros</div>
+          </div>
+        </div>
+
+        <div class="progress-section">
+          <div class="progress-bar-container">
+            <div class="progress-bar-fill" style="width: 28%; background: linear-gradient(90deg, #f59e0b 0%, #fb923c 100%);"></div>
+            <div class="progress-percentage">28%</div>
+          </div>
+          <div class="progress-text">139 / 498 pages</div>
+        </div>
+
+        <div class="pace-badge behind">BEHIND: +15 PAGES</div>
+
+        <div class="goal-stats">
+          <div class="goal-stat">
+            <span class="goal-icon">🎯</span>
+            <span>Target: <span class="goal-value">Dec 15, 2024</span></span>
+          </div>
+          <div class="goal-stat">
+            <span class="goal-icon">📊</span>
+            <span>Daily Goal: <span class="goal-value">18 pages/day</span></span>
+          </div>
+          <div class="goal-stat">
+            <span class="goal-icon">⚡</span>
+            <span>Current Streak: <span class="goal-value">3 days</span></span>
+          </div>
+        </div>
+
+        <div class="time-comparison">
+          <div class="comparison-title">💡 TODAY'S VIBE CHECK:</div>
+          <div class="comparison-text">
+            That's <strong>20 mins less TikTok scrolling</strong> per day
+          </div>
+        </div>
+
+        <div class="check-in-widget">
+          <div class="check-in-title">TODAY'S CHECK-IN:</div>
+          <div class="input-group">
+            <label style="font-weight: 700;">Pages read:</label>
+            <input type="number" class="page-input" value="" placeholder="0">
+          </div>
+          <div class="quick-buttons">
+            <button class="quick-btn" onclick="addPages(10)">+10</button>
+            <button class="quick-btn" onclick="addPages(25)">+25</button>
+            <button class="quick-btn" onclick="addPages(50)">+50</button>
+          </div>
+          <button class="log-button" onclick="logProgress()">Log Progress</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Finished This Month Section -->
+    <section class="finished-section">
+      <h2 class="section-title">Finished This Month (3)</h2>
+
+      <div class="finished-card">
+        <div class="finished-icon">✓</div>
+        <div class="finished-info">
+          <div class="finished-title">Six of Crows</div>
+          <div class="finished-meta">Finished 11/15 • 465 pages • 10-day streak</div>
+        </div>
+        <div class="finished-rating">❤️</div>
+      </div>
+
+      <div class="finished-card">
+        <div class="finished-icon">✓</div>
+        <div class="finished-info">
+          <div class="finished-title">A Court of Thorns and Roses</div>
+          <div class="finished-meta">Finished 11/08 • 419 pages • 7-day streak</div>
+        </div>
+        <div class="finished-rating">😊</div>
+      </div>
+
+      <div class="finished-card">
+        <div class="finished-icon">✓</div>
+        <div class="finished-info">
+          <div class="finished-title">The Song of Achilles</div>
+          <div class="finished-meta">Finished 11/02 • 352 pages • 12-day streak</div>
+        </div>
+        <div class="finished-rating">❤️</div>
+      </div>
+    </section>
+  </div>
+
+  <!-- Celebration Modal -->
+  <div class="modal-overlay" id="celebrationModal">
+    <div class="celebration-modal">
+      <div class="celebration-emoji">🎉</div>
+      <div class="celebration-title">Book Done!</div>
+      <div class="celebration-book">The Cruel Prince</div>
+      <div class="celebration-days">Finished in 12 days!</div>
+
+      <div class="celebration-stats">
+        <div class="celebration-stat">• 370 pages read</div>
+        <div class="celebration-stat">• 8-day streak maintained</div>
+        <div class="celebration-stat">• Finished 3 days early!</div>
+      </div>
+
+      <div class="rating-section">
+        <div class="rating-title">⭐ Rate it (for better recs):</div>
+        <div class="rating-buttons">
+          <button class="rating-btn" onclick="selectRating(this)" data-rating="loved">❤️</button>
+          <button class="rating-btn" onclick="selectRating(this)" data-rating="liked">😊</button>
+          <button class="rating-btn" onclick="selectRating(this)" data-rating="meh">😐</button>
+        </div>
+      </div>
+
+      <div class="modal-actions">
+        <button class="modal-btn primary" onclick="shareBook()">Share to Feed</button>
+        <button class="modal-btn secondary" onclick="addToStack()">Add to Stack</button>
+        <button class="modal-btn secondary" onclick="closeModal()">Skip</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Demo Controls -->
+  <div class="demo-controls">
+    <button class="demo-btn" onclick="showModal()">Show Celebration</button>
+    <button class="demo-btn" onclick="changePace()">Change Pace Status</button>
+  </div>
+
+  <script>
+    function addPages(count) {
+      const input = event.target.closest('.check-in-widget').querySelector('.page-input');
+      input.value = parseInt(input.value || 0) + count;
+    }
+
+    function logProgress() {
+      alert('Progress logged! 🎉 (This would update the progress bar and stats)');
+    }
+
+    function showModal() {
+      document.getElementById('celebrationModal').classList.add('active');
+    }
+
+    function closeModal() {
+      document.getElementById('celebrationModal').classList.remove('active');
+    }
+
+    function selectRating(btn) {
+      document.querySelectorAll('.rating-btn').forEach(b => b.classList.remove('selected'));
+      btn.classList.add('selected');
+    }
+
+    function shareBook() {
+      alert('Sharing to feed! 📚 (Would create a post with completion stats)');
+      closeModal();
+    }
+
+    function addToStack() {
+      alert('Adding to stack! 📚 (Would open stack selection/creation)');
+      closeModal();
+    }
+
+    let paceIndex = 0;
+    function changePace() {
+      const badges = document.querySelectorAll('.pace-badge');
+      const states = [
+        { class: 'ahead', text: '🔥 AHEAD BY 3 DAYS' },
+        { class: 'on-track', text: '✓ ON TRACK' },
+        { class: 'behind', text: 'BEHIND: +15 PAGES' },
+        { class: 'crushing', text: '🔥 CRUSHING IT' }
+      ];
+
+      paceIndex = (paceIndex + 1) % states.length;
+      const state = states[paceIndex];
+
+      badges.forEach(badge => {
+        badge.className = `pace-badge ${state.class}`;
+        badge.textContent = state.text;
+      });
+    }
+  </script>
+</body>
+</html>

@@ -16,7 +16,7 @@ export default function BookCard({ book, size = "medium" }: BookCardProps) {
   return (
     <div className={`${sizeClasses[size]} flex-shrink-0`}>
       {/* Book Cover */}
-      <div className="relative w-full aspect-[2/3] bg-gradient-secondary border-4 border-black dark:border-white shadow-brutal rounded-[20px] mb-3 overflow-hidden">
+      <div className="relative w-full aspect-[2/3] bg-gradient-secondary border-[5px] border-light-border dark:border-dark-border shadow-brutal rounded-[20px] mb-3 overflow-hidden">
         <Image
           src={book.cover}
           alt={`${book.title} by ${book.author}`}
@@ -27,7 +27,7 @@ export default function BookCard({ book, size = "medium" }: BookCardProps) {
 
         {/* Genre Badge Overlay */}
         {book.genres.length > 0 && (
-          <div className="absolute top-2 right-2 bg-black/80 border-3 border-white px-2 py-1 z-10 rounded-lg">
+          <div className="absolute top-2 right-2 bg-black/80 border-[3px] border-white px-2 py-1 z-10 rounded-lg">
             <p className="text-white font-black text-xs uppercase">
               {book.genres[0]}
             </p>
