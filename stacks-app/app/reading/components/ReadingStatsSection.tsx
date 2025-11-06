@@ -7,6 +7,7 @@ import StatsTimePeriodTabs from "./StatsTimePeriodTabs";
 import SummaryStatsGrid from "./SummaryStatsGrid";
 import HeroDivider from "./HeroDivider";
 import ReadingPaceChart from "./charts/ReadingPaceChart";
+import GenreDistributionChart from "./charts/GenreDistributionChart";
 
 export default function ReadingStatsSection() {
   const [timePeriod, setTimePeriod] = useState<"all" | "year" | "month">("year");
@@ -42,6 +43,14 @@ export default function ReadingStatsSection() {
       />
 
       <ReadingPaceChart data={stats.monthlyReading} />
+
+      <HeroDivider
+        title="Genre Explorer"
+        subtitle={`You gravitate toward ${stats.topGenres[0]?.genre || 'various genres'} - your comfort zone!`}
+        gradient="accent"
+      />
+
+      <GenreDistributionChart data={stats.topGenres} />
 
       {/* Fun Facts */}
       {funFacts.length > 0 && (
