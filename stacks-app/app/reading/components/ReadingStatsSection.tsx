@@ -10,6 +10,7 @@ import ReadingPaceChart from "./charts/ReadingPaceChart";
 import GenreDistributionChart from "./charts/GenreDistributionChart";
 import TopAuthorsChart from "./charts/TopAuthorsChart";
 import ReadingSpeedCards from "./ReadingSpeedCards";
+import RatingDistributionChart from "./charts/RatingDistributionChart";
 
 export default function ReadingStatsSection() {
   const [timePeriod, setTimePeriod] = useState<"all" | "year" | "month">("year");
@@ -63,6 +64,11 @@ export default function ReadingStatsSection() {
       />
 
       <ReadingSpeedCards stats={stats} />
+
+      <RatingDistributionChart
+        ratings={stats.ratingDistribution}
+        avgRating={stats.avgRating}
+      />
 
       {/* Fun Facts */}
       {funFacts.length > 0 && (
