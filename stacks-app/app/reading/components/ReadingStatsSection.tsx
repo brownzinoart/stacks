@@ -11,6 +11,7 @@ import GenreDistributionChart from "./charts/GenreDistributionChart";
 import TopAuthorsChart from "./charts/TopAuthorsChart";
 import ReadingSpeedCards from "./ReadingSpeedCards";
 import RatingDistributionChart from "./charts/RatingDistributionChart";
+import ReadingStreakHeatmap from "./charts/ReadingStreakHeatmap";
 
 export default function ReadingStatsSection() {
   const [timePeriod, setTimePeriod] = useState<"all" | "year" | "month">("year");
@@ -69,6 +70,14 @@ export default function ReadingStatsSection() {
         ratings={stats.ratingDistribution}
         avgRating={stats.avgRating}
       />
+
+      <HeroDivider
+        title="Streak Champion"
+        subtitle={`${stats.currentStreak} days strong! You're building an amazing reading habit.`}
+        gradient="info"
+      />
+
+      <ReadingStreakHeatmap currentStreak={stats.currentStreak} />
 
       {/* Fun Facts */}
       {funFacts.length > 0 && (
