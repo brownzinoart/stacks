@@ -8,6 +8,7 @@ import SummaryStatsGrid from "./SummaryStatsGrid";
 import HeroDivider from "./HeroDivider";
 import ReadingPaceChart from "./charts/ReadingPaceChart";
 import GenreDistributionChart from "./charts/GenreDistributionChart";
+import TopAuthorsChart from "./charts/TopAuthorsChart";
 
 export default function ReadingStatsSection() {
   const [timePeriod, setTimePeriod] = useState<"all" | "year" | "month">("year");
@@ -51,6 +52,8 @@ export default function ReadingStatsSection() {
       />
 
       <GenreDistributionChart data={stats.topGenres} />
+
+      <TopAuthorsChart data={stats.topAuthors} />
 
       {/* Fun Facts */}
       {funFacts.length > 0 && (
