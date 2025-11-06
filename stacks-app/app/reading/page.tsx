@@ -1,3 +1,7 @@
+"use client";
+
+import ReadingStatsSection from "./components/ReadingStatsSection";
+
 export default function ReadingPage() {
   return (
     <div className="min-h-screen bg-light-primary dark:bg-dark-primary pb-24">
@@ -11,14 +15,8 @@ export default function ReadingPage() {
         </div>
       </header>
 
-      {/* Placeholder content */}
-      <div className="p-4">
-        <div className="card-brutal p-8 text-center">
-          <p className="text-light-textSecondary dark:text-dark-textSecondary">
-            Your reading pacing dashboard will appear here
-          </p>
-        </div>
-      </div>
+      {/* Reading Analytics Dashboard */}
+      <ReadingStatsSection />
     </div>
   );
 }
