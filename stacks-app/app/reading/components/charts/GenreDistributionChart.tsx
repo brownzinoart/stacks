@@ -14,7 +14,7 @@ export default function GenreDistributionChart({ data }: GenreDistributionChartP
   const isMobile = useMediaQuery("(max-width: 767px)");
 
   // Top 5 + Other on mobile
-  const chartData = isMobile && data.length > 5
+  const chartData: (GenreData & { [key: string]: any })[] = isMobile && data.length > 5
     ? [
         ...data.slice(0, 5),
         {

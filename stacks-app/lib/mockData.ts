@@ -63,11 +63,12 @@ export interface DailyCheckIn {
   timeOfDay: "morning" | "afternoon" | "evening" | "night";
 }
 
-export interface ReadingProgressEnhanced extends ReadingProgress {
+export interface ReadingProgressEnhanced extends Omit<ReadingProgress, 'startDate' | 'endDate'> {
   startDate: Date;
   finishedDate: Date | null;
   userRating?: number; // 1-5 stars
   dailyCheckIns: DailyCheckIn[];
+  userId: string;
 }
 
 export interface ReadingStats {
