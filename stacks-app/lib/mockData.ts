@@ -931,3 +931,232 @@ export async function getBookDetailWithAPIs(bookId: string, isbn?: string): Prom
     return mockDetail;
   }
 }
+
+// ============================================
+// NATURAL LANGUAGE SEARCH MOCK DATA
+// ============================================
+
+export const mockBooksWithMetadata: Book[] = [
+  {
+    id: "book-1",
+    title: "The Silent Patient",
+    author: "Alex Michaelides",
+    cover: "https://images.unsplash.com/photo-1544947950-fa07a98d237f?w=400",
+    genres: ["Thriller", "Mystery", "Psychological"],
+    tropes: ["unreliable narrator", "plot twist", "psychological manipulation"],
+    pageCount: 336,
+    publishYear: 2019,
+    metadata: {
+      synopsis: "A famous painter murders her husband and then stops speaking. A psychotherapist becomes obsessed with uncovering her motive.",
+      themes: ["obsession", "trauma", "betrayal", "mental health", "secrets"],
+      tropes: ["unreliable narrator", "shocking twist ending", "psychological thriller", "mystery within mystery"],
+      mood: ["dark", "suspenseful", "twisted", "atmospheric"],
+      similarMovies: ["Gone Girl", "Shutter Island"],
+      pageCount: 336,
+      publishYear: 2019,
+      amazonRating: 4.5,
+      goodreadsRating: 4.07
+    }
+  },
+  {
+    id: "book-2",
+    title: "The Seven Husbands of Evelyn Hugo",
+    author: "Taylor Jenkins Reid",
+    cover: "https://images.unsplash.com/photo-1512820790803-83ca734da794?w=400",
+    genres: ["Historical Fiction", "LGBTQ+", "Romance"],
+    tropes: ["fake relationship", "forbidden love", "bisexual protagonist"],
+    pageCount: 400,
+    publishYear: 2017,
+    metadata: {
+      synopsis: "Aging Hollywood icon Evelyn Hugo finally tells the story of her scandalous life and seven marriages to an unknown magazine reporter.",
+      themes: ["identity", "ambition", "love", "sacrifice", "Hollywood golden age", "LGBTQ+ representation"],
+      tropes: ["fake relationship becomes real", "forbidden love", "unreliable narrator", "dual timeline"],
+      mood: ["emotional", "glamorous", "heartbreaking", "character-driven"],
+      similarMovies: ["La La Land", "The Great Gatsby", "Carol"],
+      pageCount: 400,
+      publishYear: 2017,
+      amazonRating: 4.7,
+      goodreadsRating: 4.45
+    }
+  },
+  {
+    id: "book-3",
+    title: "Project Hail Mary",
+    author: "Andy Weir",
+    cover: "https://images.unsplash.com/photo-1614732414444-096e5f1122d5?w=400",
+    genres: ["Science Fiction", "Space Opera", "Adventure"],
+    tropes: ["lone survivor", "science saves the day", "found family"],
+    pageCount: 496,
+    publishYear: 2021,
+    metadata: {
+      synopsis: "A lone astronaut must save Earth from disaster using science and an unlikely alien friendship.",
+      themes: ["survival", "friendship", "sacrifice", "problem-solving", "humanity's future"],
+      tropes: ["lone survivor", "science as magic", "unlikely friendship", "race against time"],
+      mood: ["uplifting", "humorous", "thrilling", "sciencey"],
+      similarMovies: ["The Martian", "Interstellar", "Arrival"],
+      pageCount: 496,
+      publishYear: 2021,
+      amazonRating: 4.8,
+      goodreadsRating: 4.52
+    }
+  },
+  {
+    id: "book-4",
+    title: "Ninth House",
+    author: "Leigh Bardugo",
+    cover: "https://images.unsplash.com/photo-1532012197267-da84d127e765?w=400",
+    genres: ["Dark Fantasy", "Mystery", "Urban Fantasy"],
+    tropes: ["chosen one", "dark academia", "secret society"],
+    pageCount: 461,
+    publishYear: 2019,
+    metadata: {
+      synopsis: "A survivor of multiple tragedies is given a scholarship to Yale to monitor the university's secret magical societies.",
+      themes: ["class inequality", "trauma", "power", "privilege", "the occult"],
+      tropes: ["chosen one", "dark academia", "secret societies", "magic has a price", "morally grey protagonist"],
+      mood: ["dark", "atmospheric", "gritty", "mysterious"],
+      similarMovies: ["The Magicians", "Harry Potter (darker)", "The Secret History"],
+      pageCount: 461,
+      publishYear: 2019,
+      amazonRating: 4.3,
+      goodreadsRating: 3.98
+    }
+  },
+  {
+    id: "book-5",
+    title: "The House in the Cerulean Sea",
+    author: "TJ Klune",
+    cover: "https://images.unsplash.com/photo-1566443280617-35db331c54fb?w=400",
+    genres: ["Fantasy", "LGBTQ+", "Romance"],
+    tropes: ["found family", "grumpy/sunshine", "magical children"],
+    pageCount: 398,
+    publishYear: 2020,
+    metadata: {
+      synopsis: "A case worker investigates an orphanage of magical children and their mysterious caretaker on a remote island.",
+      themes: ["found family", "acceptance", "belonging", "bureaucracy vs humanity", "love conquers all"],
+      tropes: ["found family", "grumpy meets sunshine", "opposites attract", "magical children", "cozy fantasy"],
+      mood: ["cozy", "heartwarming", "whimsical", "uplifting"],
+      similarMovies: ["Paddington", "Big Hero 6", "Lilo & Stitch"],
+      pageCount: 398,
+      publishYear: 2020,
+      amazonRating: 4.7,
+      goodreadsRating: 4.36
+    }
+  },
+  {
+    id: "book-6",
+    title: "Tomorrow, and Tomorrow, and Tomorrow",
+    author: "Gabrielle Zevin",
+    cover: "https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=400",
+    genres: ["Literary Fiction", "Contemporary", "Friendship"],
+    tropes: ["will they won't they", "creative partnership", "nonromantic soulmates"],
+    pageCount: 416,
+    publishYear: 2022,
+    metadata: {
+      synopsis: "Two friends build a video game empire over decades, exploring love, art, identity, and the cost of creativity.",
+      themes: ["friendship", "creativity", "identity", "disability", "ambition", "game design"],
+      tropes: ["will they won't they (but not romance)", "creative partnership", "decades-spanning story", "art as life"],
+      mood: ["thoughtful", "bittersweet", "emotional", "character-driven"],
+      similarMovies: ["The Social Network", "La La Land", "Halt and Catch Fire"],
+      pageCount: 416,
+      publishYear: 2022,
+      amazonRating: 4.4,
+      goodreadsRating: 4.19
+    }
+  },
+  {
+    id: "book-7",
+    title: "Babel",
+    author: "R.F. Kuang",
+    cover: "https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=400",
+    genres: ["Dark Academia", "Historical Fantasy", "Literary Fiction"],
+    tropes: ["dark academia", "magic system based on language", "colonialism critique"],
+    pageCount: 560,
+    publishYear: 2022,
+    metadata: {
+      synopsis: "A Chinese boy is brought to Oxford to study translation magic, but discovers the empire's dark foundations.",
+      themes: ["colonialism", "language and power", "betrayal", "revolution", "academic elitism", "identity"],
+      tropes: ["dark academia", "magic system", "betrayal by mentor", "revolution", "morally complex choices"],
+      mood: ["dark", "academic", "intense", "thought-provoking"],
+      similarMovies: ["The Imitation Game", "Dead Poets Society (darker)", "Succession"],
+      pageCount: 560,
+      publishYear: 2022,
+      amazonRating: 4.5,
+      goodreadsRating: 4.27
+    }
+  },
+  {
+    id: "book-8",
+    title: "Beach Read",
+    author: "Emily Henry",
+    cover: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400",
+    genres: ["Romance", "Contemporary", "Comedy"],
+    tropes: ["enemies to lovers", "writer protagonist", "neighbor romance"],
+    pageCount: 368,
+    publishYear: 2020,
+    metadata: {
+      synopsis: "Two writers challenge each other to write in opposite genres while navigating grief and growing attraction.",
+      themes: ["grief", "creativity", "vulnerability", "second chances", "facing fears"],
+      tropes: ["enemies to lovers", "forced proximity", "grumpy/sunshine", "writer protagonist", "summer romance"],
+      mood: ["romantic", "funny", "emotional", "cozy"],
+      similarMovies: ["When Harry Met Sally", "The Proposal", "You've Got Mail"],
+      pageCount: 368,
+      publishYear: 2020,
+      amazonRating: 4.5,
+      goodreadsRating: 4.05
+    }
+  }
+];
+
+export const mockCurrentUserProfile: UserReadingProfile = {
+  userId: "user-1",
+  favoriteGenres: ["Thriller", "Dark Fantasy", "Science Fiction"],
+  favoriteAuthors: ["Andy Weir", "Leigh Bardugo", "Alex Michaelides"],
+  favoriteTropes: ["unreliable narrator", "plot twist", "dark academia", "found family"],
+  dislikedTropes: ["love triangle", "instalove"],
+  preferredMood: ["dark", "suspenseful", "character-driven"],
+  readingHistory: [
+    { bookId: "book-1", rating: 5, finishedDate: "2024-10-15" },
+    { bookId: "book-3", rating: 5, finishedDate: "2024-09-22" },
+    { bookId: "book-4", rating: 4, finishedDate: "2024-08-10" },
+    { bookId: "book-5", rating: 3, finishedDate: "2024-07-05" }, // Liked but not their usual style
+  ],
+  engagementHistory: {
+    likedStackIds: ["stack-1", "stack-3"],
+    savedStackIds: ["stack-2"],
+    commentedStackIds: ["stack-1"]
+  }
+};
+
+// Get books user has already read
+export function getBooksReadByUser(userId: string): string[] {
+  if (userId === "user-1") {
+    return mockCurrentUserProfile.readingHistory.map(h => h.bookId);
+  }
+  return [];
+}
+
+// Get user's favorite books (rating >= 4)
+export function getUserFavoriteBooks(userId: string): Book[] {
+  if (userId === "user-1") {
+    const favoriteIds = mockCurrentUserProfile.readingHistory
+      .filter(h => h.rating && h.rating >= 4)
+      .map(h => h.bookId);
+    return mockBooksWithMetadata.filter(b => favoriteIds.includes(b.id));
+  }
+  return [];
+}
+
+// Get books similar to user's favorites
+export function getSimilarBooks(bookId: string, limit: number = 5): Book[] {
+  const sourceBook = mockBooksWithMetadata.find(b => b.id === bookId);
+  if (!sourceBook) return [];
+
+  // Simple similarity: match genres or tropes
+  return mockBooksWithMetadata
+    .filter(b => b.id !== bookId)
+    .filter(b =>
+      b.genres.some(g => sourceBook.genres.includes(g)) ||
+      b.tropes.some(t => sourceBook.tropes.includes(t))
+    )
+    .slice(0, limit);
+}
