@@ -8,6 +8,18 @@ export interface User {
   followingCount: number;
 }
 
+export interface BookMetadata {
+  synopsis: string;
+  themes: string[];          // ["family drama", "corporate intrigue", "betrayal"]
+  tropes: string[];          // ["enemies to lovers", "found family", "morally grey protagonist"]
+  mood: string[];            // ["dark", "intense", "fast-paced", "character-driven"]
+  similarMovies?: string[];  // ["Succession", "The Godfather"] - for reference
+  pageCount: number;
+  publishYear: number;
+  amazonRating?: number;
+  goodreadsRating?: number;
+}
+
 export interface Book {
   id: string;
   title: string;
@@ -15,9 +27,10 @@ export interface Book {
   cover: string; // Open Library URL (primary)
   googleBooksCoverUrl?: string; // Google Books URL (fallback)
   genres: string[];
-  tropes: string[];
+  tropes: string[];          // Keep for backward compatibility
   pageCount: number;
   publishYear: number;
+  metadata?: BookMetadata;   // Extended metadata for search
 }
 
 export type MatchLevel = "high" | "medium" | "low" | "read";
@@ -56,6 +69,53 @@ export interface ReadingProgress {
   currentPage: number;
   totalPages: number;
   status: "reading" | "finished" | "abandoned";
+}
+
+export interface UserReadingProfile {
+  userId: string;
+  favoriteGenres: string[];
+  favoriteAuthors: string[];
+  favoriteTropes: string[];
+  dislikedTropes: string[];
+  preferredMood: string[];
+  readingHistory: {
+    bookId: string;
+    rating?: number;          // 1-5 stars
+    finishedDate?: string;
+    didNotFinish?: boolean;
+  }[];
+  engagementHistory: {
+    likedStackIds: string[];
+    savedStackIds: string[];
+    commentedStackIds: string[];
+  };
+}
+
+export interface SearchQuery {
+  raw: string;                    // Original user query
+  enriched?: {
+    movieReferences?: {
+      title: string;
+      tmdbId: number;
+      themes: string[];
+      tropes: string[];
+    }[];
+    extractedThemes: string[];
+    extractedMoods: string[];
+    extractedTropes: string[];
+  };
+  userContext?: {
+    profile: UserReadingProfile;
+    recentReads: Book[];
+    preferredGenres: string[];
+  };
+}
+
+export interface NaturalLanguageSearchResult {
+  book: Book;
+  matchScore: number;           // 0-100
+  matchReasons: string[];       // ["Matches your love of dark academia", "Similar to Gone Girl"]
+  relevanceToQuery: number;     // 0-100
 }
 
 // ============================================
@@ -634,6 +694,21 @@ export const mockReadingProgressEnhanced: ReadingProgressEnhanced[] = [
       { date: new Date("2024-09-03"), pagesRead: 26, timeOfDay: "night" },
       { date: new Date("2024-09-04"), pagesRead: 32, timeOfDay: "night" },
       { date: new Date("2024-09-05"), pagesRead: 202, timeOfDay: "night" }, // Marathon finish
+    ]
+  },
+  // Normal People - Abandoned (DNF)
+  {
+    id: "rp-7",
+    bookId: "book-8",
+    userId: "user-1",
+    startDate: new Date("2024-09-10"),
+    finishedDate: null,
+    currentPage: 87,
+    totalPages: 266,
+    status: "abandoned",
+    dailyCheckIns: [
+      { date: new Date("2024-09-10"), pagesRead: 45, timeOfDay: "night" },
+      { date: new Date("2024-09-11"), pagesRead: 42, timeOfDay: "evening" },
     ]
   },
 ];
