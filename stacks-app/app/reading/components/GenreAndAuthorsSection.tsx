@@ -48,7 +48,7 @@ export default function GenreAndAuthorsSection({
           <ResponsiveContainer width="100%" height={200}>
             <PieChart>
               <Pie
-                data={chartData}
+                data={chartData as any}
                 dataKey="count"
                 nameKey="genre"
                 cx="50%"
