@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import SearchBar from "@/components/SearchBar";
 import BookSection from "@/components/BookSection";
 import BookCard from "@/components/BookCard";
@@ -8,11 +9,13 @@ import VibeChips from "@/components/VibeChips";
 import { mockBooks } from "@/lib/mockData";
 
 export default function DiscoverPage() {
+  const router = useRouter();
   const [searchQuery, setSearchQuery] = useState("");
 
   const handleSearch = (query: string) => {
-    setSearchQuery(query);
-    // TODO: Implement actual search logic with API
+    if (query.trim()) {
+      router.push(`/discover/results?q=${encodeURIComponent(query)}`);
+    }
   };
 
   // Filter books by genre for different sections

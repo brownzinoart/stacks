@@ -57,6 +57,7 @@ export interface ReadingProgress {
   status: "reading" | "finished" | "abandoned";
 }
 
+<<<<<<< Updated upstream
 export interface DailyCheckIn {
   date: Date;
   pagesRead: number;
@@ -104,6 +105,63 @@ export interface GenreData {
 export interface AuthorData {
   author: string;
   count: number;
+=======
+// ============================================
+// SEARCH RESULTS & BOOK DETAIL TYPES
+// ============================================
+
+export interface SearchResult {
+  query: string;
+  atmosphere: {
+    tags: string[];
+    books: BookSearchMatch[];
+  };
+  characters: {
+    tags: string[];
+    books: BookSearchMatch[];
+  };
+  plot: {
+    tags: string[];
+    books: BookSearchMatch[];
+  };
+}
+
+export interface BookSearchMatch {
+  book: Book;
+  matchPercentage: number;
+  matchReasons: {
+    atmosphere?: string[];
+    characters?: string[];
+    plot?: string[];
+  };
+}
+
+export interface BookDetail extends Book {
+  isbn?: string;
+  description: string;
+  socialProof: {
+    isBestseller: boolean;
+    bestsellerInfo?: string;
+    rating: number;
+    ratingsCount: number;
+    readerTags: string[];
+    reviews: BookReview[];
+  };
+}
+
+export interface BookReview {
+  id: string;
+  username: string;
+  stars: number;
+  text: string;
+  source: 'hardcover' | 'google';
+}
+
+export interface UserLibrary {
+  name: string;
+  catalogUrl: string;
+  type: 'bibliocommons' | 'overdrive' | 'other';
+>>>>>>> Stashed changes
 }
 
 // Current user (the person demoing the app)
@@ -441,6 +499,7 @@ export function getBookById(id: string): Book | undefined {
   return mockBooks.find((b) => b.id === id);
 }
 
+<<<<<<< Updated upstream
 // Mock Reading Progress with patterns
 export const mockReadingProgressEnhanced: ReadingProgressEnhanced[] = [
   // The Cruel Prince - Speed read (3 days)
@@ -575,3 +634,225 @@ export const mockReadingProgressEnhanced: ReadingProgressEnhanced[] = [
     ]
   },
 ];
+=======
+// ============================================
+// MOCK SEARCH RESULTS
+// ============================================
+
+export function getMockSearchResults(query: string): SearchResult {
+  // For MVP, return hardcoded results for "cozy mystery small town"
+  // TODO: Replace with actual search API call
+
+  return {
+    query: query,
+    atmosphere: {
+      tags: ["Cozy", "Small-town", "Intimate"],
+      books: [
+        {
+          book: {
+            id: "search-book-1",
+            title: "A Cozy Murder in Maple Grove",
+            author: "Sarah Bennett",
+            cover: "https://covers.openlibrary.org/b/isbn/9780593356890-L.jpg",
+            genres: ["Mystery", "Cozy Mystery"],
+            tropes: ["Amateur Sleuth", "Small Town", "Cozy"],
+            pageCount: 320,
+            publishYear: 2023,
+          },
+          matchPercentage: 92,
+          matchReasons: {
+            atmosphere: ["Cozy setting", "Small town vibe", "Intimate feel"],
+          },
+        },
+        {
+          book: {
+            id: "search-book-2",
+            title: "The Bookshop Mystery",
+            author: "Emma Collins",
+            cover: "https://covers.openlibrary.org/b/isbn/9780593548219-L.jpg",
+            genres: ["Mystery", "Cozy Mystery"],
+            tropes: ["Bookshop", "Coastal Town"],
+            pageCount: 285,
+            publishYear: 2024,
+          },
+          matchPercentage: 88,
+          matchReasons: {
+            atmosphere: ["Sleepy coastal village", "Dusty bookshop"],
+          },
+        },
+      ],
+    },
+    characters: {
+      tags: ["Amateur Sleuth", "Quirky Cast", "Found Family"],
+      books: [
+        {
+          book: {
+            id: "search-book-3",
+            title: "Death by Scone",
+            author: "Margaret Hastings",
+            cover: "https://covers.openlibrary.org/b/isbn/9780062843098-L.jpg",
+            genres: ["Mystery", "Cozy Mystery"],
+            tropes: ["Amateur Sleuth", "Quirky Characters"],
+            pageCount: 298,
+            publishYear: 2023,
+          },
+          matchPercentage: 85,
+          matchReasons: {
+            characters: ["Witty baker protagonist", "Eccentric locals"],
+          },
+        },
+        {
+          book: {
+            id: "search-book-4",
+            title: "The Garden Club Murders",
+            author: "Helen Carter",
+            cover: "https://covers.openlibrary.org/b/isbn/9780593359426-L.jpg",
+            genres: ["Mystery", "Cozy Mystery"],
+            tropes: ["Amateur Sleuth", "Found Family"],
+            pageCount: 342,
+            publishYear: 2024,
+          },
+          matchPercentage: 83,
+          matchReasons: {
+            characters: ["Retired teacher sleuth", "Unlikely allies"],
+          },
+        },
+      ],
+    },
+    plot: {
+      tags: ["Mystery", "Slow-burn", "Twisty"],
+      books: [
+        {
+          book: {
+            id: "search-book-5",
+            title: "Murder at the Village Fair",
+            author: "Patricia Reed",
+            cover: "https://covers.openlibrary.org/b/isbn/9780593156537-L.jpg",
+            genres: ["Mystery", "Cozy Mystery"],
+            tropes: ["Mystery", "Slow Burn"],
+            pageCount: 315,
+            publishYear: 2023,
+          },
+          matchPercentage: 90,
+          matchReasons: {
+            plot: ["Festive fair setting", "Layers of secrets"],
+          },
+        },
+        {
+          book: {
+            id: "search-book-6",
+            title: "The Secret Society",
+            author: "Diana Woods",
+            cover: "https://covers.openlibrary.org/b/isbn/9780593465912-L.jpg",
+            genres: ["Mystery", "Thriller"],
+            tropes: ["Twisty", "Hidden Societies"],
+            pageCount: 365,
+            publishYear: 2024,
+          },
+          matchPercentage: 87,
+          matchReasons: {
+            plot: ["Twisty reveals", "Hidden societies"],
+          },
+        },
+      ],
+    },
+  };
+}
+
+export function getMockBookDetail(bookId: string): BookDetail | null {
+  // For MVP, return hardcoded detail for search-book-1
+  // TODO: Replace with actual API calls (Hardcover, Google Books, NYT)
+
+  if (bookId === "search-book-1") {
+    return {
+      id: "search-book-1",
+      title: "A Cozy Murder in Maple Grove",
+      author: "Sarah Bennett",
+      cover: "https://covers.openlibrary.org/b/isbn/9780593356890-L.jpg",
+      isbn: "9780593356890",
+      genres: ["Mystery", "Cozy Mystery"],
+      tropes: ["Amateur Sleuth", "Small Town", "Cozy"],
+      pageCount: 320,
+      publishYear: 2023,
+      description: "When the town librarian is found dead among the dusty stacks, amateur sleuth Eleanor Thompson must navigate a cast of quirky suspects and long-buried secrets in her small New England town. With its cozy atmosphere, clever twists, and a protagonist you'll root for, this charming mystery is perfect for fans of slow-burn whodunits.",
+      socialProof: {
+        isBestseller: false,
+        rating: 4.2,
+        ratingsCount: 1847,
+        readerTags: ["Cozy", "Character-driven", "Twisty", "Atmospheric"],
+        reviews: [
+          {
+            id: "review-1",
+            username: "booklover23",
+            stars: 5,
+            text: "Perfect cozy mystery! The small-town setting felt so real and the characters were absolutely charming. Couldn't put it down.",
+            source: "hardcover",
+          },
+          {
+            id: "review-2",
+            username: "mystery_fan",
+            stars: 4,
+            text: "Great plot twists and a protagonist you can't help but root for. Exactly what I was looking for in a cozy mystery.",
+            source: "hardcover",
+          },
+        ],
+      },
+    };
+  }
+
+  return null;
+}
+
+export async function getBookDetailWithAPIs(bookId: string, isbn?: string): Promise<BookDetail | null> {
+  // For MVP: Start with mock data, gradually replace with API calls
+  const mockDetail = getMockBookDetail(bookId);
+
+  if (!mockDetail || !isbn) {
+    return mockDetail;
+  }
+
+  try {
+    // Import API functions dynamically to avoid circular dependencies
+    const { getHardcoverBookData } = await import('./api/hardcoverApi');
+    const { getGoogleBooksData } = await import('./api/googleBooksApi');
+    const { checkBestseller } = await import('./api/nytBestsellerApi');
+    const { getBookReviews } = await import('./services/reviewsService');
+
+    // Fetch from APIs in parallel
+    const [hardcoverData, googleData, bestsellerInfo, reviewsData] = await Promise.all([
+      getHardcoverBookData(isbn),
+      getGoogleBooksData(isbn),
+      checkBestseller(isbn),
+      getBookReviews(isbn, bookId, 3), // Fetch 3 reviews for book detail page
+    ]);
+
+    // Merge API data with mock data
+    return {
+      ...mockDetail,
+      isbn,
+      socialProof: {
+        isBestseller: bestsellerInfo.isBestseller,
+        bestsellerInfo: bestsellerInfo.isBestseller
+          ? `${bestsellerInfo.listName} • ${bestsellerInfo.weeksOnList} weeks`
+          : undefined,
+        rating: hardcoverData?.rating || googleData?.averageRating || mockDetail.socialProof.rating,
+        ratingsCount: hardcoverData?.ratingsCount || googleData?.ratingsCount || mockDetail.socialProof.ratingsCount,
+        readerTags: hardcoverData?.tags || mockDetail.socialProof.readerTags,
+        // Use reviews service (currently mock, but abstracted for future real data)
+        reviews: reviewsData.reviews.map(r => ({
+          id: r.id,
+          username: r.username,
+          stars: r.rating,
+          text: r.text,
+          source: reviewsData.source.name.toLowerCase() as 'hardcover',
+        })),
+      },
+      description: googleData?.description || mockDetail.description,
+    };
+  } catch (error) {
+    console.error('API fetch error:', error);
+    // Fall back to mock data on error
+    return mockDetail;
+  }
+}
+>>>>>>> Stashed changes

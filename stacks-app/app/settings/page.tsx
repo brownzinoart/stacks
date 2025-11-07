@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
-import { User, Bell, Lock, Moon, Sun, LogOut, ChevronRight } from "lucide-react";
+import { useState, useEffect } from "react";
+import { User, Bell, Lock, Moon, Sun, LogOut, ChevronRight, Search, BookOpen } from "lucide-react";
 import { currentUser } from "@/lib/mockData";
+import { libraryDatabase, Library } from "@/lib/libraryDatabase";
 
 type SettingSection = {
   title: string;
@@ -22,6 +23,44 @@ export default function SettingsPage() {
   const [darkMode, setDarkMode] = useState(false);
   const [notifications, setNotifications] = useState(true);
   const [privateAccount, setPrivateAccount] = useState(false);
+  const [librarySearch, setLibrarySearch] = useState("");
+  const [selectedLibrary, setSelectedLibrary] = useState<Library | null>(null);
+  const [showLibraryPicker, setShowLibraryPicker] = useState(false);
+
+  useEffect(() => {
+    // Load saved library
+    const savedLibraryId = localStorage.getItem("userLibraryId");
+    const savedLibraryName = localStorage.getItem("userLibrary");
+    if (savedLibraryId) {
+      const library = libraryDatabase.find(lib => lib.id === savedLibraryId);
+      if (library) {
+        setSelectedLibrary(library);
+      }
+    } else if (savedLibraryName) {
+      // Backward compatibility: convert old library name to new format
+      const library = libraryDatabase.find(lib => lib.name === savedLibraryName);
+      if (library) {
+        setSelectedLibrary(library);
+        localStorage.setItem("userLibraryId", library.id);
+      }
+    }
+  }, []);
+
+  const handleLibrarySelect = (library: Library) => {
+    setSelectedLibrary(library);
+    localStorage.setItem("userLibraryId", library.id);
+    localStorage.setItem("userLibrary", library.name);
+    setShowLibraryPicker(false);
+    setLibrarySearch("");
+  };
+
+  const filteredLibraries = librarySearch
+    ? libraryDatabase.filter(lib =>
+        lib.name.toLowerCase().includes(librarySearch.toLowerCase()) ||
+        lib.city.toLowerCase().includes(librarySearch.toLowerCase()) ||
+        lib.state.toLowerCase().includes(librarySearch.toLowerCase())
+      )
+    : libraryDatabase;
 
   const sections: SettingSection[] = [
     {
@@ -85,6 +124,84 @@ export default function SettingsPage() {
 
       {/* Content */}
       <div className="max-w-lg mx-auto px-4 py-6 space-y-6">
+        {/* Library Selection */}
+        <div className="card-brutal overflow-hidden">
+          {/* Section Header */}
+          <div className="flex items-center gap-3 px-4 py-3 bg-gradient-info border-b-[5px] border-light-border dark:border-dark-border">
+            <BookOpen className="w-5 h-5 stroke-[3] text-white" />
+            <h2 className="font-black text-sm uppercase tracking-tight text-white">
+              Your Library
+            </h2>
+          </div>
+
+          {/* Current Library */}
+          <div className="p-4">
+            <p className="text-xs font-bold text-light-textSecondary dark:text-dark-textSecondary mb-3">
+              Check book availability at your local library
+            </p>
+
+            <button
+              onClick={() => setShowLibraryPicker(!showLibraryPicker)}
+              className="w-full flex items-center justify-between p-4 bg-light-primary dark:bg-dark-primary border-[3px] border-light-border dark:border-dark-border rounded-xl font-bold shadow-brutal-badge hover:shadow-brutal transition-all"
+            >
+              <span className="text-light-text dark:text-dark-text">
+                {selectedLibrary ? selectedLibrary.name : "Select your library"}
+              </span>
+              <ChevronRight className={`w-5 h-5 stroke-[3] text-light-textSecondary dark:text-dark-textSecondary transition-transform ${showLibraryPicker ? 'rotate-90' : ''}`} />
+            </button>
+
+            {/* Library Picker */}
+            {showLibraryPicker && (
+              <div className="mt-4 space-y-3">
+                {/* Search Input */}
+                <div className="relative">
+                  <Search
+                    className="absolute left-4 top-1/2 -translate-y-1/2 text-light-textTertiary dark:text-dark-textTertiary"
+                    size={20}
+                    strokeWidth={3}
+                  />
+                  <input
+                    type="text"
+                    value={librarySearch}
+                    onChange={(e) => setLibrarySearch(e.target.value)}
+                    placeholder="Search for your library..."
+                    className="w-full pl-12 pr-4 py-3 border-[3px] border-light-border dark:border-dark-border rounded-xl font-semibold bg-light-secondary dark:bg-dark-secondary text-light-text dark:text-dark-text shadow-brutal-badge focus:outline-none focus:shadow-brutal-input-focus focus:border-accent-cyan transition-all"
+                  />
+                </div>
+
+                {/* Library List */}
+                <div className="max-h-64 overflow-y-auto space-y-2">
+                  {filteredLibraries.map((library) => (
+                    <button
+                      key={library.id}
+                      onClick={() => handleLibrarySelect(library)}
+                      className={`w-full p-3 text-left border-[3px] rounded-xl font-bold transition-all ${
+                        selectedLibrary?.id === library.id
+                          ? "bg-accent-cyan text-white border-light-border dark:border-dark-border shadow-brutal-badge"
+                          : "bg-light-secondary dark:bg-dark-secondary border-light-borderSecondary dark:border-dark-borderSecondary hover:border-light-border dark:hover:border-dark-border"
+                      }`}
+                    >
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <div className={selectedLibrary?.id === library.id ? "text-white" : "text-light-text dark:text-dark-text"}>
+                            {library.name}
+                          </div>
+                          <div className={`text-xs ${selectedLibrary?.id === library.id ? "text-white/80" : "text-light-textSecondary dark:text-dark-textSecondary"}`}>
+                            {library.city}, {library.state}
+                          </div>
+                        </div>
+                        {selectedLibrary?.id === library.id && (
+                          <span className="text-white">✓</span>
+                        )}
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+
         {/* Settings Sections */}
         {sections.map((section) => {
           const SectionIcon = section.icon;

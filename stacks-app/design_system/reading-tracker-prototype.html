@@ -42,6 +42,7 @@
 
     /* Reading Progress Card */
     .reading-card {
+      position: relative;
       background: white;
       border: 5px solid black;
       border-radius: 20px;
@@ -50,10 +51,40 @@
       margin-bottom: 24px;
     }
 
+    .goal-edit-btn {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      width: 24px;
+      height: 24px;
+      background: rgba(255, 255, 255, 0.3);
+      border: 2px solid black;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.1s;
+      font-size: 12px;
+      padding: 0;
+    }
+
+    .goal-edit-btn:hover {
+      background: rgba(255, 255, 255, 0.5);
+      transform: translate(-1px, -1px);
+      box-shadow: 2px 2px 0 0 black;
+    }
+
+    .goal-edit-btn:active {
+      transform: translate(0px, 0px);
+      box-shadow: 1px 1px 0 0 black;
+    }
+
     .book-header {
       display: flex;
       gap: 16px;
       margin-bottom: 20px;
+      align-items: flex-start;
     }
 
     .book-cover {
@@ -70,7 +101,8 @@
       flex: 1;
       display: flex;
       flex-direction: column;
-      justify-content: center;
+      justify-content: flex-start;
+      gap: 8px;
     }
 
     .book-title {
@@ -78,7 +110,6 @@
       font-weight: 900;
       text-transform: uppercase;
       line-height: 1.2;
-      margin-bottom: 4px;
     }
 
     .book-author {
@@ -127,16 +158,20 @@
 
     /* Pace Badge */
     .pace-badge {
-      display: inline-block;
-      padding: 12px 20px;
-      border: 4px solid black;
-      border-radius: 12px;
-      box-shadow: 4px 4px 0 0 black;
-      font-size: 14px;
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      padding: 8px 14px;
+      border: 3px solid black;
+      border-radius: 8px;
+      box-shadow: 3px 3px 0 0 black;
+      font-size: 11px;
       font-weight: 900;
       text-transform: uppercase;
-      margin-bottom: 20px;
+      letter-spacing: 0.5px;
       color: white;
+      white-space: nowrap;
+      z-index: 10;
     }
 
     .pace-badge.ahead {
@@ -155,31 +190,188 @@
       background: linear-gradient(135deg, #8b5cf6 0%, #ec4899 100%);
     }
 
-    /* Goal Stats */
-    .goal-stats {
+    /* Primary Goal Metrics */
+    .primary-goals {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .goal-card {
+      position: relative;
+      padding: 16px;
+      border: 4px solid black;
+      border-radius: 12px;
+      box-shadow: 4px 4px 0 0 black;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .goal-card.target {
+      background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+    }
+
+    .goal-card.daily {
+      background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+      color: white;
+    }
+
+    .goal-emoji {
+      font-size: 28px;
+      line-height: 1;
+      flex-shrink: 0;
+    }
+
+    .goal-content {
+      flex: 1;
       display: flex;
       flex-direction: column;
+      gap: 4px;
+    }
+
+    .goal-label {
+      font-size: 10px;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      opacity: 0.8;
+      line-height: 1;
+    }
+
+    .goal-card.daily .goal-label {
+      color: white;
+    }
+
+    .goal-main-value {
+      font-size: 20px;
+      font-weight: 900;
+      line-height: 1;
+    }
+
+    /* Date Picker Dropdown */
+    .date-picker-dropdown {
+      position: absolute;
+      top: calc(100% + 8px);
+      left: 0;
+      right: 0;
+      background: white;
+      border: 4px solid black;
+      border-radius: 12px;
+      box-shadow: 6px 6px 0 0 black;
+      padding: 20px;
+      z-index: 100;
+      display: none;
+    }
+
+    .date-picker-dropdown.active {
+      display: block;
+    }
+
+    .date-picker-header {
+      font-size: 14px;
+      font-weight: 900;
+      text-transform: uppercase;
+      margin-bottom: 16px;
+      text-align: center;
+    }
+
+    .date-input-wrapper {
+      margin-bottom: 16px;
+    }
+
+    .date-input-wrapper label {
+      display: block;
+      font-size: 11px;
+      font-weight: 900;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+      letter-spacing: 0.5px;
+    }
+
+    .date-picker-input {
+      width: 100%;
+      padding: 14px 16px;
+      font-size: 16px;
+      font-weight: 700;
+      border: 4px solid black;
+      border-radius: 8px;
+      background: white;
+      text-align: center;
+      cursor: pointer;
+    }
+
+    .date-picker-input:focus {
+      outline: none;
+      transform: translate(-1px, -1px);
+      box-shadow: 3px 3px 0 0 black;
+    }
+
+    .date-picker-actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
       gap: 8px;
-      margin-bottom: 20px;
-      padding: 16px;
+    }
+
+    .date-picker-btn {
+      padding: 12px 16px;
+      font-size: 12px;
+      font-weight: 900;
+      text-transform: uppercase;
+      border: 4px solid black;
+      border-radius: 8px;
+      box-shadow: 3px 3px 0 0 black;
+      cursor: pointer;
+      transition: all 0.1s;
+    }
+
+    .date-picker-btn.primary {
+      background: #10b981;
+      color: white;
+    }
+
+    .date-picker-btn.secondary {
+      background: white;
+      color: black;
+    }
+
+    .date-picker-btn:hover {
+      transform: translate(-1px, -1px);
+      box-shadow: 4px 4px 0 0 black;
+    }
+
+    .date-picker-btn:active {
+      transform: translate(1px, 1px);
+      box-shadow: 2px 2px 0 0 black;
+    }
+
+    /* Secondary Stats */
+    .secondary-stats {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 12px 16px;
       background: #f9fafb;
       border: 3px solid black;
       border-radius: 12px;
+      margin-bottom: 20px;
     }
 
-    .goal-stat {
+    .secondary-stat {
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: 6px;
       font-size: 14px;
       font-weight: 700;
     }
 
-    .goal-icon {
+    .stat-icon {
       font-size: 16px;
     }
 
-    .goal-value {
+    .stat-value {
       font-weight: 900;
       color: #000;
     }
@@ -243,13 +435,15 @@
     }
 
     .quick-buttons {
-      display: flex;
-      gap: 8px;
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 6px;
+      margin-bottom: 24px;
     }
 
     .quick-btn {
-      padding: 8px 16px;
-      font-size: 14px;
+      padding: 10px 4px;
+      font-size: 13px;
       font-weight: 900;
       background: white;
       border: 3px solid black;
@@ -257,6 +451,11 @@
       box-shadow: 2px 2px 0 0 black;
       cursor: pointer;
       transition: all 0.1s;
+      text-align: center;
+    }
+
+    .quick-btn.custom {
+      grid-column: span 2;
     }
 
     .quick-btn:hover {
@@ -309,19 +508,33 @@
       display: flex;
       align-items: center;
       gap: 12px;
+      position: relative;
+    }
+
+    .finished-cover {
+      width: 48px;
+      height: 72px;
+      border: 3px solid black;
+      border-radius: 6px;
+      box-shadow: 2px 2px 0 0 black;
+      flex-shrink: 0;
     }
 
     .finished-icon {
-      width: 40px;
-      height: 40px;
+      position: absolute;
+      top: 12px;
+      left: 12px;
+      width: 24px;
+      height: 24px;
       background: #10b981;
-      border: 3px solid black;
+      border: 2px solid black;
       border-radius: 50%;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 20px;
+      font-size: 14px;
       flex-shrink: 0;
+      z-index: 1;
     }
 
     .finished-info {
@@ -333,6 +546,7 @@
       font-weight: 900;
       text-transform: uppercase;
       margin-bottom: 4px;
+      line-height: 1.2;
     }
 
     .finished-meta {
@@ -342,7 +556,7 @@
     }
 
     .finished-rating {
-      font-size: 16px;
+      font-size: 20px;
     }
 
     /* Celebration Modal */
@@ -553,12 +767,16 @@
       <h2 class="section-title">Currently Reading</h2>
 
       <!-- Book 1: The Cruel Prince -->
-      <div class="reading-card">
+      <div class="reading-card" data-book-id="book1" data-current-page="194" data-total-pages="370" data-target-date="2024-11-30">
+        <div class="pace-badge ahead">🔥 AHEAD BY 3 DAYS</div>
+
         <div class="book-header">
-          <div class="book-cover"></div>
+          <div class="book-cover" style="background: url('https://covers.openlibrary.org/b/isbn/9780316310277-L.jpg') center/cover no-repeat;"></div>
           <div class="book-info">
-            <div class="book-title">The Cruel Prince</div>
-            <div class="book-author">Holly Black</div>
+            <div>
+              <div class="book-title">The Cruel Prince</div>
+              <div class="book-author">Holly Black</div>
+            </div>
           </div>
         </div>
 
@@ -570,20 +788,42 @@
           <div class="progress-text">194 / 370 pages</div>
         </div>
 
-        <div class="pace-badge ahead">🔥 AHEAD BY 3 DAYS</div>
+        <div class="primary-goals">
+          <div class="goal-card target">
+            <button class="goal-edit-btn" onclick="toggleDatePicker('book1')">✏️</button>
 
-        <div class="goal-stats">
-          <div class="goal-stat">
-            <span class="goal-icon">🎯</span>
-            <span>Target: <span class="goal-value">Nov 30, 2024</span></span>
+            <!-- Date Picker Dropdown -->
+            <div class="date-picker-dropdown" id="datePicker-book1">
+              <div class="date-picker-header">Set Target Date</div>
+              <div class="date-input-wrapper">
+                <label>Target Completion Date</label>
+                <input type="date" class="date-picker-input" id="dateInput-book1" value="2024-11-30">
+              </div>
+              <div class="date-picker-actions">
+                <button class="date-picker-btn secondary" onclick="closeDatePicker('book1')">Cancel</button>
+                <button class="date-picker-btn primary" onclick="saveDate('book1')">Save</button>
+              </div>
+            </div>
+
+            <div class="goal-emoji">🎯</div>
+            <div class="goal-content">
+              <div class="goal-label">Target Date</div>
+              <div class="goal-main-value" data-target-display>Nov 30</div>
+            </div>
           </div>
-          <div class="goal-stat">
-            <span class="goal-icon">📊</span>
-            <span>Daily Goal: <span class="goal-value">12 pages/day</span></span>
+          <div class="goal-card daily">
+            <div class="goal-emoji">📊</div>
+            <div class="goal-content">
+              <div class="goal-label">Daily Goal</div>
+              <div class="goal-main-value" data-daily-goal>12 pages</div>
+            </div>
           </div>
-          <div class="goal-stat">
-            <span class="goal-icon">⚡</span>
-            <span>Current Streak: <span class="goal-value">7 days</span></span>
+        </div>
+
+        <div class="secondary-stats">
+          <div class="secondary-stat">
+            <span class="stat-icon">⚡</span>
+            <span><span class="stat-value">7 day</span> streak</span>
           </div>
         </div>
 
@@ -601,21 +841,33 @@
             <input type="number" class="page-input" value="20" placeholder="0">
           </div>
           <div class="quick-buttons">
+            <button class="quick-btn" onclick="addPages(5)">+5</button>
             <button class="quick-btn" onclick="addPages(10)">+10</button>
+            <button class="quick-btn" onclick="addPages(15)">+15</button>
+            <button class="quick-btn" onclick="addPages(20)">+20</button>
             <button class="quick-btn" onclick="addPages(25)">+25</button>
+            <button class="quick-btn" onclick="addPages(30)">+30</button>
+            <button class="quick-btn" onclick="addPages(35)">+35</button>
+            <button class="quick-btn" onclick="addPages(40)">+40</button>
+            <button class="quick-btn" onclick="addPages(45)">+45</button>
             <button class="quick-btn" onclick="addPages(50)">+50</button>
+            <button class="quick-btn custom" onclick="promptCustomPages()">Custom</button>
           </div>
           <button class="log-button" onclick="logProgress()">Log Progress</button>
         </div>
       </div>
 
       <!-- Book 2: Fourth Wing -->
-      <div class="reading-card">
+      <div class="reading-card" data-book-id="book2" data-current-page="139" data-total-pages="498" data-target-date="2024-12-15">
+        <div class="pace-badge behind">BEHIND: +15 PAGES</div>
+
         <div class="book-header">
-          <div class="book-cover" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);"></div>
+          <div class="book-cover" style="background: url('https://covers.openlibrary.org/b/isbn/9781649374042-L.jpg') center/cover no-repeat;"></div>
           <div class="book-info">
-            <div class="book-title">Fourth Wing</div>
-            <div class="book-author">Rebecca Yarros</div>
+            <div>
+              <div class="book-title">Fourth Wing</div>
+              <div class="book-author">Rebecca Yarros</div>
+            </div>
           </div>
         </div>
 
@@ -627,20 +879,42 @@
           <div class="progress-text">139 / 498 pages</div>
         </div>
 
-        <div class="pace-badge behind">BEHIND: +15 PAGES</div>
+        <div class="primary-goals">
+          <div class="goal-card target">
+            <button class="goal-edit-btn" onclick="toggleDatePicker('book2')">✏️</button>
 
-        <div class="goal-stats">
-          <div class="goal-stat">
-            <span class="goal-icon">🎯</span>
-            <span>Target: <span class="goal-value">Dec 15, 2024</span></span>
+            <!-- Date Picker Dropdown -->
+            <div class="date-picker-dropdown" id="datePicker-book2">
+              <div class="date-picker-header">Set Target Date</div>
+              <div class="date-input-wrapper">
+                <label>Target Completion Date</label>
+                <input type="date" class="date-picker-input" id="dateInput-book2" value="2024-12-15">
+              </div>
+              <div class="date-picker-actions">
+                <button class="date-picker-btn secondary" onclick="closeDatePicker('book2')">Cancel</button>
+                <button class="date-picker-btn primary" onclick="saveDate('book2')">Save</button>
+              </div>
+            </div>
+
+            <div class="goal-emoji">🎯</div>
+            <div class="goal-content">
+              <div class="goal-label">Target Date</div>
+              <div class="goal-main-value" data-target-display>Dec 15</div>
+            </div>
           </div>
-          <div class="goal-stat">
-            <span class="goal-icon">📊</span>
-            <span>Daily Goal: <span class="goal-value">18 pages/day</span></span>
+          <div class="goal-card daily">
+            <div class="goal-emoji">📊</div>
+            <div class="goal-content">
+              <div class="goal-label">Daily Goal</div>
+              <div class="goal-main-value" data-daily-goal>18 pages</div>
+            </div>
           </div>
-          <div class="goal-stat">
-            <span class="goal-icon">⚡</span>
-            <span>Current Streak: <span class="goal-value">3 days</span></span>
+        </div>
+
+        <div class="secondary-stats">
+          <div class="secondary-stat">
+            <span class="stat-icon">⚡</span>
+            <span><span class="stat-value">3 day</span> streak</span>
           </div>
         </div>
 
@@ -658,9 +932,17 @@
             <input type="number" class="page-input" value="" placeholder="0">
           </div>
           <div class="quick-buttons">
+            <button class="quick-btn" onclick="addPages(5)">+5</button>
             <button class="quick-btn" onclick="addPages(10)">+10</button>
+            <button class="quick-btn" onclick="addPages(15)">+15</button>
+            <button class="quick-btn" onclick="addPages(20)">+20</button>
             <button class="quick-btn" onclick="addPages(25)">+25</button>
+            <button class="quick-btn" onclick="addPages(30)">+30</button>
+            <button class="quick-btn" onclick="addPages(35)">+35</button>
+            <button class="quick-btn" onclick="addPages(40)">+40</button>
+            <button class="quick-btn" onclick="addPages(45)">+45</button>
             <button class="quick-btn" onclick="addPages(50)">+50</button>
+            <button class="quick-btn custom" onclick="promptCustomPages()">Custom</button>
           </div>
           <button class="log-button" onclick="logProgress()">Log Progress</button>
         </div>
@@ -673,6 +955,7 @@
 
       <div class="finished-card">
         <div class="finished-icon">✓</div>
+        <div class="finished-cover" style="background: url('https://covers.openlibrary.org/b/isbn/9781627792127-L.jpg') center/cover no-repeat;"></div>
         <div class="finished-info">
           <div class="finished-title">Six of Crows</div>
           <div class="finished-meta">Finished 11/15 • 465 pages • 10-day streak</div>
@@ -682,6 +965,7 @@
 
       <div class="finished-card">
         <div class="finished-icon">✓</div>
+        <div class="finished-cover" style="background: url('https://covers.openlibrary.org/b/isbn/9781635575569-L.jpg') center/cover no-repeat;"></div>
         <div class="finished-info">
           <div class="finished-title">A Court of Thorns and Roses</div>
           <div class="finished-meta">Finished 11/08 • 419 pages • 7-day streak</div>
@@ -691,6 +975,7 @@
 
       <div class="finished-card">
         <div class="finished-icon">✓</div>
+        <div class="finished-cover" style="background: url('https://covers.openlibrary.org/b/isbn/9780062060624-L.jpg') center/cover no-repeat;"></div>
         <div class="finished-info">
           <div class="finished-title">The Song of Achilles</div>
           <div class="finished-meta">Finished 11/02 • 352 pages • 12-day streak</div>
@@ -738,9 +1023,26 @@
   </div>
 
   <script>
+    // Close date picker when clicking outside
+    document.addEventListener('click', function(event) {
+      if (!event.target.closest('.date-picker-dropdown') && !event.target.closest('.goal-edit-btn')) {
+        document.querySelectorAll('.date-picker-dropdown').forEach(picker => {
+          picker.classList.remove('active');
+        });
+      }
+    });
+
     function addPages(count) {
       const input = event.target.closest('.check-in-widget').querySelector('.page-input');
       input.value = parseInt(input.value || 0) + count;
+    }
+
+    function promptCustomPages() {
+      const input = event.target.closest('.check-in-widget').querySelector('.page-input');
+      const customPages = prompt('Enter number of pages:');
+      if (customPages && !isNaN(customPages)) {
+        input.value = parseInt(input.value || 0) + parseInt(customPages);
+      }
     }
 
     function logProgress() {
@@ -787,6 +1089,96 @@
         badge.className = `pace-badge ${state.class}`;
         badge.textContent = state.text;
       });
+    }
+
+    function toggleDatePicker(bookId) {
+      const datePicker = document.getElementById(`datePicker-${bookId}`);
+      // Close all other date pickers
+      document.querySelectorAll('.date-picker-dropdown').forEach(picker => {
+        if (picker.id !== `datePicker-${bookId}`) {
+          picker.classList.remove('active');
+        }
+      });
+      datePicker.classList.toggle('active');
+    }
+
+    function closeDatePicker(bookId) {
+      const datePicker = document.getElementById(`datePicker-${bookId}`);
+      datePicker.classList.remove('active');
+    }
+
+    function saveDate(bookId) {
+      const dateInput = document.getElementById(`dateInput-${bookId}`);
+      const newDate = dateInput.value;
+
+      // Update the card's data attribute
+      const card = document.querySelector(`[data-book-id="${bookId}"]`);
+      card.dataset.targetDate = newDate;
+
+      // Update the display
+      const targetDisplay = card.querySelector('[data-target-display]');
+      const date = new Date(newDate);
+      const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+      targetDisplay.textContent = `${monthNames[date.getMonth()]} ${date.getDate()}`;
+
+      // Recalculate goals
+      updateGoals(bookId);
+
+      // Close the picker
+      closeDatePicker(bookId);
+    }
+
+    function updateGoals(bookId) {
+      const card = document.querySelector(`[data-book-id="${bookId}"]`);
+      const currentPage = parseInt(card.dataset.currentPage);
+      const totalPages = parseInt(card.dataset.totalPages);
+      const pagesRemaining = totalPages - currentPage;
+
+      // Calculate days until target
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const targetDate = new Date(card.dataset.targetDate);
+      const daysRemaining = Math.ceil((targetDate - today) / (1000 * 60 * 60 * 24));
+
+      // Calculate daily pages needed
+      const dailyPages = daysRemaining > 0 ? Math.ceil(pagesRemaining / daysRemaining) : pagesRemaining;
+
+      // Update daily goal display
+      const dailyGoalElement = card.querySelector('[data-daily-goal]');
+      dailyGoalElement.textContent = `${dailyPages} pages`;
+
+      // Update vibe check message
+      const vibeCheckElement = card.querySelector('.comparison-text');
+      const vibeMessages = [
+        `That's like <strong>${dailyPages} mins of reading</strong> instead of scrolling`,
+        `Just <strong>${dailyPages} pages</strong> - easier than your morning routine`,
+        `That's like watching <strong>1 episode</strong> instead of scrolling`,
+        `<strong>${dailyPages} mins less TikTok</strong> per day`,
+        `About <strong>${Math.round(dailyPages * 2)} mins</strong> - one coffee break worth`
+      ];
+      vibeCheckElement.innerHTML = vibeMessages[Math.floor(Math.random() * vibeMessages.length)];
+
+      // Calculate pace based on ideal progress
+      const daysElapsed = 30 - daysRemaining; // Assuming 30 day reading period
+      const idealPage = Math.floor((daysElapsed / 30) * totalPages);
+      const pagesDifference = currentPage - idealPage;
+      const daysDifference = Math.round(pagesDifference / dailyPages);
+
+      // Update pace badge
+      const paceBadge = card.querySelector('.pace-badge');
+      if (daysDifference >= 3) {
+        paceBadge.className = 'pace-badge ahead';
+        paceBadge.textContent = `🔥 AHEAD BY ${daysDifference} DAYS`;
+      } else if (daysDifference >= 1) {
+        paceBadge.className = 'pace-badge on-track';
+        paceBadge.textContent = '✓ ON TRACK';
+      } else if (daysDifference <= -3) {
+        paceBadge.className = 'pace-badge behind';
+        paceBadge.textContent = `BEHIND: +${Math.abs(pagesDifference)} PAGES`;
+      } else {
+        paceBadge.className = 'pace-badge on-track';
+        paceBadge.textContent = '✓ ON TRACK';
+      }
     }
   </script>
 </body>
