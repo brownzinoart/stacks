@@ -82,7 +82,7 @@ export default function StacksPage() {
               <h1 className="text-h2-mobile md:text-h2-tablet lg:text-h2-desktop font-black uppercase mb-1">
                 {currentUser.username}
               </h1>
-              <p className="text-sm font-semibold text-gray-600 dark:text-gray-400">
+              <p className="text-sm font-semibold text-light-textSecondary dark:text-dark-textSecondary">
                 {currentUser.bio}
               </p>
             </div>
@@ -90,17 +90,17 @@ export default function StacksPage() {
 
           {/* Stats Row */}
           <div className="grid grid-cols-3 gap-3">
-            <div className="bg-gradient-primary border-[5px] border-light-border dark:border-dark-border shadow-brutal-sm rounded-[20px] p-3 text-center">
-              <p className="font-black text-4xl text-black dark:text-white">24</p>
-              <p className="font-black text-xs uppercase tracking-wider text-gray-600 dark:text-gray-400">Stacks</p>
+            <div className="bg-accent-purple border-[5px] border-light-border dark:border-dark-border shadow-brutal-badge rounded-[20px] p-3 text-center transition-all duration-[120ms] ease-in-out hover:translate-x-[3px] hover:-translate-y-[3px] hover:shadow-[-6px_6px_0_0_rgb(var(--shadow-color))] cursor-pointer">
+              <p className="font-black text-4xl text-white">24</p>
+              <p className="font-black text-xs uppercase tracking-wider text-white/80">Stacks</p>
             </div>
-            <div className="bg-gradient-accent border-[5px] border-light-border dark:border-dark-border shadow-brutal-sm rounded-[20px] p-3 text-center">
-              <p className="font-black text-4xl text-black dark:text-white">156</p>
-              <p className="font-black text-xs uppercase tracking-wider text-gray-600 dark:text-gray-400">Likes</p>
+            <div className="bg-accent-coral border-[5px] border-light-border dark:border-dark-border shadow-brutal-badge rounded-[20px] p-3 text-center transition-all duration-[120ms] ease-in-out hover:translate-x-[3px] hover:-translate-y-[3px] hover:shadow-[-6px_6px_0_0_rgb(var(--shadow-color))] cursor-pointer">
+              <p className="font-black text-4xl text-white">156</p>
+              <p className="font-black text-xs uppercase tracking-wider text-white/80">Likes</p>
             </div>
-            <div className="bg-gradient-success border-[5px] border-light-border dark:border-dark-border shadow-brutal-sm rounded-[20px] p-3 text-center">
-              <p className="font-black text-4xl text-black dark:text-white">89</p>
-              <p className="font-black text-xs uppercase tracking-wider text-gray-600 dark:text-gray-400">Books</p>
+            <div className="bg-accent-teal border-[5px] border-light-border dark:border-dark-border shadow-brutal-badge rounded-[20px] p-3 text-center transition-all duration-[120ms] ease-in-out hover:translate-x-[3px] hover:-translate-y-[3px] hover:shadow-[-6px_6px_0_0_rgb(var(--shadow-color))] cursor-pointer">
+              <p className="font-black text-4xl text-white">89</p>
+              <p className="font-black text-xs uppercase tracking-wider text-white/80">Books</p>
             </div>
           </div>
         </div>
@@ -164,7 +164,7 @@ function TabButton({
       onClick={onClick}
       className={`flex-1 py-4 font-black text-sm uppercase tracking-tight border-r-[5px] last:border-r-0 border-light-border dark:border-dark-border transition-colors ${
         active
-          ? "bg-gradient-primary text-white"
+          ? "bg-accent-teal text-white"
           : "bg-light-secondary dark:bg-dark-secondary text-light-text dark:text-dark-text"
       }`}
     >
