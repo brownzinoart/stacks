@@ -8,6 +8,7 @@ interface GoogleBooksData {
   averageRating: number;
   ratingsCount: number;
   description: string;
+  coverUrl?: string; // For cascade fallback system
 }
 
 export async function getGoogleBooksData(isbn: string): Promise<GoogleBooksData | null> {
@@ -24,10 +25,16 @@ export async function getGoogleBooksData(isbn: string): Promise<GoogleBooksData 
 
     const volumeInfo = data.items[0].volumeInfo;
 
+    // Extract cover image URL (prefer higher quality)
+    const coverUrl = volumeInfo.imageLinks?.thumbnail ||
+                     volumeInfo.imageLinks?.smallThumbnail ||
+                     undefined;
+
     return {
       averageRating: volumeInfo.averageRating || 0,
       ratingsCount: volumeInfo.ratingsCount || 0,
       description: volumeInfo.description || '',
+      coverUrl,
     };
   } catch (error) {
     console.error('Google Books API error:', error);

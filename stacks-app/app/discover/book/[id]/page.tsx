@@ -76,20 +76,29 @@ export default function BookDetailPage() {
         <div className="p-6 clear-both">
           {/* Book Header */}
           <div className="flex gap-5 mb-6">
-            {/* Cover */}
-            <div
-              className="w-[140px] h-[210px] flex-shrink-0 border-[5px] border-light-border dark:border-dark-border rounded-xl overflow-hidden shadow-brutal-badge"
-              style={{
-                backgroundImage: `url(${book.cover})`,
-                backgroundSize: "cover",
-                backgroundPosition: "center",
-              }}
-            >
-              {!book.cover && (
-                <div className="w-full h-full bg-gradient-accent flex items-center justify-center text-5xl">
-                  📚
-                </div>
-              )}
+            {/* Cover with cascade fallback */}
+            <div className="w-[140px] h-[210px] flex-shrink-0 border-[5px] border-light-border dark:border-dark-border rounded-xl overflow-hidden shadow-brutal-badge relative">
+              <img
+                src={book.cover}
+                alt={`${book.title} cover`}
+                className="w-full h-full object-cover"
+                onError={(e) => {
+                  // Cascade: Try Google Books fallback
+                  const googleCover = book.googleBooksCoverUrl;
+                  if (googleCover && e.currentTarget.src !== googleCover) {
+                    e.currentTarget.src = googleCover;
+                  } else {
+                    // Final fallback: hide img, show placeholder
+                    e.currentTarget.style.display = 'none';
+                    const placeholder = e.currentTarget.nextElementSibling as HTMLElement;
+                    if (placeholder) placeholder.style.display = 'flex';
+                  }
+                }}
+              />
+              {/* Styled placeholder (hidden by default) */}
+              <div className="absolute inset-0 bg-gradient-accent items-center justify-center text-5xl" style={{ display: 'none' }}>
+                📚
+              </div>
             </div>
 
             {/* Header Info */}

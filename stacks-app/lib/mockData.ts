@@ -12,7 +12,8 @@ export interface Book {
   id: string;
   title: string;
   author: string;
-  cover: string;
+  cover: string; // Open Library URL (primary)
+  googleBooksCoverUrl?: string; // Google Books URL (fallback)
   genres: string[];
   tropes: string[];
   pageCount: number;
@@ -57,7 +58,10 @@ export interface ReadingProgress {
   status: "reading" | "finished" | "abandoned";
 }
 
-<<<<<<< Updated upstream
+// ============================================
+// READING ANALYTICS TYPES
+// ============================================
+
 export interface DailyCheckIn {
   date: Date;
   pagesRead: number;
@@ -105,7 +109,8 @@ export interface GenreData {
 export interface AuthorData {
   author: string;
   count: number;
-=======
+}
+
 // ============================================
 // SEARCH RESULTS & BOOK DETAIL TYPES
 // ============================================
@@ -154,14 +159,13 @@ export interface BookReview {
   username: string;
   stars: number;
   text: string;
-  source: 'hardcover' | 'google';
+  source: 'google' | 'mock';
 }
 
 export interface UserLibrary {
   name: string;
   catalogUrl: string;
   type: 'bibliocommons' | 'overdrive' | 'other';
->>>>>>> Stashed changes
 }
 
 // Current user (the person demoing the app)
@@ -499,7 +503,6 @@ export function getBookById(id: string): Book | undefined {
   return mockBooks.find((b) => b.id === id);
 }
 
-<<<<<<< Updated upstream
 // Mock Reading Progress with patterns
 export const mockReadingProgressEnhanced: ReadingProgressEnhanced[] = [
   // The Cruel Prince - Speed read (3 days)
@@ -634,7 +637,6 @@ export const mockReadingProgressEnhanced: ReadingProgressEnhanced[] = [
     ]
   },
 ];
-=======
 // ============================================
 // MOCK SEARCH RESULTS
 // ============================================
@@ -761,7 +763,7 @@ export function getMockSearchResults(query: string): SearchResult {
 
 export function getMockBookDetail(bookId: string): BookDetail | null {
   // For MVP, return hardcoded detail for search-book-1
-  // TODO: Replace with actual API calls (Hardcover, Google Books, NYT)
+  // TODO: Replace with actual search API (currently mock data)
 
   if (bookId === "search-book-1") {
     return {
@@ -786,14 +788,14 @@ export function getMockBookDetail(bookId: string): BookDetail | null {
             username: "booklover23",
             stars: 5,
             text: "Perfect cozy mystery! The small-town setting felt so real and the characters were absolutely charming. Couldn't put it down.",
-            source: "hardcover",
+            source: "mock",
           },
           {
             id: "review-2",
             username: "mystery_fan",
             stars: 4,
             text: "Great plot twists and a protagonist you can't help but root for. Exactly what I was looking for in a cozy mystery.",
-            source: "hardcover",
+            source: "mock",
           },
         ],
       },
@@ -813,14 +815,12 @@ export async function getBookDetailWithAPIs(bookId: string, isbn?: string): Prom
 
   try {
     // Import API functions dynamically to avoid circular dependencies
-    const { getHardcoverBookData } = await import('./api/hardcoverApi');
     const { getGoogleBooksData } = await import('./api/googleBooksApi');
     const { checkBestseller } = await import('./api/nytBestsellerApi');
     const { getBookReviews } = await import('./services/reviewsService');
 
     // Fetch from APIs in parallel
-    const [hardcoverData, googleData, bestsellerInfo, reviewsData] = await Promise.all([
-      getHardcoverBookData(isbn),
+    const [googleData, bestsellerInfo, reviewsData] = await Promise.all([
       getGoogleBooksData(isbn),
       checkBestseller(isbn),
       getBookReviews(isbn, bookId, 3), // Fetch 3 reviews for book detail page
@@ -830,21 +830,22 @@ export async function getBookDetailWithAPIs(bookId: string, isbn?: string): Prom
     return {
       ...mockDetail,
       isbn,
+      googleBooksCoverUrl: googleData?.coverUrl, // For cascade fallback
       socialProof: {
         isBestseller: bestsellerInfo.isBestseller,
         bestsellerInfo: bestsellerInfo.isBestseller
           ? `${bestsellerInfo.listName} • ${bestsellerInfo.weeksOnList} weeks`
           : undefined,
-        rating: hardcoverData?.rating || googleData?.averageRating || mockDetail.socialProof.rating,
-        ratingsCount: hardcoverData?.ratingsCount || googleData?.ratingsCount || mockDetail.socialProof.ratingsCount,
-        readerTags: hardcoverData?.tags || mockDetail.socialProof.readerTags,
+        rating: googleData?.averageRating || mockDetail.socialProof.rating,
+        ratingsCount: googleData?.ratingsCount || mockDetail.socialProof.ratingsCount,
+        readerTags: mockDetail.socialProof.readerTags,
         // Use reviews service (currently mock, but abstracted for future real data)
         reviews: reviewsData.reviews.map(r => ({
           id: r.id,
           username: r.username,
           stars: r.rating,
           text: r.text,
-          source: reviewsData.source.name.toLowerCase() as 'hardcover',
+          source: 'google',
         })),
       },
       description: googleData?.description || mockDetail.description,
@@ -855,4 +856,3 @@ export async function getBookDetailWithAPIs(bookId: string, isbn?: string): Prom
     return mockDetail;
   }
 }
->>>>>>> Stashed changes
