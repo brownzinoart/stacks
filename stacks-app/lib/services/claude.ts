@@ -1,5 +1,5 @@
 import Anthropic from '@anthropic-ai/sdk';
-import type { UserReadingProfile, Book, SearchResult } from '../mockData';
+import type { UserReadingProfile, Book, NaturalLanguageSearchResult } from '../mockData';
 import { extractMovieReferences, extractThemesFromMovie } from './tmdb';
 
 const anthropic = new Anthropic({
@@ -101,7 +101,7 @@ export async function findMatchingBooks(
   userProfile: UserReadingProfile,
   bookCatalog: Book[],
   limit: number = 10
-): Promise<SearchResult[]> {
+): Promise<NaturalLanguageSearchResult[]> {
   // Step 1: Enrich query with context
   const enrichment = await enrichQueryWithContext(query, userProfile);
 
@@ -152,7 +152,7 @@ Return ONLY the book recommendations in this format, nothing else.`;
 
   // Step 4: Parse Claude's response
   const lines = response.trim().split('\n').filter(line => line.trim());
-  const results: SearchResult[] = [];
+  const results: NaturalLanguageSearchResult[] = [];
 
   for (const line of lines) {
     const match = line.match(/\[(\d+)\]\|(\d+)\|(.*)/);
