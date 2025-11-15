@@ -10,7 +10,7 @@ import { mockBooksWithMetadata } from "@/lib/mockData";
 
 export default function DiscoverPage() {
   const [searchMode, setSearchMode] = useState<"natural" | "browse">("browse");
-  const { query, results, loading, error, search, clearResults } = useNaturalSearch();
+  const { query, results, loading, error, progress, enrichedContext, search, clearResults } = useNaturalSearch();
 
   const handleSearch = (query: string) => {
     setSearchMode("natural");
@@ -66,15 +66,39 @@ export default function DiscoverPage() {
           </div>
         )}
 
+        {/* Loading State with Progress */}
+        {searchMode === "natural" && loading && (
+          <div className="py-6 px-4">
+            <NaturalSearchResults
+              results={[]}
+              query={query}
+              progress={progress}
+              enrichedContext={enrichedContext}
+              onBookClick={(bookId) => {
+                console.log("Book clicked:", bookId);
+                // TODO: Navigate to book detail page
+              }}
+              onExampleClick={(exampleQuery) => {
+                handleSearch(exampleQuery);
+              }}
+            />
+          </div>
+        )}
+
         {/* Search Results */}
         {searchMode === "natural" && !loading && !error && (
           <div className="py-6 px-4">
             <NaturalSearchResults
               results={results}
               query={query}
+              progress={progress}
+              enrichedContext={enrichedContext}
               onBookClick={(bookId) => {
                 console.log("Book clicked:", bookId);
                 // TODO: Navigate to book detail page
+              }}
+              onExampleClick={(exampleQuery) => {
+                handleSearch(exampleQuery);
               }}
             />
           </div>

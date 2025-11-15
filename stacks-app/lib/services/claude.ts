@@ -5,20 +5,27 @@ import { extractMovieReferences, extractThemesFromMovie } from './tmdb';
 const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
   dangerouslyAllowBrowser: true, // Required for test environment
+  timeout: 10000, // 10 second timeout
 });
 
 const MODEL = 'claude-3-5-haiku-20241022';
 
 /**
- * Generic Claude API call
+ * Generic Claude API call with timeout
  */
-export async function callClaude(prompt: string, maxTokens: number = 1024): Promise<string> {
+export async function callClaude(prompt: string, maxTokens: number = 1024, timeoutMs: number = 10000): Promise<string> {
   if (!process.env.ANTHROPIC_API_KEY) {
     throw new Error('ANTHROPIC_API_KEY not set in environment');
   }
 
   try {
-    const message = await anthropic.messages.create({
+    // Create a timeout promise
+    const timeoutPromise = new Promise<never>((_, reject) => {
+      setTimeout(() => reject(new Error('Request timeout')), timeoutMs);
+    });
+
+    // Race between API call and timeout
+    const apiPromise = anthropic.messages.create({
       model: MODEL,
       max_tokens: maxTokens,
       messages: [
@@ -29,6 +36,7 @@ export async function callClaude(prompt: string, maxTokens: number = 1024): Prom
       ]
     });
 
+    const message = await Promise.race([apiPromise, timeoutPromise]);
     const textContent = message.content.find(block => block.type === 'text');
     return textContent ? textContent.text : '';
   } catch (error) {
@@ -39,6 +47,7 @@ export async function callClaude(prompt: string, maxTokens: number = 1024): Prom
 
 /**
  * SECONDARY MODEL: Enrich query with TMDB data and user context
+ * Optimized with parallelization
  */
 export async function enrichQueryWithContext(
   rawQuery: string,
@@ -50,41 +59,36 @@ export async function enrichQueryWithContext(
 }> {
   // Extract movie references
   const movieRefs = extractMovieReferences(rawQuery);
+  
+  // Parallelize TMDB lookups
+  const movieThemePromises = movieRefs.map(movieTitle => extractThemesFromMovie(movieTitle));
+  const movieThemeResults = await Promise.all(movieThemePromises);
+  
+  // Flatten themes from all movies
   const movieThemes: string[] = [];
-
-  // Fetch themes from TMDB for each movie reference
-  for (const movieTitle of movieRefs) {
-    const themes = await extractThemesFromMovie(movieTitle);
+  movieThemeResults.forEach(themes => {
     movieThemes.push(...themes.themes, ...themes.tropes, ...themes.mood);
-  }
+  });
 
-  // Build user context summary
-  const userContextSummary = `
-User's favorite genres: ${userProfile.favoriteGenres.join(', ')}
-User's favorite tropes: ${userProfile.favoriteTropes.join(', ')}
-User's preferred mood: ${userProfile.preferredMood.join(', ')}
-User dislikes: ${userProfile.dislikedTropes.join(', ')}
-Recently rated highly: ${userProfile.readingHistory.filter(h => h.rating && h.rating >= 4).length} books
-  `.trim();
+  // Build user context summary (optimized)
+  const highRatedCount = userProfile.readingHistory.filter(h => h.rating && h.rating >= 4).length;
+  const userContextSummary = `Favorite genres: ${userProfile.favoriteGenres.join(', ')}
+Favorite tropes: ${userProfile.favoriteTropes.join(', ')}
+Preferred mood: ${userProfile.preferredMood.join(', ')}
+Dislikes: ${userProfile.dislikedTropes.join(', ')}
+Highly rated books: ${highRatedCount}`;
 
-  // Use Claude to enrich the query
-  const prompt = `You are a book recommendation expert. A user searched for: "${rawQuery}"
+  // Optimized prompt (reduced tokens)
+  const prompt = `Book recommendation expert. User search: "${rawQuery}"
 
-${movieRefs.length > 0 ? `Movie references detected: ${movieRefs.join(', ')}
-Themes from these movies: ${movieThemes.join(', ')}` : ''}
+${movieRefs.length > 0 ? `Movie refs: ${movieRefs.join(', ')}
+Themes: ${movieThemes.join(', ')}` : ''}
 
-User's reading preferences:
-${userContextSummary}
+User preferences: ${userContextSummary}
 
-Your task: Expand this search query into a detailed description of what the user is looking for in their next book. Include:
-1. Core themes and tropes they're seeking
-2. Mood/atmosphere
-3. Any specific elements mentioned
-4. How their past preferences should influence recommendations
+Expand query into what user seeks (2-3 sentences). Include themes, tropes, mood, and how preferences influence recommendations. Return ONLY the description.`;
 
-Return ONLY the enriched query description (2-3 sentences), nothing else.`;
-
-  const enrichedQuery = await callClaude(prompt, 300);
+  const enrichedQuery = await callClaude(prompt, 300, 8000);
 
   return {
     enrichedQuery,
@@ -150,26 +154,95 @@ Return ONLY the book recommendations in this format, nothing else.`;
 
   const response = await callClaude(prompt, 2000);
 
-  // Step 4: Parse Claude's response
+  // Step 4: Parse Claude's response with fallback strategies
+  const results = parseClaudeResponse(response, bookCatalog, limit);
+
+  if (results.length === 0) {
+    console.warn('Claude returned no parseable results, response:', response.substring(0, 200));
+  }
+
+  return results;
+}
+
+/**
+ * Parse Claude response with multiple fallback strategies
+ */
+function parseClaudeResponse(
+  response: string,
+  bookCatalog: Book[],
+  limit: number
+): NaturalLanguageSearchResult[] {
   const lines = response.trim().split('\n').filter(line => line.trim());
   const results: NaturalLanguageSearchResult[] = [];
+  const seenIndices = new Set<number>();
 
+  // Strategy 1: Primary format [index]|score|reason 1; reason 2
   for (const line of lines) {
-    const match = line.match(/\[(\d+)\]\|(\d+)\|(.*)/);
+    // Try primary format
+    let match = line.match(/\[(\d+)\]\s*[|]\s*(\d+)\s*[|]\s*(.*)/);
+    
+    // Try alternative formats
+    if (!match) {
+      match = line.match(/\[(\d+)\]\s*-\s*(\d+)\s*-\s*(.*)/);
+    }
+    if (!match) {
+      match = line.match(/(\d+)\s*[|]\s*(\d+)\s*[|]\s*(.*)/);
+    }
+    if (!match) {
+      match = line.match(/Book\s*(\d+)[:]\s*(\d+)%[:\s]*(.*)/i);
+    }
+
     if (!match) continue;
 
     const [, indexStr, scoreStr, reasonsStr] = match;
-    const bookIndex = parseInt(indexStr);
-    const matchScore = parseInt(scoreStr);
-    const matchReasons = reasonsStr.split(';').map(r => r.trim()).filter(r => r);
+    const bookIndex = parseInt(indexStr, 10);
+    const matchScore = Math.min(Math.max(parseInt(scoreStr, 10) || 0, 0), 100);
+    
+    // Validate index
+    if (isNaN(bookIndex) || bookIndex < 0 || bookIndex >= bookCatalog.length) {
+      continue;
+    }
 
-    if (bookIndex >= 0 && bookIndex < bookCatalog.length) {
-      results.push({
-        book: bookCatalog[bookIndex],
-        matchScore,
-        matchReasons,
-        relevanceToQuery: matchScore // Same for now
-      });
+    // Skip duplicates
+    if (seenIndices.has(bookIndex)) {
+      continue;
+    }
+
+    seenIndices.add(bookIndex);
+
+    // Parse reasons (handle various separators)
+    const matchReasons = reasonsStr
+      .split(/[;|]|and/)
+      .map(r => r.trim())
+      .filter(r => r.length > 0);
+
+    // Ensure at least one reason
+    if (matchReasons.length === 0) {
+      matchReasons.push('Matches your search criteria');
+    }
+
+    results.push({
+      book: bookCatalog[bookIndex],
+      matchScore,
+      matchReasons: matchReasons.slice(0, 3), // Limit to 3 reasons
+      relevanceToQuery: matchScore
+    });
+  }
+
+  // Strategy 2: If no results, try to extract book indices from response
+  if (results.length === 0) {
+    const indexMatches = response.matchAll(/\[(\d+)\]/g);
+    for (const match of indexMatches) {
+      const bookIndex = parseInt(match[1], 10);
+      if (!isNaN(bookIndex) && bookIndex >= 0 && bookIndex < bookCatalog.length && !seenIndices.has(bookIndex)) {
+        seenIndices.add(bookIndex);
+        results.push({
+          book: bookCatalog[bookIndex],
+          matchScore: 70, // Default score
+          matchReasons: ['Mentioned in search results'],
+          relevanceToQuery: 70
+        });
+      }
     }
   }
 

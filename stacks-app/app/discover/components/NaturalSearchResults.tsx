@@ -1,30 +1,106 @@
 "use client";
 
-import { Sparkles, TrendingUp } from "lucide-react";
+import { Sparkles, TrendingUp, Loader2, Film, BookOpen } from "lucide-react";
 import Image from "next/image";
 import type { NaturalLanguageSearchResult } from "@/lib/mockData";
+import type { SearchProgress } from "../hooks/useNaturalSearch";
 
 interface NaturalSearchResultsProps {
   results: NaturalLanguageSearchResult[];
   query: string;
+  progress?: SearchProgress;
+  enrichedContext?: {
+    movieReferences?: string[];
+    excludedReadBooks?: number;
+    fallback?: boolean;
+  };
   onBookClick?: (bookId: string) => void;
+  onExampleClick?: (exampleQuery: string) => void;
 }
+
+const PROGRESS_MESSAGES: Record<SearchProgress, string> = {
+  idle: '',
+  analyzing: 'Analyzing your query...',
+  finding: 'Finding matching books...',
+  ranking: 'Ranking results...',
+  complete: ''
+};
+
+const EXAMPLE_QUERIES = [
+  "cozy mystery in a bookshop",
+  "like Succession but a book",
+  "dark academia with secret societies",
+  "uplifting after a hard week",
+  "psychological thriller with a twist"
+];
 
 export default function NaturalSearchResults({
   results,
   query,
-  onBookClick
+  progress = 'complete',
+  enrichedContext,
+  onBookClick,
+  onExampleClick
 }: NaturalSearchResultsProps) {
-  if (results.length === 0) {
+  const isLoading = progress !== 'complete' && progress !== 'idle';
+  const isEmpty = results.length === 0 && !isLoading;
+
+  // Loading state with progress
+  if (isLoading) {
+    return (
+      <div className="space-y-6">
+        {/* Progress Indicator */}
+        <div className="text-center py-8 px-4">
+          <div className="relative inline-block mb-4">
+            <Loader2 className="w-12 h-12 text-purple-600 dark:text-purple-400 animate-spin" strokeWidth={2.5} />
+            <Sparkles className="w-6 h-6 text-purple-600 dark:text-purple-400 absolute -top-1 -right-1 animate-pulse" strokeWidth={2.5} />
+          </div>
+          <p className="font-bold text-lg text-black dark:text-white mb-2">
+            {PROGRESS_MESSAGES[progress]}
+          </p>
+          {enrichedContext?.movieReferences && enrichedContext.movieReferences.length > 0 && (
+            <div className="mt-4 flex items-center justify-center gap-2 px-4 py-2 bg-purple-100 dark:bg-purple-900/30 border-[3px] border-black dark:border-white rounded-xl inline-flex">
+              <Film className="w-4 h-4 text-purple-600 dark:text-purple-400" strokeWidth={2.5} />
+              <span className="font-semibold text-sm text-purple-600 dark:text-purple-400">
+                Detected: {enrichedContext.movieReferences.join(', ')}
+              </span>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  // Empty state with suggestions
+  if (isEmpty) {
+    const message = enrichedContext?.excludedReadBooks && enrichedContext.excludedReadBooks > 0
+      ? `All ${enrichedContext.excludedReadBooks} matching books have already been read`
+      : 'No books found matching your search';
+
     return (
       <div className="text-center py-16 px-4">
-        <Sparkles className="w-16 h-16 mx-auto mb-4 text-gray-400" strokeWidth={2} />
+        <BookOpen className="w-16 h-16 mx-auto mb-4 text-gray-400" strokeWidth={2} />
         <p className="font-bold text-xl text-black dark:text-white mb-2">
-          No matches found
+          {message}
         </p>
-        <p className="font-semibold text-gray-600 dark:text-gray-400">
-          Try a different search or adjust your preferences
+        <p className="font-semibold text-gray-600 dark:text-gray-400 mb-6">
+          Try a different search or check out these examples:
         </p>
+        
+        {/* Example Queries */}
+        <div className="max-w-md mx-auto space-y-2">
+          {EXAMPLE_QUERIES.slice(0, 3).map((example, idx) => (
+            <button
+              key={idx}
+              onClick={() => onExampleClick && onExampleClick(example)}
+              className="w-full text-left px-4 py-3 bg-gray-100 dark:bg-gray-800 border-[3px] border-black dark:border-white rounded-xl hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+            >
+              <p className="font-semibold text-sm text-gray-700 dark:text-gray-300">
+                "{example}"
+              </p>
+            </button>
+          ))}
+        </div>
       </div>
     );
   }
@@ -40,10 +116,20 @@ export default function NaturalSearchResults({
                       border-[3px] border-black dark:border-white rounded-xl">
           <Sparkles className="w-4 h-4 text-purple-600 dark:text-purple-400" strokeWidth={3} />
           <span className="font-black text-sm text-purple-600 dark:text-purple-400">
-            AI POWERED
+            {enrichedContext?.fallback ? 'KEYWORD SEARCH' : 'AI POWERED'}
           </span>
         </div>
       </div>
+
+      {/* Enrichment Context */}
+      {enrichedContext?.movieReferences && enrichedContext.movieReferences.length > 0 && (
+        <div className="px-4 flex items-center gap-2 text-sm">
+          <Film className="w-4 h-4 text-purple-600 dark:text-purple-400" strokeWidth={2.5} />
+          <span className="font-semibold text-gray-700 dark:text-gray-300">
+            Found books similar to: <span className="text-purple-600 dark:text-purple-400">{enrichedContext.movieReferences.join(', ')}</span>
+          </span>
+        </div>
+      )}
 
       {/* Results List */}
       <div className="space-y-4">
