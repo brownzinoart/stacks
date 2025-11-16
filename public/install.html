@@ -1,0 +1,211 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Install Stacks Library App</title>
+    <style>
+      body {
+        font-family: -apple-system, system-ui, sans-serif;
+        margin: 0;
+        padding: 20px;
+        background: #fbf7f4;
+        text-align: center;
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+      }
+      .container {
+        max-width: 400px;
+        background: white;
+        border-radius: 24px;
+        padding: 40px 30px;
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+      }
+      h1 {
+        color: #0f172a;
+        font-size: 32px;
+        margin: 0 0 10px 0;
+        font-weight: 900;
+      }
+      .subtitle {
+        color: #475569;
+        font-size: 18px;
+        margin-bottom: 40px;
+      }
+      .step {
+        background: #f8fafc;
+        border-radius: 16px;
+        padding: 20px;
+        margin-bottom: 20px;
+        text-align: left;
+      }
+      .step-number {
+        background: #3b82f6;
+        color: white;
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        margin-right: 12px;
+      }
+      .step-text {
+        font-size: 18px;
+        color: #0f172a;
+        display: flex;
+        align-items: center;
+      }
+      .big-button {
+        background: #4ade80;
+        color: white;
+        border: none;
+        border-radius: 999px;
+        padding: 20px 40px;
+        font-size: 20px;
+        font-weight: 900;
+        cursor: pointer;
+        margin-top: 20px;
+        width: 100%;
+        box-shadow: 0 10px 20px -5px rgba(74, 222, 128, 0.3);
+        transition: transform 0.2s;
+      }
+      .big-button:active {
+        transform: scale(0.95);
+      }
+      .icon {
+        width: 80px;
+        height: 80px;
+        margin: 0 auto 20px;
+        background: #fbbf24;
+        border-radius: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 40px;
+      }
+      .device-specific {
+        display: none;
+        background: #fef3c7;
+        border-radius: 12px;
+        padding: 16px;
+        margin-top: 20px;
+        font-size: 16px;
+        color: #92400e;
+      }
+      .qr-section {
+        margin-top: 40px;
+        padding-top: 40px;
+        border-top: 2px dashed #e5e7eb;
+      }
+      #install-button {
+        display: none;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="icon">📚</div>
+      <h1>Stacks Library</h1>
+      <p class="subtitle">Your AI-powered reading companion</p>
+
+      <div id="ios-instructions" class="device-specific">
+        <div class="step">
+          <div class="step-text">
+            <span class="step-number">1</span>
+            <span>Tap the Share button below ⬇️</span>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-text">
+            <span class="step-number">2</span>
+            <span>Scroll down and tap "Add to Home Screen"</span>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-text">
+            <span class="step-number">3</span>
+            <span>Tap "Add" in the top right</span>
+          </div>
+        </div>
+      </div>
+
+      <div id="android-instructions" class="device-specific">
+        <div class="step">
+          <div class="step-text">
+            <span class="step-number">1</span>
+            <span>Tap the menu (3 dots) in your browser</span>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-text">
+            <span class="step-number">2</span>
+            <span>Tap "Add to Home screen"</span>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-text">
+            <span class="step-number">3</span>
+            <span>Tap "Add"</span>
+          </div>
+        </div>
+      </div>
+
+      <div id="desktop-instructions" class="device-specific">
+        <div class="step">
+          <div class="step-text">
+            <span class="step-number">📱</span>
+            <span>Open this page on your phone to install the app!</span>
+          </div>
+        </div>
+        <p style="margin-top: 20px">Or scan this QR code:</p>
+        <div id="qr-code" style="margin: 20px auto"></div>
+      </div>
+
+      <button id="install-button" class="big-button">Install Stacks App</button>
+
+      <button id="open-app" class="big-button" onclick="window.location.href='/'">Open Stacks in Browser</button>
+    </div>
+
+    <script>
+      // Detect device type
+      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+      const isAndroid = /Android/.test(navigator.userAgent);
+      const isMobile = isIOS || isAndroid;
+      const isPWA = window.matchMedia('(display-mode: standalone)').matches;
+
+      // Show appropriate instructions
+      if (isPWA) {
+        document.querySelector('.subtitle').textContent = 'App is already installed!';
+        document.getElementById('open-app').textContent = 'Open Stacks App';
+      } else if (isIOS) {
+        document.getElementById('ios-instructions').style.display = 'block';
+      } else if (isAndroid) {
+        document.getElementById('android-instructions').style.display = 'block';
+      } else {
+        document.getElementById('desktop-instructions').style.display = 'block';
+        // Generate QR code for desktop users
+        const qrUrl = window.location.origin + '/install.html';
+        document.getElementById('qr-code').innerHTML =
+          `<img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(qrUrl)}" alt="QR Code">`;
+      }
+
+      // PWA install prompt
+      let deferredPrompt;
+      window.addEventListener('beforeinstallprompt', (e) => {
+        e.preventDefault();
+        deferredPrompt = e;
+        document.getElementById('install-button').style.display = 'block';
+        document.getElementById('install-button').addEventListener('click', async () => {
+          deferredPrompt.prompt();
+          const { outcome } = await deferredPrompt.userChoice;
+          deferredPrompt = null;
+        });
+      });
+    </script>
+  </body>
+</html>
