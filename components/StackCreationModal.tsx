@@ -4,7 +4,7 @@ import { useState } from "react";
 import Modal from "./Modal";
 import Input from "./Input";
 import EmptyState from "./EmptyState";
-import { Book, mockBooks } from "@/lib/mockData";
+import { Book, mockBooks } from "../lib/mockData";
 import { Search, Plus, Camera, Check } from "lucide-react";
 
 interface StackCreationModalProps {

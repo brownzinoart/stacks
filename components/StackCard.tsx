@@ -4,8 +4,8 @@ import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { Heart, MessageCircle, Send, Bookmark, MoreHorizontal, Eye, EyeOff } from "lucide-react";
-import { Stack, User, MatchLevel } from "@/lib/mockData";
-import { useScrollAnimation } from "@/lib/useScrollAnimation";
+import { Stack, User, MatchLevel } from "../lib/mockData";
+import { useScrollAnimation } from "../lib/useScrollAnimation";
 import HashtagBadge from "./HashtagBadge";
 
 interface StackCardProps {

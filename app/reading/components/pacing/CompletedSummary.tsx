@@ -1,6 +1,6 @@
 "use client";
 
-import { ReadingProgressEnhanced } from "@/lib/mockData";
+import { ReadingProgressEnhanced } from "../../../../lib/mockData";
 
 interface Props {
   finished: ReadingProgressEnhanced[];

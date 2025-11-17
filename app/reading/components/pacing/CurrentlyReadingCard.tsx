@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { getBookById, ReadingProgressEnhanced } from "@/lib/mockData";
+import { getBookById, ReadingProgressEnhanced } from "../../../../lib/mockData";
 
 interface Props {
   progress: ReadingProgressEnhanced;

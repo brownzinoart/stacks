@@ -1,4 +1,4 @@
-import { Book } from "@/lib/mockData";
+import { Book } from "../lib/mockData";
 
 interface BookCardProps {
   book: Book;

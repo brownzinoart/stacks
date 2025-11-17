@@ -1,8 +1,8 @@
 "use client";
 
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend } from "recharts";
-import { GenreData } from "@/lib/mockData";
-import { useMediaQuery } from "@/hooks/useMediaQuery";
+import { GenreData } from "../../../../lib/mockData";
+import { useMediaQuery } from "../../../../hooks/useMediaQuery";
 
 interface GenreDistributionChartProps {
   data: GenreData[];

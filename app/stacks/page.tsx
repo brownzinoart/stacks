@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Image from "next/image";
 import { Plus } from "lucide-react";
-import { currentUser, mockStacks, getUserById } from "@/lib/mockData";
+import { currentUser, mockStacks, getUserById } from "../../lib/mockData";
 
 type TabType = "my-stacks" | "liked" | "saved";
 

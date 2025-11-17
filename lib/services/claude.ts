@@ -60,15 +60,26 @@ export async function enrichQueryWithContext(
   // Extract movie references
   const movieRefs = extractMovieReferences(rawQuery);
   
+  if (movieRefs.length > 0) {
+    console.log(`[TMDB] Movie references detected in query "${rawQuery}": ${movieRefs.join(', ')}`);
+  }
+  
   // Parallelize TMDB lookups
   const movieThemePromises = movieRefs.map(movieTitle => extractThemesFromMovie(movieTitle));
   const movieThemeResults = await Promise.all(movieThemePromises);
   
   // Flatten themes from all movies
   const movieThemes: string[] = [];
-  movieThemeResults.forEach(themes => {
+  movieThemeResults.forEach((themes, idx) => {
+    if (themes.themes.length > 0 || themes.tropes.length > 0 || themes.mood.length > 0) {
+      console.log(`[TMDB] Extracted themes for "${movieRefs[idx]}": ${[...themes.themes, ...themes.tropes, ...themes.mood].join(', ')}`);
+    }
     movieThemes.push(...themes.themes, ...themes.tropes, ...themes.mood);
   });
+  
+  if (movieThemes.length > 0) {
+    console.log(`[TMDB] Total movie themes extracted: ${movieThemes.length} (will enhance query understanding)`);
+  }
 
   // Build user context summary (optimized)
   const highRatedCount = userProfile.readingHistory.filter(h => h.rating && h.rating >= 4).length;
@@ -78,15 +89,21 @@ Preferred mood: ${userProfile.preferredMood.join(', ')}
 Dislikes: ${userProfile.dislikedTropes.join(', ')}
 Highly rated books: ${highRatedCount}`;
 
-  // Optimized prompt (reduced tokens)
+  // Optimized prompt (reduced tokens) - PRIORITIZE USER QUERY
   const prompt = `Book recommendation expert. User search: "${rawQuery}"
 
-${movieRefs.length > 0 ? `Movie refs: ${movieRefs.join(', ')}
-Themes: ${movieThemes.join(', ')}` : ''}
+${movieRefs.length > 0 ? `Movie references detected: ${movieRefs.join(', ')}
+Movie themes/tropes/mood: ${movieThemes.join(', ')}
+Use these themes to understand what the user wants, but the original query "${rawQuery}" is PRIMARY.` : ''}
 
-User preferences (for context only): ${userContextSummary}
+User preferences (SECONDARY context only - do not override query intent): ${userContextSummary}
 
-Expand query into what user seeks (2-3 sentences). Focus on the QUERY'S themes, tropes, and mood. User preferences are secondary context. Return ONLY the description.`;
+Expand the USER'S QUERY "${rawQuery}" into what they seek (2-3 sentences). 
+CRITICAL: Focus PRIMARILY on the QUERY'S themes, tropes, and mood. 
+${movieRefs.length > 0 ? 'Use movie themes to enhance understanding, but the query intent is PRIMARY. ' : ''}
+User preferences are ONLY for additional context - do not let them override the query.
+
+Return ONLY the description.`;
 
   const enrichedQuery = await callClaude(prompt, 300, 8000);
 
@@ -126,24 +143,36 @@ Pages: ${book.pageCount}
     .join('\n\n');
 
   // Step 3: Ask Claude to match books to query
+  // Build context about movie themes if available
+  const movieContext = enrichment.movieThemes.length > 0 
+    ? `\nMOVIE THEMES DETECTED (use to understand query intent): ${enrichment.movieThemes.join(', ')}`
+    : '';
+  
   const prompt = `You are a book recommendation expert. Match books to the user's search query.
 
 USER'S SEARCH QUERY: "${query}"
+${movieContext}
 
 AVAILABLE BOOKS:
 ${bookDescriptions}
 
-CRITICAL INSTRUCTIONS:
-- Match books based SOLELY on the search query "${query}"
-- Look for books where genres, mood, themes, and tropes match the query keywords
+CRITICAL INSTRUCTIONS - READ CAREFULLY:
+1. PRIMARY FOCUS: Match books based SOLELY on the user's search query "${query}"
+2. If movie themes are provided, use them ONLY to understand what the user wants from "${query}" - do not override the query
+3. Look for books where genres, mood, themes, and tropes match the QUERY keywords and intent
+4. User profile data is SECONDARY - only use it if the query is ambiguous, otherwise ignore it
+5. The query "${query}" is the PRIMARY source of truth - everything must ladder up to it
+
+Match scoring guidelines:
 - For "cozy fantasy", prioritize books with "cozy", "whimsical", "heartwarming", "uplifting" moods
 - For "dark", prioritize books with "dark", "suspenseful", "intense" moods
-- Ignore any other context - ONLY match the query
+- For movie references, match the themes/tropes/mood of that movie type
+- Score based on how well the book matches "${query}" specifically
 
 Your task: Find the top ${limit} books that match "${query}". For each book:
 1. Provide the book index number [0-${bookCatalog.length - 1}]
-2. Give a match score (0-100) based on how well it matches the query
-3. Explain 2-3 reasons why it matches the query keywords
+2. Give a match score (0-100) based on how well it matches "${query}"
+3. Explain 2-3 reasons why it matches the query keywords and intent
 
 Format EXACTLY like this (one book per line):
 [index]|score|reason 1; reason 2; reason 3

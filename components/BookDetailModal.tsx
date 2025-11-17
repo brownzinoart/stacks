@@ -1,6 +1,6 @@
 "use client";
 
-import { Book } from "@/lib/mockData";
+import { Book } from "../lib/mockData";
 import Modal from "./Modal";
 import Badge from "./Badge";
 import { Plus, BookMarked, Heart } from "lucide-react";

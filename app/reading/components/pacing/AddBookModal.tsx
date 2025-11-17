@@ -1,7 +1,7 @@
 "use client";
 
 import { Fragment, useMemo, useState } from "react";
-import { Book } from "@/lib/mockData";
+import { Book } from "../../../../lib/mockData";
 
 interface Props {
   books: Book[];

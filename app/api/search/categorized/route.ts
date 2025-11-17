@@ -55,20 +55,27 @@ async function categorizeResults(
 
   const prompt = `You are a book recommendation expert. Categorize these ${results.length} book recommendations into three categories: Atmosphere, Characters, and Plot.
 
-USER'S SEARCH: "${query}"
+USER'S SEARCH QUERY: "${query}"
+PRIMARY FOCUS: All categorization must ladder up to what the user is seeking: "${query}"
 
 BOOKS:
 ${bookList}
 
 CRITICAL REQUIREMENTS:
-- Each book can ONLY appear in ONE category (no duplicates across categories)
-- You must select exactly 2 unique books per category (6 books total)
-- Each category must have different books - no book should appear in multiple categories
+1. Each book can ONLY appear in ONE category (no duplicates across categories)
+2. You MUST select exactly 2 unique books per category (6 books total)
+3. Each category must have different books - no book should appear in multiple categories
+4. Categorize based on how each book relates to "${query}" - atmosphere, characters, or plot aspects that match the query
+
+For each category, select the 2 books that best represent that aspect of "${query}":
+- ATMOSPHERE: Books where the mood, setting, tone, or vibe matches "${query}"
+- CHARACTERS: Books where the character types, dynamics, or personalities match "${query}"
+- PLOT: Books where the story structure, themes, or narrative matches "${query}"
 
 For each category:
-- Select the top 2 books that best match that category
-- Extract 2-3 descriptive tags for that category based on the books
-- Explain why each book matches (atmosphere, characters, or plot reasons)
+- Select exactly 2 books that best match that category in relation to "${query}"
+- Extract 2-3 descriptive tags that relate to "${query}" and that category
+- Explain why each book matches that category aspect of "${query}"
 
 Format your response EXACTLY as JSON:
 {
@@ -95,7 +102,10 @@ Format your response EXACTLY as JSON:
   }
 }
 
-IMPORTANT: Ensure indices 0, 1, 2, 3, 4, 5 are all different (no duplicates).
+CRITICAL: 
+- Ensure indices 0, 1, 2, 3, 4, 5 are all different (no duplicates)
+- You MUST return exactly 2 books per category (6 total)
+- All selections must relate back to "${query}"
 
 Return ONLY valid JSON, nothing else.`;
 
@@ -263,20 +273,104 @@ Return ONLY valid JSON, nothing else.`;
         });
     };
 
-    // Final validation: Ensure we're returning the expected number of books
+    // ============================================
+    // FINAL VALIDATION: Ensure exactly 2 books per category with no duplicates
+    // ============================================
+    const finalUsedIndices = new Set<number>();
+    const finalCategories: Record<string, Array<{ index: number; reasons: string[] }>> = {
+      atmosphere: [],
+      characters: [],
+      plot: []
+    };
+    
+    // Collect all books from fixed categories, ensuring no duplicates
+    categories.forEach(cat => {
+      const categoryBooks = fixedCategories[cat]?.books || [];
+      categoryBooks.forEach(book => {
+        if (!finalUsedIndices.has(book.index) && book.index >= 0 && book.index < results.length) {
+          finalUsedIndices.add(book.index);
+          finalCategories[cat].push(book);
+        }
+      });
+    });
+    
+    // If we have 6+ books available, ensure exactly 2 per category
+    if (results.length >= 6) {
+      categories.forEach(cat => {
+        while (finalCategories[cat].length < 2 && finalUsedIndices.size < results.length) {
+          // Find next available book
+          for (let i = 0; i < results.length; i++) {
+            if (!finalUsedIndices.has(i)) {
+              finalUsedIndices.add(i);
+              finalCategories[cat].push({
+                index: i,
+                reasons: results[i].matchReasons || []
+              });
+              break;
+            }
+          }
+        }
+      });
+    }
+    
+    // Final duplicate check - ensure no book appears in multiple categories
+    const indexToCategories = new Map<number, string[]>();
+    
+    categories.forEach(cat => {
+      finalCategories[cat].forEach(book => {
+        const existing = indexToCategories.get(book.index) || [];
+        existing.push(cat);
+        indexToCategories.set(book.index, existing);
+      });
+    });
+    
+    // Find and remove duplicates
+    const duplicatesFound = Array.from(indexToCategories.entries()).filter(([_, cats]) => cats.length > 1);
+    
+    if (duplicatesFound.length > 0) {
+      console.warn(`Duplicate books detected across categories: ${duplicatesFound.length} books appear in multiple categories`);
+      duplicatesFound.forEach(([index, cats]) => {
+        // Keep in first category, remove from others
+        for (let i = 1; i < cats.length; i++) {
+          const catToClean = cats[i];
+          finalCategories[catToClean] = finalCategories[catToClean].filter(b => b.index !== index);
+          finalUsedIndices.delete(index); // Remove from used so we can reuse it
+        }
+      });
+      
+      // Refill categories that lost books
+      if (results.length >= 6) {
+        categories.forEach(cat => {
+          while (finalCategories[cat].length < 2 && finalUsedIndices.size < results.length) {
+            for (let i = 0; i < results.length; i++) {
+              if (!finalUsedIndices.has(i)) {
+                finalUsedIndices.add(i);
+                finalCategories[cat].push({
+                  index: i,
+                  reasons: results[i].matchReasons || []
+                });
+                break;
+              }
+            }
+          }
+        });
+      }
+    }
+    
+    // Transform to SearchResult format
     const finalResult = {
       query,
       atmosphere: {
         tags: fixedCategories.atmosphere?.tags || [],
-        books: transformBooks(fixedCategories.atmosphere?.books || [], 'atmosphere')
+        books: transformBooks(finalCategories.atmosphere.slice(0, 2), 'atmosphere')
       },
       characters: {
         tags: fixedCategories.characters?.tags || [],
-        books: transformBooks(fixedCategories.characters?.books || [], 'characters')
+        books: transformBooks(finalCategories.characters.slice(0, 2), 'characters')
       },
       plot: {
         tags: fixedCategories.plot?.tags || [],
-        books: transformBooks(fixedCategories.plot?.books || [], 'plot')
+        books: transformBooks(finalCategories.plot.slice(0, 2), 'plot')
       }
     };
     
@@ -287,6 +381,22 @@ Return ONLY valid JSON, nothing else.`;
       plot: finalResult.plot.books.length
     };
     console.log(`Final book counts: atmosphere=${finalCounts.atmosphere}, characters=${finalCounts.characters}, plot=${finalCounts.plot}`);
+    
+    // Final validation check
+    if (results.length >= 6) {
+      const allUnique = new Set<string>();
+      finalResult.atmosphere.books.forEach(b => allUnique.add(b.book.id));
+      finalResult.characters.books.forEach(b => allUnique.add(b.book.id));
+      finalResult.plot.books.forEach(b => allUnique.add(b.book.id));
+      
+      if (allUnique.size !== 6) {
+        console.error(`ERROR: Found ${6 - allUnique.size} duplicate books in final result!`);
+      } else if (finalCounts.atmosphere === 2 && finalCounts.characters === 2 && finalCounts.plot === 2) {
+        console.log('✓ Validation passed: Exactly 2 books per category, no duplicates');
+      } else {
+        console.warn(`WARNING: Expected 2 books per category, got: atmosphere=${finalCounts.atmosphere}, characters=${finalCounts.characters}, plot=${finalCounts.plot}`);
+      }
+    }
     
     return finalResult;
   } catch (error) {
@@ -302,21 +412,72 @@ Return ONLY valid JSON, nothing else.`;
     const atmosphereBooks: NaturalLanguageSearchResult[] = [];
     const charactersBooks: NaturalLanguageSearchResult[] = [];
     const plotBooks: NaturalLanguageSearchResult[] = [];
+    const usedBookIds = new Set<string>();
     
-    // Distribute books round-robin style, ensuring up to 2 per category
+    // Distribute books round-robin style, ensuring up to 2 per category and no duplicates
     while (idx < availableBooks.length) {
       if (atmosphereBooks.length < 2 && idx < availableBooks.length) {
-        atmosphereBooks.push(availableBooks[idx++]);
+        const book = availableBooks[idx];
+        if (!usedBookIds.has(book.book.id)) {
+          usedBookIds.add(book.book.id);
+          atmosphereBooks.push(book);
+        }
+        idx++;
       }
       if (charactersBooks.length < 2 && idx < availableBooks.length) {
-        charactersBooks.push(availableBooks[idx++]);
+        const book = availableBooks[idx];
+        if (!usedBookIds.has(book.book.id)) {
+          usedBookIds.add(book.book.id);
+          charactersBooks.push(book);
+        }
+        idx++;
       }
       if (plotBooks.length < 2 && idx < availableBooks.length) {
-        plotBooks.push(availableBooks[idx++]);
+        const book = availableBooks[idx];
+        if (!usedBookIds.has(book.book.id)) {
+          usedBookIds.add(book.book.id);
+          plotBooks.push(book);
+        }
+        idx++;
       }
       // If all categories have 2 books, stop
       if (atmosphereBooks.length >= 2 && charactersBooks.length >= 2 && plotBooks.length >= 2) {
         break;
+      }
+      // If we've gone through all books and still need more, break
+      if (idx >= availableBooks.length) {
+        break;
+      }
+    }
+    
+    // Final check: ensure exactly 2 per category if we have enough books
+    if (availableBooks.length >= 6) {
+      // If any category has less than 2, try to fill from remaining books
+      const remainingBooks = availableBooks.filter(b => !usedBookIds.has(b.book.id));
+      let remainingIdx = 0;
+      
+      while (remainingIdx < remainingBooks.length) {
+        if (atmosphereBooks.length < 2) {
+          const book = remainingBooks[remainingIdx++];
+          if (book && !usedBookIds.has(book.book.id)) {
+            usedBookIds.add(book.book.id);
+            atmosphereBooks.push(book);
+          }
+        } else if (charactersBooks.length < 2) {
+          const book = remainingBooks[remainingIdx++];
+          if (book && !usedBookIds.has(book.book.id)) {
+            usedBookIds.add(book.book.id);
+            charactersBooks.push(book);
+          }
+        } else if (plotBooks.length < 2) {
+          const book = remainingBooks[remainingIdx++];
+          if (book && !usedBookIds.has(book.book.id)) {
+            usedBookIds.add(book.book.id);
+            plotBooks.push(book);
+          }
+        } else {
+          break;
+        }
       }
     }
 
@@ -531,27 +692,76 @@ export async function POST(request: NextRequest) {
     } catch (error) {
       console.error('Categorization failed, using simple distribution:', error);
       
-      // Simple fallback: distribute results evenly across categories
+      // Simple fallback: distribute results evenly across categories with no duplicates
       const availableBooks = searchResults.slice(0, Math.min(searchResults.length, 6));
       
       let idx = 0;
       const atmosphereBooks: NaturalLanguageSearchResult[] = [];
       const charactersBooks: NaturalLanguageSearchResult[] = [];
       const plotBooks: NaturalLanguageSearchResult[] = [];
+      const usedBookIds = new Set<string>();
       
-      // Distribute books round-robin style, ensuring up to 2 per category
+      // Distribute books round-robin style, ensuring up to 2 per category and no duplicates
       while (idx < availableBooks.length) {
         if (atmosphereBooks.length < 2 && idx < availableBooks.length) {
-          atmosphereBooks.push(availableBooks[idx++]);
+          const book = availableBooks[idx];
+          if (!usedBookIds.has(book.book.id)) {
+            usedBookIds.add(book.book.id);
+            atmosphereBooks.push(book);
+          }
+          idx++;
         }
         if (charactersBooks.length < 2 && idx < availableBooks.length) {
-          charactersBooks.push(availableBooks[idx++]);
+          const book = availableBooks[idx];
+          if (!usedBookIds.has(book.book.id)) {
+            usedBookIds.add(book.book.id);
+            charactersBooks.push(book);
+          }
+          idx++;
         }
         if (plotBooks.length < 2 && idx < availableBooks.length) {
-          plotBooks.push(availableBooks[idx++]);
+          const book = availableBooks[idx];
+          if (!usedBookIds.has(book.book.id)) {
+            usedBookIds.add(book.book.id);
+            plotBooks.push(book);
+          }
+          idx++;
         }
         if (atmosphereBooks.length >= 2 && charactersBooks.length >= 2 && plotBooks.length >= 2) {
           break;
+        }
+        if (idx >= availableBooks.length) {
+          break;
+        }
+      }
+      
+      // Final check: ensure exactly 2 per category if we have enough books
+      if (availableBooks.length >= 6) {
+        const remainingBooks = availableBooks.filter(b => !usedBookIds.has(b.book.id));
+        let remainingIdx = 0;
+        
+        while (remainingIdx < remainingBooks.length) {
+          if (atmosphereBooks.length < 2) {
+            const book = remainingBooks[remainingIdx++];
+            if (book && !usedBookIds.has(book.book.id)) {
+              usedBookIds.add(book.book.id);
+              atmosphereBooks.push(book);
+            }
+          } else if (charactersBooks.length < 2) {
+            const book = remainingBooks[remainingIdx++];
+            if (book && !usedBookIds.has(book.book.id)) {
+              usedBookIds.add(book.book.id);
+              charactersBooks.push(book);
+            }
+          } else if (plotBooks.length < 2) {
+            const book = remainingBooks[remainingIdx++];
+            if (book && !usedBookIds.has(book.book.id)) {
+              usedBookIds.add(book.book.id);
+              plotBooks.push(book);
+            }
+          } else {
+            break;
+          }
         }
       }
 

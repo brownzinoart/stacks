@@ -209,12 +209,19 @@ Focus on what makes this movie distinctive and what book readers might seek.`;
 /**
  * Extract movie references from natural language query
  * e.g., "like Succession but a book" -> ["Succession"]
+ * e.g., "books like the movie scarface" -> ["scarface"]
  */
 export function extractMovieReferences(query: string): string[] {
   const commonPhrases = [
-    /like ([A-Z][a-zA-Z\s]+)(?:\s+but|,|$)/gi,
-    /similar to ([A-Z][a-zA-Z\s]+)(?:\s+but|,|$)/gi,
-    /reminds me of ([A-Z][a-zA-Z\s]+)(?:\s+but|,|$)/gi,
+    // "books like the movie [title]" or "like the movie [title]"
+    /(?:books?\s+)?like\s+(?:the\s+)?(?:movie|film|show|series)\s+([A-Z][a-zA-Z0-9\s]+?)(?:\s+but|\s+book|,|$|\.)/gi,
+    // "like [Title] but a book"
+    /like\s+([A-Z][a-zA-Z\s]+?)(?:\s+but|,|$|\.)/gi,
+    // "similar to [Title]"
+    /similar\s+to\s+([A-Z][a-zA-Z\s]+?)(?:\s+but|,|$|\.)/gi,
+    // "reminds me of [Title]"
+    /reminds\s+me\s+of\s+([A-Z][a-zA-Z\s]+?)(?:\s+but|,|$|\.)/gi,
+    // "[Title] vibes"
     /(\b[A-Z][a-z]+(?:\s+[A-Z][a-z]+)*)\s+vibes/gi,
   ];
 
@@ -222,8 +229,23 @@ export function extractMovieReferences(query: string): string[] {
 
   for (const pattern of commonPhrases) {
     let match;
+    // Reset regex lastIndex to avoid issues with global regex
+    pattern.lastIndex = 0;
     while ((match = pattern.exec(query)) !== null) {
-      matches.add(match[1].trim());
+      let extracted = match[1].trim();
+      // Remove common prefixes
+      extracted = extracted.replace(/^(the|a|an)\s+/i, '').trim();
+      // Remove "movie", "film", etc. from start (in case pattern captured it)
+      extracted = extracted.replace(/^(movie|film|show|series)\s+/i, '').trim();
+      // Remove common suffixes
+      extracted = extracted.replace(/\s+(movie|film|show|series|book|books)$/i, '').trim();
+      // Filter out common words and ensure it's a valid movie title
+      const extractedLower = extracted.toLowerCase();
+      if (extracted && extracted.length > 2 && 
+          !['the', 'movie', 'film', 'show', 'series', 'book', 'books'].includes(extractedLower) &&
+          !extractedLower.startsWith('movie ') && !extractedLower.startsWith('film ')) {
+        matches.add(extracted);
+      }
     }
   }
 

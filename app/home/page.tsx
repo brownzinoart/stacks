@@ -2,8 +2,8 @@
 
 import { useState, useMemo } from "react";
 import { X } from "lucide-react";
-import { mockStacks, getUserById } from "@/lib/mockData";
-import StackCard from "@/components/StackCard";
+import { mockStacks, getUserById } from "../../lib/mockData";
+import StackCard from "../../components/StackCard";
 
 export default function HomePage() {
   const [globalVizEnabled, setGlobalVizEnabled] = useState(false);

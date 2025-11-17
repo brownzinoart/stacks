@@ -1,7 +1,7 @@
 "use client";
 
-import { AuthorData } from "@/lib/mockData";
-import { useMediaQuery } from "@/hooks/useMediaQuery";
+import { AuthorData } from "../../../../lib/mockData";
+import { useMediaQuery } from "../../../../hooks/useMediaQuery";
 
 interface TopAuthorsChartProps {
   data: AuthorData[];

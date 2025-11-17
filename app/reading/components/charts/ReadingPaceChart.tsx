@@ -1,8 +1,8 @@
 "use client";
 
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, ResponsiveContainer } from "recharts";
-import { MonthlyReadingData } from "@/lib/mockData";
-import { useMediaQuery } from "@/hooks/useMediaQuery";
+import { MonthlyReadingData } from "../../../../lib/mockData";
+import { useMediaQuery } from "../../../../hooks/useMediaQuery";
 
 interface ReadingPaceChartProps {
   data: MonthlyReadingData[];

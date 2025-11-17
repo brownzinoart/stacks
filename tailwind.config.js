@@ -5,12 +5,15 @@
 
 /** @type {import('tailwindcss').Config} */
 module.exports = {
+  darkMode: 'class',
   content: [
     './src/pages/**/*.{js,ts,jsx,tsx,mdx}',
     './src/components/**/*.{js,ts,jsx,tsx,mdx}',
     './src/features/**/*.{js,ts,jsx,tsx,mdx}',
     './src/app/**/*.{js,ts,jsx,tsx,mdx}',
     './pages/**/*.{js,ts,jsx,tsx,mdx}',
+    './app/**/*.{js,ts,jsx,tsx,mdx}',
+    './components/**/*.{js,ts,jsx,tsx,mdx}',
   ],
   safelist: [
     // Ensure all gradient combinations are generated
@@ -32,7 +35,38 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        // Ultra vibrant Gen Z colors
+        // v2.0 Light mode - Warm Neutrals
+        light: {
+          primary: '#F4EFEA',      // Warm beige background
+          secondary: '#FFFFFF',    // White cards
+          tertiary: '#FAFAFA',     // Light gray
+          text: '#383838',         // Dark charcoal
+          textSecondary: '#6B6B6B', // Medium gray
+          textTertiary: '#999999',  // Light gray
+          border: '#383838',       // Dark borders
+          borderSecondary: '#C4C4C4', // Light borders
+        },
+        // v2.0 Dark mode
+        dark: {
+          primary: '#1a1a1a',
+          secondary: '#2a2a2a',
+          tertiary: '#1f1f1f',
+          text: '#ffffff',
+          textSecondary: '#e0e0e0',
+          textTertiary: '#999999',
+          border: '#ffffff',
+          borderSecondary: '#444444',
+        },
+        // v2.0 Accent Colors
+        accent: {
+          cyan: '#6FC2FF',
+          cyanHover: '#2BA5FF',
+          yellow: '#EAC435',
+          coral: '#FF7169',
+          teal: '#53DBC9',
+          purple: '#667eea',
+        },
+        // Ultra vibrant Gen Z colors (legacy)
         'primary-green': '#4ADE80',
         'primary-yellow': '#FBBF24',
         'primary-orange': '#FB7185',
@@ -40,15 +74,6 @@ module.exports = {
         'primary-teal': '#14B8A6',
         'primary-pink': '#EC4899',
         'primary-blue': '#3B82F6',
-
-        // Background colors
-        'bg-light': '#F8FAFC',
-        'bg-dark': '#0F172A',
-
-        // Text colors
-        'text-primary': '#0F172A',
-        'text-secondary': '#475569',
-        'text-white': '#FFFFFF',
       },
       borderRadius: {
         card: '24px',
@@ -56,6 +81,14 @@ module.exports = {
         pill: '999px',
       },
       boxShadow: {
+        // v2.0 Shadows - Offset Style (MotherDuck-inspired)
+        'brutal-card': '-8px 8px 0 0 rgb(var(--shadow-color))',
+        'brutal-button': '-4px 4px 0 0 rgb(var(--shadow-color))',
+        'brutal-button-hover': '-6px 6px 0 0 rgb(var(--shadow-color))',
+        'brutal-badge': '-3px 3px 0 0 rgb(var(--shadow-color))',
+        'brutal-input-focus': '-5px 5px 0 0 #6FC2FF',
+        'brutal-active': '-2px 2px 0 0 rgb(var(--shadow-color))',
+        // Legacy shadows
         card: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
         'card-hover': '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
         mega: '0 32px 64px -12px rgba(0, 0, 0, 0.25)',

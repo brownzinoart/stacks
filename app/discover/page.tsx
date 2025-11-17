@@ -2,10 +2,10 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import SearchBar from "@/components/SearchBar";
-import VibeChips from "@/components/VibeChips";
-import BookSection from "@/components/BookSection";
-import { mockBooksWithMetadata } from "@/lib/mockData";
+import SearchBar from "../../components/SearchBar";
+import VibeChips from "../../components/VibeChips";
+import BookSection from "../../components/BookSection";
+import { mockBooksWithMetadata } from "../../lib/mockData";
 
 export default function DiscoverPage() {
   const router = useRouter();

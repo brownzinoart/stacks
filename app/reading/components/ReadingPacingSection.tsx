@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { getBookById, mockBooks, mockReadingProgressEnhanced, ReadingProgressEnhanced } from "@/lib/mockData";
+import { getBookById, mockBooks, mockReadingProgressEnhanced, ReadingProgressEnhanced } from "../../../../lib/mockData";
 import CompletedSummary from "./pacing/CompletedSummary";
 import CurrentlyReadingCard from "./pacing/CurrentlyReadingCard";
 import AddBookModal from "./pacing/AddBookModal";

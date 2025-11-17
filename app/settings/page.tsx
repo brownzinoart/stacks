@@ -2,8 +2,8 @@
 
 import { useState, useEffect } from "react";
 import { User, Bell, Lock, Moon, Sun, LogOut, ChevronRight, Search, BookOpen } from "lucide-react";
-import { currentUser } from "@/lib/mockData";
-import { libraryDatabase, Library } from "@/lib/libraryDatabase";
+import { currentUser } from "../../lib/mockData";
+import { libraryDatabase, Library } from "../../lib/libraryDatabase";
 
 type SettingSection = {
   title: string;

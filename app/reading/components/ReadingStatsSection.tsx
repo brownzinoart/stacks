@@ -1,8 +1,8 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { calculateStats, generateFunFacts } from "@/lib/analytics";
-import { mockReadingProgressEnhanced, mockBooks } from "@/lib/mockData";
+import { calculateStats, generateFunFacts } from "../../../../lib/analytics";
+import { mockReadingProgressEnhanced, mockBooks } from "../../../../lib/mockData";
 import StatsTimePeriodTabs from "./StatsTimePeriodTabs";
 import SummaryStatsGrid from "./SummaryStatsGrid";
 import HeroDivider from "./HeroDivider";

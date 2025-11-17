@@ -1,7 +1,7 @@
 "use client";
 
-import { mockReadingProgressEnhanced } from "@/lib/mockData";
-import { useMediaQuery } from "@/hooks/useMediaQuery";
+import { mockReadingProgressEnhanced } from "../../../../lib/mockData";
+import { useMediaQuery } from "../../../../hooks/useMediaQuery";
 
 interface ReadingStreakHeatmapProps {
   currentStreak: number;
