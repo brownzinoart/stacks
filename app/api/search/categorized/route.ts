@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { findMatchingBooks, callClaude } from '@/lib/services/claude';
-import { mockCurrentUserProfile, mockBooksWithMetadata, getBooksReadByUser } from '@/lib/mockData';
-import type { SearchResult, BookSearchMatch, NaturalLanguageSearchResult, Book } from '@/lib/mockData';
+import { findMatchingBooks, callClaude } from '../../../lib/services/claude';
+import { mockBooksWithMetadata } from '../../../lib/mockData';
+import type { SearchResult, BookSearchMatch, NaturalLanguageSearchResult, Book, UserReadingProfile } from '../../../lib/mockData';
 
 // Cache for expensive search operations
 const searchCache = new Map<string, { results: SearchResult; timestamp: number }>();
@@ -546,7 +546,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Check cache first
-    const cacheKey = `${userId || 'anonymous'}:${normalized}`;
+    const cacheKey = `query:${normalized}`;
     const cached = searchCache.get(cacheKey);
 
     if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
@@ -557,23 +557,25 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    // Get user profile
-    const userProfile = mockCurrentUserProfile;
-    const readBookIds = getBooksReadByUser(userId || 'user-1');
-    const unreadBooks = mockBooksWithMetadata.filter(
-      book => !readBookIds.includes(book.id)
-    );
+    // Use ALL books in catalog - focus SOLELY on the query, not user reading history
+    const allBooks = mockBooksWithMetadata;
 
-    if (unreadBooks.length === 0) {
-      return NextResponse.json({
-        success: true,
-        query: normalized,
-        atmosphere: { tags: [], books: [] },
-        characters: { tags: [], books: [] },
-        plot: { tags: [], books: [] },
-        message: 'All matching books have already been read'
-      });
-    }
+    // Create minimal user profile (required by findMatchingBooks but won't influence results)
+    // The prompt in findMatchingBooks explicitly prioritizes the query over user profile
+    const minimalUserProfile: UserReadingProfile = {
+      userId: userId || 'anonymous',
+      favoriteGenres: [],
+      favoriteAuthors: [],
+      favoriteTropes: [],
+      dislikedTropes: [],
+      preferredMood: [],
+      readingHistory: [],
+      engagementHistory: {
+        likedStackIds: [],
+        savedStackIds: [],
+        commentedStackIds: []
+      }
+    };
 
     // Get search results from natural language API
     // Request at least 6 books to ensure 2 unique books per category
@@ -582,7 +584,8 @@ export async function POST(request: NextRequest) {
     
     try {
       // Request more books than needed to ensure we have enough unique options
-      searchResults = await findMatchingBooks(normalized, userProfile, unreadBooks, 8);
+      // Pass minimal profile - query is PRIMARY, profile is SECONDARY per prompt design
+      searchResults = await findMatchingBooks(normalized, minimalUserProfile, allBooks, 8);
       
       // Ensure we have at least 6 books for categorization
       if (searchResults.length < 6) {
@@ -670,7 +673,7 @@ export async function POST(request: NextRequest) {
           .slice(0, limit);
       };
       
-      searchResults = fallbackKeywordSearch(normalized, unreadBooks, 8);
+      searchResults = fallbackKeywordSearch(normalized, allBooks, 8);
       usedFallback = true;
       
       if (searchResults.length === 0) {
