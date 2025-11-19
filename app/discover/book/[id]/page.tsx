@@ -131,7 +131,7 @@ export default function BookDetailPage() {
             {/* Badges */}
             <div className="flex flex-wrap gap-3 mb-4">
               {book.socialProof.isBestseller && (
-                <div className="flex items-center gap-2 px-5 py-2.5 bg-accent-yellow border-[3px] border-light-border dark:border-dark-border rounded-xl font-black text-sm shadow-brutal-badge">
+                <div className="flex items-center gap-2 px-5 py-2.5 bg-accent-yellow text-light-text dark:text-dark-text border-[3px] border-light-border dark:border-dark-border rounded-xl font-black text-sm shadow-brutal-badge">
                   <span className="text-lg">🏆</span>
                   <span>NYT Bestseller</span>
                 </div>
@@ -151,7 +151,7 @@ export default function BookDetailPage() {
                 {book.socialProof.readerTags.map((tag, index) => (
                   <span
                     key={index}
-                    className="px-3.5 py-1.5 bg-accent-teal border-2 border-light-border dark:border-dark-border rounded-lg text-xs font-bold shadow-brutal-badge"
+                    className="px-3.5 py-1.5 bg-accent-teal text-light-text dark:text-dark-text border-2 border-light-border dark:border-dark-border rounded-lg text-xs font-bold shadow-brutal-badge"
                   >
                     {tag}
                   </span>
@@ -241,7 +241,7 @@ export default function BookDetailPage() {
             <div className="flex flex-col gap-3 mb-2">
               <button
                 onClick={handleBookshopClick}
-                className="flex items-center justify-center gap-2 px-6 py-4 bg-accent-teal border-[5px] border-light-border dark:border-dark-border rounded-xl font-black uppercase text-base shadow-brutal-sm hover:shadow-brutal transition-all"
+                className="flex items-center justify-center gap-2 px-6 py-4 bg-accent-teal text-light-text dark:text-dark-text border-[5px] border-light-border dark:border-dark-border rounded-xl font-black uppercase text-base shadow-brutal-sm hover:shadow-brutal transition-all"
               >
                 <span className="text-xl">📖</span>
                 Buy on Bookshop.org
