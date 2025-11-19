@@ -162,7 +162,7 @@ function SearchResultsContent() {
             </h1>
             <button
               onClick={handleRandomize}
-              className="px-4 py-3 bg-accent-yellow border-[5px] border-light-border dark:border-dark-border rounded-xl font-black text-xl shadow-brutal-sm hover:shadow-brutal transition-all"
+              className="px-4 py-3 bg-accent-yellow text-light-text dark:text-dark-text border-[5px] border-light-border dark:border-dark-border rounded-xl font-black text-xl shadow-brutal-sm hover:shadow-brutal transition-all"
               aria-label="Randomize results"
             >
               <Shuffle size={20} strokeWidth={3} />
