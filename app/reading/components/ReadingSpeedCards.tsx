@@ -1,6 +1,6 @@
 "use client";
 
-import { ReadingStats } from "../../../../lib/mockData";
+import { ReadingStats } from "../../../lib/mockData";
 
 interface ReadingSpeedCardsProps {
   stats: ReadingStats;
