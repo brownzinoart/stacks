@@ -31,12 +31,25 @@ export default function ReadingPacingSection() {
     []
   );
 
-  const handleCheckIn = (id: string, pagesRead: number) => {
+  const handleCheckIn = (id: string, value: number, mode: "increment" | "bookmark") => {
     setItems((prev) =>
       prev.map((it) => {
         if (it.id !== id) return it;
-        const nextPage = Math.min(it.totalPages, it.currentPage + pagesRead);
         const today = new Date();
+
+        let nextPage: number;
+        let pagesRead: number;
+
+        if (mode === "bookmark") {
+          // User entered the page number they're on
+          nextPage = Math.min(it.totalPages, value);
+          pagesRead = nextPage - it.currentPage;
+        } else {
+          // User entered pages read (increment mode)
+          nextPage = Math.min(it.totalPages, it.currentPage + value);
+          pagesRead = value;
+        }
+
         return {
           ...it,
           currentPage: nextPage,
@@ -112,7 +125,7 @@ export default function ReadingPacingSection() {
             progress={it}
             targetDate={(it as any)._targetDate || null}
             onTargetDateChange={(d) => handleTargetDateChange(it.id, d)}
-            onCheckIn={(pages) => handleCheckIn(it.id, pages)}
+            onCheckIn={(value, mode) => handleCheckIn(it.id, value, mode)}
           />
         ))}
       </div>

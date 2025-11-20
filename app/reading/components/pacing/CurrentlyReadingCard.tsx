@@ -7,7 +7,7 @@ interface Props {
   progress: ReadingProgressEnhanced;
   targetDate: Date | null;
   onTargetDateChange: (date: Date | null) => void;
-  onCheckIn: (pagesRead: number) => void;
+  onCheckIn: (pagesRead: number, mode: "increment" | "bookmark") => void;
 }
 
 export default function CurrentlyReadingCard({ progress, targetDate, onTargetDateChange, onCheckIn }: Props) {
@@ -15,6 +15,7 @@ export default function CurrentlyReadingCard({ progress, targetDate, onTargetDat
   const [showPicker, setShowPicker] = useState(false);
   const [tempDate, setTempDate] = useState<string>(targetDate ? toInputValue(targetDate) : "");
   const [checkIn, setCheckIn] = useState("");
+  const [checkInMode, setCheckInMode] = useState<"increment" | "bookmark">("increment");
 
   const remainingPages = Math.max(0, progress.totalPages - progress.currentPage);
 
@@ -54,9 +55,10 @@ export default function CurrentlyReadingCard({ progress, targetDate, onTargetDat
   };
 
   const submitCheckIn = () => {
-    const pages = parseInt(checkIn, 10);
-    if (!Number.isFinite(pages) || pages <= 0) return;
-    onCheckIn(pages);
+    const value = parseInt(checkIn, 10);
+    if (!Number.isFinite(value) || value <= 0) return;
+    if (checkInMode === "bookmark" && value > progress.totalPages) return;
+    onCheckIn(value, checkInMode);
     setCheckIn("");
   };
 
@@ -131,17 +133,48 @@ export default function CurrentlyReadingCard({ progress, targetDate, onTargetDat
       {/* Check-in */}
       <div className="mt-4">
         <div className="text-xs font-black uppercase tracking-wide mb-2">Today's Check-in</div>
+
+        {/* Mode Toggle */}
+        <div className="flex gap-2 mb-3">
+          <button
+            onClick={() => setCheckInMode("increment")}
+            style={checkInMode === "increment" ? { backgroundImage: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)" } : undefined}
+            className={`flex-1 px-3 py-2 text-xs font-black uppercase border-[3px] rounded-xl transition-all ${
+              checkInMode === "increment"
+                ? "bg-[#667eea] text-white border-black dark:border-white shadow-brutal-badge"
+                : "bg-light-tertiary dark:bg-gray-700 border-black dark:border-white text-light-text dark:text-white shadow-brutal-badge"
+            }`}
+          >
+            Pages Read
+          </button>
+          <button
+            onClick={() => setCheckInMode("bookmark")}
+            style={checkInMode === "bookmark" ? { backgroundImage: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)" } : undefined}
+            className={`flex-1 px-3 py-2 text-xs font-black uppercase border-[3px] rounded-xl transition-all ${
+              checkInMode === "bookmark"
+                ? "bg-[#667eea] text-white border-black dark:border-white shadow-brutal-badge"
+                : "bg-light-tertiary dark:bg-gray-700 border-black dark:border-white text-light-text dark:text-white shadow-brutal-badge"
+            }`}
+          >
+            Page Number
+          </button>
+        </div>
+
+        {/* Input */}
         <div className="flex gap-2">
           <input
             type="number"
             inputMode="numeric"
             min={1}
-            placeholder="Pages read"
+            max={checkInMode === "bookmark" ? progress.totalPages : undefined}
+            placeholder={checkInMode === "increment" ? "Pages read today" : `Page # (1-${progress.totalPages})`}
             className="input-brutal"
             value={checkIn}
             onChange={(e) => setCheckIn(e.target.value)}
           />
-          <button className="btn-brutal-touch whitespace-nowrap" onClick={submitCheckIn}>Add</button>
+          <button className="btn-brutal-touch whitespace-nowrap" onClick={submitCheckIn}>
+            {checkInMode === "increment" ? "Add" : "Save"}
+          </button>
         </div>
       </div>
     </div>

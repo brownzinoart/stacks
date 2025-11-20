@@ -47,7 +47,7 @@ const config: Config = {
         "gradient-secondary": "linear-gradient(135deg, #fa709a 0%, #fee140 100%)",
         "gradient-accent": "linear-gradient(135deg, #f093fb 0%, #f5576c 100%)",
         "gradient-success": "linear-gradient(135deg, #11998e 0%, #38ef7d 100%)",
-        "gradient-info": "linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)",
+        "gradient-info": "linear-gradient(135deg, #2563eb 0%, #0891b2 100%)",
         "gradient-hero": "linear-gradient(135deg, #a8edea 0%, #fed6e3 100%)",
       },
       fontFamily: {
