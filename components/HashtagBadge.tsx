@@ -12,7 +12,7 @@ export default function HashtagBadge({ hashtag, onClick }: HashtagBadgeProps) {
   return (
     <button
       onClick={() => onClick?.(cleanHashtag)}
-      className="bg-gradient-info text-white px-3 py-1 rounded-xl border-[3px] border-black dark:border-white shadow-brutal-badge font-black text-sm uppercase"
+      className="bg-gradient-to-br from-[#2563eb] to-[#0891b2] text-white px-3 py-1 rounded-xl border-[3px] border-black dark:border-white shadow-brutal-badge font-black text-sm uppercase"
     >
       {displayText}
     </button>

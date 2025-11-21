@@ -99,7 +99,7 @@ export default function StackCard({ stack, user, globalVizEnabled = false, onHas
       {/* Header - Profile + Menu */}
       <div className="flex items-center justify-between px-4 py-3 border-b-[5px] border-light-border dark:border-dark-border">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full bg-gradient-primary border-[3px] border-light-border dark:border-dark-border shadow-brutal-sm" />
+          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#667eea] to-[#764ba2] border-[3px] border-light-border dark:border-dark-border shadow-brutal-sm" />
           <Link href={`/profile/${user.id}`} className="link-motherduck font-black text-base uppercase tracking-tight">
             {user.username}
           </Link>

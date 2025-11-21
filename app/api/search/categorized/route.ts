@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { findMatchingBooks, callClaude } from '../../../lib/services/claude';
-import { mockBooksWithMetadata } from '../../../lib/mockData';
-import type { SearchResult, BookSearchMatch, NaturalLanguageSearchResult, Book, UserReadingProfile } from '../../../lib/mockData';
+import { findMatchingBooks, callClaude } from '@/lib/services/claude';
+import { mockBooksWithMetadata } from '@/lib/mockData';
+import type { SearchResult, BookSearchMatch, NaturalLanguageSearchResult, Book, UserReadingProfile } from '@/lib/mockData';
 
 // Cache for expensive search operations
 const searchCache = new Map<string, { results: SearchResult; timestamp: number }>();

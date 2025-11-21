@@ -41,6 +41,7 @@
     "ai:test-web": "open test-ios-ai.html"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.70.1",
     "@capacitor/app": "^7.0.1",
     "@capacitor/haptics": "^7.0.1",
     "@capacitor/ios": "^7.4.2",

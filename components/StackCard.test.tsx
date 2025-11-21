@@ -78,6 +78,8 @@ describe('StackCard Hashtag Rendering', () => {
     render(<StackCard stack={mockStackWithHashtags} user={mockUser} />);
 
     const hashtagElement = screen.getByText('#blues');
-    expect(hashtagElement).toHaveClass('bg-gradient-info');
+    expect(hashtagElement).toHaveClass('bg-gradient-to-br');
+    expect(hashtagElement).toHaveClass('from-[#2563eb]');
+    expect(hashtagElement).toHaveClass('to-[#0891b2]');
   });
 });

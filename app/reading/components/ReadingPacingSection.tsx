@@ -166,12 +166,12 @@ export default function ReadingPacingSection() {
                       <span className="font-black text-xs uppercase text-white">DNF</span>
                     </div>
                   ) : isFinished ? (
-                    <div className="flex items-center gap-1 bg-gradient-success px-3 py-1 rounded-lg border-2 border-black dark:border-white w-[70px] justify-center">
-                      <span className="text-lg leading-none">✓</span>
+                    <div className="flex items-center gap-1 bg-gradient-to-br from-[#11998e] to-[#38ef7d] px-3 py-1 rounded-lg border-2 border-black dark:border-white w-[70px] justify-center">
+                      <span className="text-lg leading-none text-white">✓</span>
                       <span className="font-black text-xs uppercase text-white">Done</span>
                     </div>
                   ) : (
-                    <div className="bg-gradient-info px-3 py-1 rounded-lg border-2 border-black dark:border-white w-[70px] justify-center flex items-center">
+                    <div className="flex items-center bg-gradient-to-br from-[#2563eb] to-[#0891b2] px-3 py-1 rounded-lg border-2 border-black dark:border-white w-[70px] justify-center">
                       <span className="font-black text-xs uppercase text-white">{completionPercentage}%</span>
                     </div>
                   )}
