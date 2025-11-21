@@ -174,11 +174,11 @@ Return ONLY valid JSON, nothing else.`;
         }
         
         // Add to used indices and fixed books
-        if (bookIndex >= 0 && bookIndex < results.length) {
+        if (bookIndex >= 0 && bookIndex < results.length && results[bookIndex]) {
           usedIndices.add(bookIndex);
           fixedBooks.push({
             index: bookIndex,
-            reasons: book.reasons || results[bookIndex].matchReasons || []
+            reasons: book.reasons || results[bookIndex]?.matchReasons || []
           });
         }
       });
@@ -202,16 +202,18 @@ Return ONLY valid JSON, nothing else.`;
       
       // Process categories in order, filling those that need more books
       categories.forEach(cat => {
-        const currentBooks = fixedCategories[cat].books;
+        const categoryData = fixedCategories[cat];
+        if (!categoryData) return;
+        const currentBooks = categoryData.books;
         
         // If this category needs more books, try to fill it
         if (currentBooks.length < targetBooksPerCategory) {
           const nextIndex = findNextAvailableIndex(usedIndices);
-          if (nextIndex !== null) {
+          if (nextIndex !== null && results[nextIndex]) {
             usedIndices.add(nextIndex);
             currentBooks.push({
               index: nextIndex,
-              reasons: results[nextIndex].matchReasons || []
+              reasons: results[nextIndex]?.matchReasons || []
             });
             needsMoreBooks = true; // Continue loop to check other categories
             console.log(`Filled slot in category ${cat} with book index ${nextIndex}`);
@@ -221,7 +223,7 @@ Return ONLY valid JSON, nothing else.`;
       
       // Stop if all categories have reached their target or we've run out of books
       const allCategoriesFull = categories.every(cat => 
-        fixedCategories[cat].books.length >= targetBooksPerCategory
+        (fixedCategories[cat]?.books.length || 0) >= targetBooksPerCategory
       );
       if (allCategoriesFull || usedIndices.size >= results.length) {
         needsMoreBooks = false;
@@ -233,7 +235,7 @@ Return ONLY valid JSON, nothing else.`;
     // ============================================
     const bookCounts = categories.map(cat => ({
       category: cat,
-      count: fixedCategories[cat].books.length
+      count: fixedCategories[cat]?.books.length || 0
     }));
     
     console.log(`Book distribution: ${bookCounts.map(b => `${b.category}=${b.count}`).join(', ')} (total results: ${results.length})`);
@@ -263,6 +265,9 @@ Return ONLY valid JSON, nothing else.`;
         .slice(0, 2) // Ensure max 2 books
         .map(item => {
           const result = results[item.index];
+          if (!result) {
+            return null;
+          }
           return {
             book: result.book,
             matchPercentage: result.matchScore,
@@ -270,7 +275,8 @@ Return ONLY valid JSON, nothing else.`;
               [categoryType]: item.reasons
             }
           } as BookSearchMatch;
-        });
+        })
+        .filter((item): item is BookSearchMatch => item !== null);
     };
 
     // ============================================
@@ -286,10 +292,12 @@ Return ONLY valid JSON, nothing else.`;
     // Collect all books from fixed categories, ensuring no duplicates
     categories.forEach(cat => {
       const categoryBooks = fixedCategories[cat]?.books || [];
+      const finalCategoryBooks = finalCategories[cat];
+      if (!finalCategoryBooks) return;
       categoryBooks.forEach(book => {
         if (!finalUsedIndices.has(book.index) && book.index >= 0 && book.index < results.length) {
           finalUsedIndices.add(book.index);
-          finalCategories[cat].push(book);
+          finalCategoryBooks.push(book);
         }
       });
     });
@@ -297,14 +305,16 @@ Return ONLY valid JSON, nothing else.`;
     // If we have 6+ books available, ensure exactly 2 per category
     if (results.length >= 6) {
       categories.forEach(cat => {
-        while (finalCategories[cat].length < 2 && finalUsedIndices.size < results.length) {
+        const finalCategoryBooks = finalCategories[cat];
+        if (!finalCategoryBooks) return;
+        while (finalCategoryBooks.length < 2 && finalUsedIndices.size < results.length) {
           // Find next available book
           for (let i = 0; i < results.length; i++) {
-            if (!finalUsedIndices.has(i)) {
+            if (!finalUsedIndices.has(i) && results[i]) {
               finalUsedIndices.add(i);
-              finalCategories[cat].push({
+              finalCategoryBooks.push({
                 index: i,
-                reasons: results[i].matchReasons || []
+                reasons: results[i]?.matchReasons || []
               });
               break;
             }
@@ -317,11 +327,14 @@ Return ONLY valid JSON, nothing else.`;
     const indexToCategories = new Map<number, string[]>();
     
     categories.forEach(cat => {
-      finalCategories[cat].forEach(book => {
-        const existing = indexToCategories.get(book.index) || [];
-        existing.push(cat);
-        indexToCategories.set(book.index, existing);
-      });
+      const finalCategoryBooks = finalCategories[cat];
+      if (finalCategoryBooks) {
+        finalCategoryBooks.forEach(book => {
+          const existing = indexToCategories.get(book.index) || [];
+          existing.push(cat);
+          indexToCategories.set(book.index, existing);
+        });
+      }
     });
     
     // Find and remove duplicates
@@ -333,21 +346,27 @@ Return ONLY valid JSON, nothing else.`;
         // Keep in first category, remove from others
         for (let i = 1; i < cats.length; i++) {
           const catToClean = cats[i];
-          finalCategories[catToClean] = finalCategories[catToClean].filter(b => b.index !== index);
-          finalUsedIndices.delete(index); // Remove from used so we can reuse it
+          if (!catToClean) continue;
+          const categoryToClean = finalCategories[catToClean];
+          if (categoryToClean) {
+            finalCategories[catToClean] = categoryToClean.filter((b: { index: number; reasons: string[] }) => b.index !== index);
+            finalUsedIndices.delete(index); // Remove from used so we can reuse it
+          }
         }
       });
       
       // Refill categories that lost books
       if (results.length >= 6) {
         categories.forEach(cat => {
-          while (finalCategories[cat].length < 2 && finalUsedIndices.size < results.length) {
+          const finalCategoryBooks = finalCategories[cat];
+          if (!finalCategoryBooks) return;
+          while (finalCategoryBooks.length < 2 && finalUsedIndices.size < results.length) {
             for (let i = 0; i < results.length; i++) {
-              if (!finalUsedIndices.has(i)) {
+              if (!finalUsedIndices.has(i) && results[i]) {
                 finalUsedIndices.add(i);
-                finalCategories[cat].push({
+                finalCategoryBooks.push({
                   index: i,
-                  reasons: results[i].matchReasons || []
+                  reasons: results[i]?.matchReasons || []
                 });
                 break;
               }
@@ -362,15 +381,15 @@ Return ONLY valid JSON, nothing else.`;
       query,
       atmosphere: {
         tags: fixedCategories.atmosphere?.tags || [],
-        books: transformBooks(finalCategories.atmosphere.slice(0, 2), 'atmosphere')
+        books: transformBooks((finalCategories.atmosphere || []).slice(0, 2), 'atmosphere')
       },
       characters: {
         tags: fixedCategories.characters?.tags || [],
-        books: transformBooks(finalCategories.characters.slice(0, 2), 'characters')
+        books: transformBooks((finalCategories.characters || []).slice(0, 2), 'characters')
       },
       plot: {
         tags: fixedCategories.plot?.tags || [],
-        books: transformBooks(finalCategories.plot.slice(0, 2), 'plot')
+        books: transformBooks((finalCategories.plot || []).slice(0, 2), 'plot')
       }
     };
     
@@ -418,7 +437,7 @@ Return ONLY valid JSON, nothing else.`;
     while (idx < availableBooks.length) {
       if (atmosphereBooks.length < 2 && idx < availableBooks.length) {
         const book = availableBooks[idx];
-        if (!usedBookIds.has(book.book.id)) {
+        if (book && book.book && !usedBookIds.has(book.book.id)) {
           usedBookIds.add(book.book.id);
           atmosphereBooks.push(book);
         }
@@ -426,7 +445,7 @@ Return ONLY valid JSON, nothing else.`;
       }
       if (charactersBooks.length < 2 && idx < availableBooks.length) {
         const book = availableBooks[idx];
-        if (!usedBookIds.has(book.book.id)) {
+        if (book && book.book && !usedBookIds.has(book.book.id)) {
           usedBookIds.add(book.book.id);
           charactersBooks.push(book);
         }
@@ -434,7 +453,7 @@ Return ONLY valid JSON, nothing else.`;
       }
       if (plotBooks.length < 2 && idx < availableBooks.length) {
         const book = availableBooks[idx];
-        if (!usedBookIds.has(book.book.id)) {
+        if (book && book.book && !usedBookIds.has(book.book.id)) {
           usedBookIds.add(book.book.id);
           plotBooks.push(book);
         }
@@ -459,19 +478,19 @@ Return ONLY valid JSON, nothing else.`;
       while (remainingIdx < remainingBooks.length) {
         if (atmosphereBooks.length < 2) {
           const book = remainingBooks[remainingIdx++];
-          if (book && !usedBookIds.has(book.book.id)) {
+          if (book && book.book && !usedBookIds.has(book.book.id)) {
             usedBookIds.add(book.book.id);
             atmosphereBooks.push(book);
           }
         } else if (charactersBooks.length < 2) {
           const book = remainingBooks[remainingIdx++];
-          if (book && !usedBookIds.has(book.book.id)) {
+          if (book && book.book && !usedBookIds.has(book.book.id)) {
             usedBookIds.add(book.book.id);
             charactersBooks.push(book);
           }
         } else if (plotBooks.length < 2) {
           const book = remainingBooks[remainingIdx++];
-          if (book && !usedBookIds.has(book.book.id)) {
+          if (book && book.book && !usedBookIds.has(book.book.id)) {
             usedBookIds.add(book.book.id);
             plotBooks.push(book);
           }
@@ -708,7 +727,7 @@ export async function POST(request: NextRequest) {
       while (idx < availableBooks.length) {
         if (atmosphereBooks.length < 2 && idx < availableBooks.length) {
           const book = availableBooks[idx];
-          if (!usedBookIds.has(book.book.id)) {
+          if (book && book.book && !usedBookIds.has(book.book.id)) {
             usedBookIds.add(book.book.id);
             atmosphereBooks.push(book);
           }
@@ -716,7 +735,7 @@ export async function POST(request: NextRequest) {
         }
         if (charactersBooks.length < 2 && idx < availableBooks.length) {
           const book = availableBooks[idx];
-          if (!usedBookIds.has(book.book.id)) {
+          if (book && book.book && !usedBookIds.has(book.book.id)) {
             usedBookIds.add(book.book.id);
             charactersBooks.push(book);
           }
@@ -724,7 +743,7 @@ export async function POST(request: NextRequest) {
         }
         if (plotBooks.length < 2 && idx < availableBooks.length) {
           const book = availableBooks[idx];
-          if (!usedBookIds.has(book.book.id)) {
+          if (book && book.book && !usedBookIds.has(book.book.id)) {
             usedBookIds.add(book.book.id);
             plotBooks.push(book);
           }
@@ -746,19 +765,19 @@ export async function POST(request: NextRequest) {
         while (remainingIdx < remainingBooks.length) {
           if (atmosphereBooks.length < 2) {
             const book = remainingBooks[remainingIdx++];
-            if (book && !usedBookIds.has(book.book.id)) {
+            if (book && book.book && !usedBookIds.has(book.book.id)) {
               usedBookIds.add(book.book.id);
               atmosphereBooks.push(book);
             }
           } else if (charactersBooks.length < 2) {
             const book = remainingBooks[remainingIdx++];
-            if (book && !usedBookIds.has(book.book.id)) {
+            if (book && book.book && !usedBookIds.has(book.book.id)) {
               usedBookIds.add(book.book.id);
               charactersBooks.push(book);
             }
           } else if (plotBooks.length < 2) {
             const book = remainingBooks[remainingIdx++];
-            if (book && !usedBookIds.has(book.book.id)) {
+            if (book && book.book && !usedBookIds.has(book.book.id)) {
               usedBookIds.add(book.book.id);
               plotBooks.push(book);
             }

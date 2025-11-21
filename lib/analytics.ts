@@ -82,8 +82,11 @@ function calculateStreaks(checkIns: { date: Date; pagesRead: number }[]): { curr
   let tempStreak = 1;
 
   for (let i = 1; i < checkIns.length; i++) {
+    const current = checkIns[i];
+    const previous = checkIns[i - 1];
+    if (!current || !previous) continue;
     const dayDiff = Math.floor(
-      (checkIns[i].date.getTime() - checkIns[i - 1].date.getTime()) / (1000 * 60 * 60 * 24)
+      (current.date.getTime() - previous.date.getTime()) / (1000 * 60 * 60 * 24)
     );
 
     if (dayDiff === 1) {
@@ -96,9 +99,9 @@ function calculateStreaks(checkIns: { date: Date; pagesRead: number }[]): { curr
 
   // Calculate current streak from most recent check-in
   const lastCheckIn = checkIns[checkIns.length - 1];
-  const daysSinceLastCheckIn = Math.floor(
+  const daysSinceLastCheckIn = lastCheckIn ? Math.floor(
     (new Date().getTime() - lastCheckIn.date.getTime()) / (1000 * 60 * 60 * 24)
-  );
+  ) : Infinity;
 
   currentStreak = daysSinceLastCheckIn <= 1 ? tempStreak : 0;
 
@@ -211,19 +214,24 @@ export function getMonthlyReading(progress: ReadingProgressEnhanced[]): MonthlyR
 
   return monthOrder
     .filter(month => monthCounts[month])
-    .map(month => ({
-      month,
-      books: monthCounts[month].books,
-      pages: monthCounts[month].pages
-    }));
+    .map(month => {
+      const monthData = monthCounts[month];
+      if (!monthData) return null;
+      return {
+        month,
+        books: monthData.books,
+        pages: monthData.pages
+      };
+    })
+    .filter((item): item is { month: string; books: number; pages: number } => item !== null);
 }
 
 function getRatingDistribution(progress: ReadingProgressEnhanced[]): { rating: number; count: number }[] {
   const ratingCounts: Record<number, number> = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
 
   progress.forEach(p => {
-    if (p.userRating) {
-      ratingCounts[p.userRating]++;
+    if (p.userRating && p.userRating >= 1 && p.userRating <= 5) {
+      ratingCounts[p.userRating] = (ratingCounts[p.userRating] || 0) + 1;
     }
   });
 
@@ -240,7 +248,9 @@ function getTimeOfDayPattern(
 
   progress.forEach(p => {
     p.dailyCheckIns.forEach(checkIn => {
-      timePattern[checkIn.timeOfDay]++;
+      if (checkIn) {
+        timePattern[checkIn.timeOfDay]++;
+      }
     });
   });
 
@@ -251,17 +261,17 @@ export function generateFunFacts(stats: ReadingStats, books: Book[]): string[] {
   const facts: string[] = [];
 
   // Genre fanatic
-  if (stats.topGenres.length > 0 && stats.topGenres[0].percentage >= 40) {
+  if (stats.topGenres.length > 0 && stats.topGenres[0] && stats.topGenres[0].percentage >= 40) {
     facts.push(`You're a ${stats.topGenres[0].genre.toLowerCase()} fanatic!`);
   }
 
   // Speed reader
-  if (stats.fastestBook.pagesPerDay > 100) {
+  if (stats.fastestBook && stats.fastestBook.pagesPerDay > 100) {
     facts.push(`Speed demon alert: ${stats.fastestBook.pagesPerDay} pages/day on ${stats.fastestBook.title}!`);
   }
 
   // Superfan
-  if (stats.topAuthors.length > 0 && stats.topAuthors[0].count >= 3) {
+  if (stats.topAuthors.length > 0 && stats.topAuthors[0] && stats.topAuthors[0].count >= 3) {
     facts.push(`${stats.topAuthors[0].author} superfan detected! (${stats.topAuthors[0].count} books)`);
   }
 

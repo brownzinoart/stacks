@@ -15,10 +15,10 @@ export default function ReadingPaceChart({ data }: ReadingPaceChartProps) {
   const chartData = isMobile ? data.slice(-6) : data;
 
   // Find best month
-  const bestMonth = data.reduce((max, month) =>
+  const bestMonth = data.length > 0 ? data.reduce((max, month) =>
     month.books > max.books ? month : max,
-    data[0]
-  );
+    data[0]!
+  ) : null;
 
   return (
     <div className="mb-6">

@@ -73,7 +73,7 @@ export async function searchMovie(query: string): Promise<MovieSearchResult | nu
     return {
       tmdbId: movie.id,
       title: movie.title,
-      year: movie.release_date ? parseInt(movie.release_date.split('-')[0]) : undefined,
+      year: movie.release_date ? parseInt(movie.release_date.split('-')[0] || '0') : undefined,
       overview: movie.overview,
       genres: genres.length > 0 ? genres : []
     };
@@ -164,22 +164,22 @@ Focus on what makes this movie distinctive and what book readers might seek.`;
     const mood: string[] = [];
 
     const themesMatch = response.match(/THEMES?:\s*(.+?)(?:\n|TROPES|MOOD|$)/i);
-    if (themesMatch) {
+    if (themesMatch && themesMatch[1]) {
       themes.push(...themesMatch[1].split(',').map(t => t.trim()).filter(t => t));
     }
 
     const tropesMatch = response.match(/TROPES?:\s*(.+?)(?:\n|MOOD|$)/i);
-    if (tropesMatch) {
+    if (tropesMatch && tropesMatch[1]) {
       tropes.push(...tropesMatch[1].split(',').map(t => t.trim()).filter(t => t));
     }
 
     const moodMatch = response.match(/MOOD:\s*(.+?)(?:\n|$)/i);
-    if (moodMatch) {
+    if (moodMatch && moodMatch[1]) {
       mood.push(...moodMatch[1].split(',').map(m => m.trim()).filter(m => m));
     }
 
     // Fallback: if parsing fails, use genres as themes
-    if (themes.length === 0 && tropes.length === 0 && mood.length === 0) {
+    if (themes.length === 0 && tropes.length === 0 && mood.length === 0 && movie.genres) {
       themes.push(...movie.genres.map(g => g.toLowerCase()));
     }
 
@@ -232,6 +232,7 @@ export function extractMovieReferences(query: string): string[] {
     // Reset regex lastIndex to avoid issues with global regex
     pattern.lastIndex = 0;
     while ((match = pattern.exec(query)) !== null) {
+      if (!match[1]) continue;
       let extracted = match[1].trim();
       // Remove common prefixes
       extracted = extracted.replace(/^(the|a|an)\s+/i, '').trim();

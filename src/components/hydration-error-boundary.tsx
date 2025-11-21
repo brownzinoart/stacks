@@ -242,7 +242,7 @@ export function useHydrationSafeRender() {
 
       for (let i = 0; i < bodyAttrs.length; i++) {
         const attr = bodyAttrs[i];
-        if (extensionAttributes.some(ext => attr.name.includes(ext))) {
+        if (attr && extensionAttributes.some(ext => attr.name?.includes(ext))) {
           setHasExtensionInterference(true);
           console.warn('[Hydration] Browser extension detected:', attr.name);
           break;
@@ -251,7 +251,7 @@ export function useHydrationSafeRender() {
 
       for (let i = 0; i < htmlAttrs.length; i++) {
         const attr = htmlAttrs[i];
-        if (extensionAttributes.some(ext => attr.name.includes(ext))) {
+        if (attr && extensionAttributes.some(ext => attr.name?.includes(ext))) {
           setHasExtensionInterference(true);
           console.warn('[Hydration] Browser extension detected:', attr.name);
           break;

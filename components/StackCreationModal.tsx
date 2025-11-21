@@ -223,7 +223,8 @@ export default function StackCreationModal({
               onClick={() => {
                 const steps: Step[] = ["books", "caption", "photo", "review"];
                 const currentIdx = steps.indexOf(step);
-                setStep(steps[currentIdx - 1]);
+                const prevStep = steps[currentIdx - 1];
+                if (prevStep) setStep(prevStep);
               }}
               className="flex-1 btn-brutal bg-light-secondary dark:bg-dark-secondary text-light-text dark:text-dark-text"
             >
@@ -237,7 +238,8 @@ export default function StackCreationModal({
               } else {
                 const steps: Step[] = ["books", "caption", "photo", "review"];
                 const currentIdx = steps.indexOf(step);
-                setStep(steps[currentIdx + 1]);
+                const nextStep = steps[currentIdx + 1];
+                if (nextStep) setStep(nextStep);
               }
             }}
             disabled={!canProceed[step]}

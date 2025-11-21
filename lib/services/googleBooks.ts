@@ -86,11 +86,12 @@ export async function enrichBookWithMetadata(
   }
 
   const book = results[0];
+  if (!book) return null;
 
   return {
     synopsis: book.description || '',
     pageCount: book.pageCount || 0,
-    publishYear: book.publishedDate ? parseInt(book.publishedDate.split('-')[0]) : 0,
+    publishYear: book.publishedDate ? parseInt(book.publishedDate.split('-')[0] || '0') : 0,
     genres: book.categories || [],
     rating: book.averageRating
   };

@@ -226,6 +226,7 @@ function parseClaudeResponse(
     if (!match) continue;
 
     const [, indexStr, scoreStr, reasonsStr] = match;
+    if (!indexStr || !scoreStr) continue;
     const bookIndex = parseInt(indexStr, 10);
     const matchScore = Math.min(Math.max(parseInt(scoreStr, 10) || 0, 0), 100);
     
@@ -233,6 +234,9 @@ function parseClaudeResponse(
     if (isNaN(bookIndex) || bookIndex < 0 || bookIndex >= bookCatalog.length) {
       continue;
     }
+
+    const book = bookCatalog[bookIndex];
+    if (!book) continue;
 
     // Skip duplicates
     if (seenIndices.has(bookIndex)) {
@@ -242,7 +246,7 @@ function parseClaudeResponse(
     seenIndices.add(bookIndex);
 
     // Parse reasons (handle various separators)
-    const matchReasons = reasonsStr
+    const matchReasons = (reasonsStr || '')
       .split(/[;|]|and/)
       .map(r => r.trim())
       .filter(r => r.length > 0);
@@ -253,7 +257,7 @@ function parseClaudeResponse(
     }
 
     results.push({
-      book: bookCatalog[bookIndex],
+      book,
       matchScore,
       matchReasons: matchReasons.slice(0, 3), // Limit to 3 reasons
       relevanceToQuery: matchScore
@@ -264,11 +268,13 @@ function parseClaudeResponse(
   if (results.length === 0) {
     const indexMatches = response.matchAll(/\[(\d+)\]/g);
     for (const match of indexMatches) {
-      const bookIndex = parseInt(match[1], 10);
+      const bookIndex = parseInt(match[1] || '0', 10);
       if (!isNaN(bookIndex) && bookIndex >= 0 && bookIndex < bookCatalog.length && !seenIndices.has(bookIndex)) {
+        const book = bookCatalog[bookIndex];
+        if (!book) continue;
         seenIndices.add(bookIndex);
         results.push({
-          book: bookCatalog[bookIndex],
+          book,
           matchScore: 70, // Default score
           matchReasons: ['Mentioned in search results'],
           relevanceToQuery: 70

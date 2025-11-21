@@ -9,6 +9,10 @@ export async function generateStaticParams() {
   }));
 }
 
-export default function BookDetailPage({ params }: { params: { id: string } }) {
-  return <BookDetailClient bookId={params.id} />;
+export default function BookDetailPage({ params }: { params: Promise<{ id: string }> | { id: string } }) {
+  const resolvedParams = params instanceof Promise ? null : params;
+  if (!resolvedParams) {
+    return <div>Loading...</div>;
+  }
+  return <BookDetailClient bookId={resolvedParams.id} />;
 }

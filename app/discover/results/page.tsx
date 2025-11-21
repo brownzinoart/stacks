@@ -16,7 +16,7 @@ export default function SearchResultsPage() {
 function SearchResultsContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
-  const query = searchParams.get("q") || "";
+  const query = searchParams?.get("q") || "";
 
   const [searchValue, setSearchValue] = useState(query);
   const [results, setResults] = useState<SearchResult | null>(null);

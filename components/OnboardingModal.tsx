@@ -70,6 +70,7 @@ export default function OnboardingModal({
   };
 
   const screen = screens[currentScreen];
+  if (!screen) return null;
   const ScreenIcon = screen.icon;
   const isLastScreen = currentScreen === screens.length - 1;
 
