@@ -19,12 +19,13 @@ export default function CurrentlyReadingCard({ progress, targetDate, onTargetDat
 
   const remainingPages = Math.max(0, progress.totalPages - progress.currentPage);
 
-  const { dailyGoal, paceState, paceText, progressPct } = useMemo(() => {
+  const { dailyGoal, paceState, paceText, progressPct, idealPct } = useMemo(() => {
     // Daily goal requires target date & days remaining
     let dailyGoal = 0;
-    let paceState: "ahead" | "on" | "behind" = "on";
+    let paceState: "ahead" | "on" | "slightly-behind" | "behind" = "on";
     let paceText = "✓ ON TRACK";
     const pct = Math.round((progress.currentPage / progress.totalPages) * 100);
+    let idealPct = pct;
 
     if (targetDate) {
       const daysRemaining = daysBetween(new Date(), targetDate);
@@ -34,7 +35,7 @@ export default function CurrentlyReadingCard({ progress, targetDate, onTargetDat
         // Ideal progress vs actual progress based on elapsed from start
         const elapsed = Math.max(1, daysBetween(progress.startDate, new Date()));
         const totalWindow = Math.max(1, daysBetween(progress.startDate, targetDate));
-        const idealPct = Math.min(100, Math.round((elapsed / totalWindow) * 100));
+        idealPct = Math.min(100, Math.round((elapsed / totalWindow) * 100));
         const deltaPct = pct - idealPct;
         if (deltaPct > 5) {
           paceState = "ahead";
@@ -42,10 +43,13 @@ export default function CurrentlyReadingCard({ progress, targetDate, onTargetDat
         } else if (deltaPct < -5) {
           paceState = "behind";
           paceText = `BEHIND: +${Math.abs(Math.round((deltaPct / 100) * progress.totalPages))} PAGES`;
+        } else if (deltaPct < -2) {
+          paceState = "slightly-behind";
+          paceText = "⚠️ SLIGHTLY BEHIND";
         }
       }
     }
-    return { dailyGoal, paceState, paceText, progressPct: pct };
+    return { dailyGoal, paceState, paceText, progressPct: pct, idealPct };
   }, [progress.currentPage, progress.totalPages, progress.startDate, targetDate]);
 
   const saveDate = () => {
@@ -83,11 +87,33 @@ export default function CurrentlyReadingCard({ progress, targetDate, onTargetDat
 
       {/* Progress */}
       <div className="mt-4">
-        <div className="h-3 w-full bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden border-2 border-black">
-          <div className="h-full bg-black dark:bg-white" style={{ width: `${progressPct}%` }} />
+        <div className="h-3 w-full bg-sky-100 dark:bg-sky-900 rounded-full overflow-hidden border-2 border-black relative">
+          {/* Ideal progress indicator (if target date is set) */}
+          {targetDate && idealPct > progressPct && idealPct < 100 && (
+            <div 
+              className="absolute top-0 bottom-0 w-0.5 bg-gray-400 dark:bg-gray-500 z-10" 
+              style={{ left: `${idealPct}%` }}
+            />
+          )}
+          {/* Actual progress */}
+          <div 
+            className={`h-full transition-colors ${
+              paceState === "ahead" 
+                ? "bg-emerald-600 dark:bg-emerald-400"
+                : paceState === "slightly-behind"
+                ? "bg-yellow-500 dark:bg-yellow-400"
+                : paceState === "behind"
+                ? "bg-amber-600 dark:bg-amber-400"
+                : "bg-sky-600 dark:bg-sky-400"
+            }`} 
+            style={{ width: `${progressPct}%` }} 
+          />
         </div>
         <div className="mt-1 text-xs font-black uppercase tracking-wide opacity-80">
           {progress.currentPage} / {progress.totalPages} pages • {progressPct}%
+          {targetDate && idealPct !== progressPct && (
+            <span className="ml-2 opacity-60">(ideal: {idealPct}%)</span>
+          )}
         </div>
       </div>
 
@@ -197,9 +223,10 @@ function toInputValue(d: Date) {
   return `${y}-${m}-${day}`;
 }
 
-function paceClass(state: "ahead" | "on" | "behind") {
+function paceClass(state: "ahead" | "on" | "slightly-behind" | "behind") {
   if (state === "ahead") return "bg-emerald-200 border-black";
   if (state === "behind") return "bg-amber-200 border-black";
+  if (state === "slightly-behind") return "bg-yellow-200 border-black";
   return "bg-sky-200 border-black";
 }
 

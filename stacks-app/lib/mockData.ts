@@ -622,14 +622,14 @@ export const mockReadingProgressEnhanced: ReadingProgressEnhanced[] = [
       { date: new Date("2024-03-17"), pagesRead: 45, timeOfDay: "morning" },
     ]
   },
-  // Fourth Wing - Currently reading (52%)
+  // Fourth Wing - Currently reading - SLIGHTLY BEHIND (39% vs 42% ideal)
   {
     id: "rp-2",
     bookId: "book-1",
     userId: "user-1",
     startDate: new Date("2024-10-20"),
     finishedDate: null,
-    currentPage: 258,
+    currentPage: 194, // 39% - slightly behind ideal of 42%
     totalPages: 498,
     status: "reading",
     dailyCheckIns: [
@@ -641,16 +641,17 @@ export const mockReadingProgressEnhanced: ReadingProgressEnhanced[] = [
       { date: new Date("2024-10-27"), pagesRead: 33, timeOfDay: "night" },
       { date: new Date("2024-10-29"), pagesRead: 29, timeOfDay: "evening" },
       { date: new Date("2024-10-31"), pagesRead: 22, timeOfDay: "afternoon" },
-    ]
-  },
-  // It Ends With Us - Daily reader! (31%)
+    ],
+    _targetDate: new Date("2024-12-01"), // Target date for testing slightly behind status
+  } as any,
+  // It Ends With Us - BEHIND (18% vs 25% ideal)
   {
     id: "rp-8",
     bookId: "book-5",
     userId: "user-1",
     startDate: new Date("2024-10-25"),
     finishedDate: null,
-    currentPage: 120,
+    currentPage: 69, // 18% - behind ideal of 25%
     totalPages: 384,
     status: "reading",
     dailyCheckIns: [
@@ -660,8 +661,9 @@ export const mockReadingProgressEnhanced: ReadingProgressEnhanced[] = [
       { date: new Date("2024-10-28"), pagesRead: 20, timeOfDay: "night" },
       { date: new Date("2024-10-29"), pagesRead: 15, timeOfDay: "afternoon" },
       { date: new Date("2024-10-30"), pagesRead: 20, timeOfDay: "evening" },
-    ]
-  },
+    ],
+    _targetDate: new Date("2024-12-15"), // Target date for testing behind status
+  } as any,
   // Six of Crows - Solid 5-star read (finished early June)
   {
     id: "rp-3",
