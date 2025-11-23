@@ -9,16 +9,27 @@ import AddBookModal from "./pacing/AddBookModal";
 export default function ReadingPacingSection() {
   const [items, setItems] = useState<ReadingProgressEnhanced[]>(() => {
     const base = mockReadingProgressEnhanced.filter((p) => p.status === "reading");
-    // hydrate any saved target dates from localStorage
+    // hydrate any saved target dates from localStorage or use mock data targetDate
     if (typeof window !== "undefined") {
       return base.map((it) => {
         try {
           const raw = window.localStorage.getItem(lsKey(it.bookId));
-          if (!raw) return it as any;
-          const d = new Date(raw);
-          if (isNaN(d.getTime())) return it as any;
-          return { ...(it as any), _targetDate: d } as any;
+          if (raw) {
+            const d = new Date(raw);
+            if (!isNaN(d.getTime())) {
+              return { ...(it as any), _targetDate: d } as any;
+            }
+          }
+          // Fall back to mock data targetDate if no localStorage value
+          if ((it as any)._targetDate) {
+            return it as any;
+          }
+          return it as any;
         } catch {
+          // Fall back to mock data targetDate if localStorage fails
+          if ((it as any)._targetDate) {
+            return it as any;
+          }
           return it as any;
         }
       });

@@ -622,46 +622,56 @@ export const mockReadingProgressEnhanced: ReadingProgressEnhanced[] = [
       { date: new Date("2024-03-17"), pagesRead: 45, timeOfDay: "morning" },
     ]
   },
-  // Fourth Wing - Currently reading (52%)
+  // Fourth Wing - Currently reading - SLIGHTLY BEHIND (-3% delta)
   {
     id: "rp-2",
     bookId: "book-1",
     userId: "user-1",
-    startDate: new Date("2024-10-20"),
+    startDate: new Date("2025-11-01"),
     finishedDate: null,
-    currentPage: 258,
+    currentPage: 234, // 47% - slightly behind ideal of 50%
     totalPages: 498,
     status: "reading",
     dailyCheckIns: [
-      { date: new Date("2024-10-20"), pagesRead: 42, timeOfDay: "night" },
-      { date: new Date("2024-10-21"), pagesRead: 35, timeOfDay: "evening" },
-      { date: new Date("2024-10-22"), pagesRead: 38, timeOfDay: "night" },
-      { date: new Date("2024-10-23"), pagesRead: 31, timeOfDay: "night" },
-      { date: new Date("2024-10-25"), pagesRead: 28, timeOfDay: "afternoon" },
-      { date: new Date("2024-10-27"), pagesRead: 33, timeOfDay: "night" },
-      { date: new Date("2024-10-29"), pagesRead: 29, timeOfDay: "evening" },
-      { date: new Date("2024-10-31"), pagesRead: 22, timeOfDay: "afternoon" },
-    ]
-  },
-  // It Ends With Us - Daily reader! (31%)
+      { date: new Date("2025-11-01"), pagesRead: 25, timeOfDay: "night" },
+      { date: new Date("2025-11-02"), pagesRead: 22, timeOfDay: "evening" },
+      { date: new Date("2025-11-03"), pagesRead: 20, timeOfDay: "night" },
+      { date: new Date("2025-11-05"), pagesRead: 18, timeOfDay: "afternoon" },
+      { date: new Date("2025-11-07"), pagesRead: 23, timeOfDay: "night" },
+      { date: new Date("2025-11-09"), pagesRead: 21, timeOfDay: "evening" },
+      { date: new Date("2025-11-11"), pagesRead: 19, timeOfDay: "night" },
+      { date: new Date("2025-11-13"), pagesRead: 17, timeOfDay: "afternoon" },
+      { date: new Date("2025-11-15"), pagesRead: 20, timeOfDay: "night" },
+      { date: new Date("2025-11-17"), pagesRead: 16, timeOfDay: "evening" },
+      { date: new Date("2025-11-19"), pagesRead: 18, timeOfDay: "night" },
+      { date: new Date("2025-11-21"), pagesRead: 15, timeOfDay: "afternoon" },
+    ],
+    _targetDate: new Date("2025-12-15"),
+  } as any,
+  // It Ends With Us - BEHIND (-8% delta)
   {
     id: "rp-8",
     bookId: "book-5",
     userId: "user-1",
-    startDate: new Date("2024-10-25"),
+    startDate: new Date("2025-11-05"),
     finishedDate: null,
-    currentPage: 120,
+    currentPage: 123, // 32% - behind ideal of 40%
     totalPages: 384,
     status: "reading",
     dailyCheckIns: [
-      { date: new Date("2024-10-25"), pagesRead: 25, timeOfDay: "morning" },
-      { date: new Date("2024-10-26"), pagesRead: 22, timeOfDay: "afternoon" },
-      { date: new Date("2024-10-27"), pagesRead: 18, timeOfDay: "morning" },
-      { date: new Date("2024-10-28"), pagesRead: 20, timeOfDay: "night" },
-      { date: new Date("2024-10-29"), pagesRead: 15, timeOfDay: "afternoon" },
-      { date: new Date("2024-10-30"), pagesRead: 20, timeOfDay: "evening" },
-    ]
-  },
+      { date: new Date("2025-11-05"), pagesRead: 15, timeOfDay: "morning" },
+      { date: new Date("2025-11-06"), pagesRead: 12, timeOfDay: "afternoon" },
+      { date: new Date("2025-11-08"), pagesRead: 14, timeOfDay: "night" },
+      { date: new Date("2025-11-10"), pagesRead: 11, timeOfDay: "evening" },
+      { date: new Date("2025-11-12"), pagesRead: 13, timeOfDay: "afternoon" },
+      { date: new Date("2025-11-14"), pagesRead: 10, timeOfDay: "night" },
+      { date: new Date("2025-11-16"), pagesRead: 12, timeOfDay: "morning" },
+      { date: new Date("2025-11-18"), pagesRead: 9, timeOfDay: "evening" },
+      { date: new Date("2025-11-20"), pagesRead: 14, timeOfDay: "night" },
+      { date: new Date("2025-11-22"), pagesRead: 13, timeOfDay: "afternoon" },
+    ],
+    _targetDate: new Date("2025-12-20"),
+  } as any,
   // Six of Crows - Solid 5-star read (finished early June)
   {
     id: "rp-3",
@@ -686,36 +696,35 @@ export const mockReadingProgressEnhanced: ReadingProgressEnhanced[] = [
       { date: new Date("2024-06-12"), pagesRead: 42, timeOfDay: "afternoon" },
     ]
   },
-  // A Court of Thorns and Roses - On a reading streak! (92%)
+  // A Court of Thorns and Roses - ON TRACK (+1% delta)
   {
     id: "rp-4",
     bookId: "book-2",
     userId: "user-1",
-    startDate: new Date("2024-10-22"),
+    startDate: new Date("2025-11-08"),
     finishedDate: null,
-    currentPage: 385,
+    currentPage: 214, // 51% - on track with ideal of 50%
     totalPages: 419,
     status: "reading",
     dailyCheckIns: [
-      { date: new Date("2024-10-22"), pagesRead: 35, timeOfDay: "night" },
-      { date: new Date("2024-10-23"), pagesRead: 32, timeOfDay: "evening" },
-      { date: new Date("2024-10-24"), pagesRead: 28, timeOfDay: "night" },
-      { date: new Date("2024-10-25"), pagesRead: 30, timeOfDay: "night" },
-      { date: new Date("2024-10-26"), pagesRead: 26, timeOfDay: "evening" },
-      { date: new Date("2024-10-27"), pagesRead: 24, timeOfDay: "night" },
-      { date: new Date("2024-10-28"), pagesRead: 22, timeOfDay: "night" },
-      { date: new Date("2024-10-29"), pagesRead: 25, timeOfDay: "evening" },
-      { date: new Date("2024-10-30"), pagesRead: 28, timeOfDay: "night" },
-      { date: new Date("2024-10-31"), pagesRead: 30, timeOfDay: "afternoon" },
-      { date: new Date("2024-11-01"), pagesRead: 27, timeOfDay: "night" },
-      { date: new Date("2024-11-02"), pagesRead: 24, timeOfDay: "evening" },
-      { date: new Date("2024-11-03"), pagesRead: 26, timeOfDay: "night" },
-      { date: new Date("2024-11-04"), pagesRead: 22, timeOfDay: "afternoon" },
-      { date: new Date("2024-11-05"), pagesRead: 28, timeOfDay: "night" },
-      { date: new Date("2024-11-06"), pagesRead: 29, timeOfDay: "evening" },
-      { date: new Date("2024-11-07"), pagesRead: 19, timeOfDay: "morning" },
-    ]
-  },
+      { date: new Date("2025-11-08"), pagesRead: 18, timeOfDay: "night" },
+      { date: new Date("2025-11-09"), pagesRead: 16, timeOfDay: "evening" },
+      { date: new Date("2025-11-10"), pagesRead: 14, timeOfDay: "night" },
+      { date: new Date("2025-11-11"), pagesRead: 15, timeOfDay: "afternoon" },
+      { date: new Date("2025-11-12"), pagesRead: 13, timeOfDay: "night" },
+      { date: new Date("2025-11-13"), pagesRead: 15, timeOfDay: "evening" },
+      { date: new Date("2025-11-14"), pagesRead: 12, timeOfDay: "night" },
+      { date: new Date("2025-11-15"), pagesRead: 14, timeOfDay: "afternoon" },
+      { date: new Date("2025-11-16"), pagesRead: 14, timeOfDay: "night" },
+      { date: new Date("2025-11-18"), pagesRead: 15, timeOfDay: "evening" },
+      { date: new Date("2025-11-19"), pagesRead: 13, timeOfDay: "night" },
+      { date: new Date("2025-11-20"), pagesRead: 15, timeOfDay: "afternoon" },
+      { date: new Date("2025-11-21"), pagesRead: 14, timeOfDay: "night" },
+      { date: new Date("2025-11-22"), pagesRead: 14, timeOfDay: "evening" },
+      { date: new Date("2025-11-23"), pagesRead: 12, timeOfDay: "morning" },
+    ],
+    _targetDate: new Date("2025-12-08"),
+  } as any,
   // The Song of Achilles - Beautiful but heartbreaking (finished in January)
   {
     id: "rp-5",
@@ -838,27 +847,25 @@ export const mockReadingProgressEnhanced: ReadingProgressEnhanced[] = [
       { date: new Date("2024-05-28"), pagesRead: 140, timeOfDay: "night" },
     ]
   },
-  // The Atlas Six - Interesting concept, slow execution (July 2024)
+  // The Atlas Six - Reading ahead of schedule! (+10% delta - AHEAD)
   {
     id: "rp-11",
     bookId: "book-11",
     userId: "user-1",
-    startDate: new Date("2024-07-08"),
-    finishedDate: new Date("2024-07-15"),
-    currentPage: 373,
+    startDate: new Date("2025-11-18"),
+    finishedDate: null,
+    currentPage: 82, // 22% complete
     totalPages: 373,
-    status: "finished",
-    userRating: 3,
+    status: "reading",
     dailyCheckIns: [
-      { date: new Date("2024-07-08"), pagesRead: 55, timeOfDay: "morning" },
-      { date: new Date("2024-07-09"), pagesRead: 52, timeOfDay: "afternoon" },
-      { date: new Date("2024-07-10"), pagesRead: 48, timeOfDay: "evening" },
-      { date: new Date("2024-07-12"), pagesRead: 50, timeOfDay: "morning" },
-      { date: new Date("2024-07-13"), pagesRead: 54, timeOfDay: "afternoon" },
-      { date: new Date("2024-07-14"), pagesRead: 58, timeOfDay: "morning" },
-      { date: new Date("2024-07-15"), pagesRead: 56, timeOfDay: "afternoon" },
-    ]
-  },
+      { date: new Date("2025-11-18"), pagesRead: 20, timeOfDay: "night" },
+      { date: new Date("2025-11-19"), pagesRead: 18, timeOfDay: "evening" },
+      { date: new Date("2025-11-20"), pagesRead: 16, timeOfDay: "night" },
+      { date: new Date("2025-11-21"), pagesRead: 14, timeOfDay: "afternoon" },
+      { date: new Date("2025-11-22"), pagesRead: 14, timeOfDay: "night" },
+    ],
+    _targetDate: new Date("2025-12-31"), // 44-day target, ahead at day 5
+  } as any,
   // Circe - Madeline Miller does it again! (Oct 2024)
   {
     id: "rp-12",
