@@ -14,7 +14,7 @@ export default function ReadingPage() {
       <div className="sticky top-0 z-40 bg-white dark:bg-dark-secondary">
         {/* Header */}
         <div className="px-4 py-4 border-b-4 border-black dark:border-white">
-          <h1 className="text-2xl font-black uppercase tracking-tighter">Reading</h1>
+          <h1 className="font-display text-2xl font-black uppercase tracking-tighter">Reading</h1>
           <p className="text-sm text-light-textTertiary dark:text-dark-textTertiary">
             Track your progress
           </p>

@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Unbounded:wght@400;600;700;800;900&family=Space+Mono:wght@400;700&family=Archivo+Black&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -8,17 +10,51 @@
     --background: 244 239 234; /* #F4EFEA */
     --foreground: 56 56 56;    /* #383838 */
     --shadow-color: 56 56 56;  /* #383838 */
+
+    /* Grain overlay */
+    --grain-opacity: 0.03;
   }
 
   .dark {
     --background: 26 26 26;
     --foreground: 255 255 255;
     --shadow-color: 255 255 255;
+    --grain-opacity: 0.05;
   }
 
   body {
     @apply bg-light-primary dark:bg-dark-primary text-light-text dark:text-dark-text;
     font-feature-settings: "rlig" 1, "calt" 1;
+    position: relative;
+  }
+
+  /* Print-inspired grain texture overlay */
+  body::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 9999;
+    opacity: var(--grain-opacity);
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='3.5' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+    background-repeat: repeat;
+    animation: grain 8s steps(10) infinite;
+  }
+
+  @keyframes grain {
+    0%, 100% { transform: translate(0, 0); }
+    10% { transform: translate(-5%, -10%); }
+    20% { transform: translate(-15%, 5%); }
+    30% { transform: translate(7%, -25%); }
+    40% { transform: translate(-5%, 25%); }
+    50% { transform: translate(-15%, 10%); }
+    60% { transform: translate(15%, 0%); }
+    70% { transform: translate(0%, 15%); }
+    80% { transform: translate(3%, 35%); }
+    90% { transform: translate(-10%, 10%); }
   }
 }
 
@@ -34,6 +70,28 @@
            hover:translate-x-0.5 hover:-translate-y-0.5 hover:shadow-brutal-button-hover
            active:-translate-x-0.5 active:translate-y-0.5 active:shadow-brutal-active
            transition-all duration-150;
+    font-family: 'Unbounded', system-ui, sans-serif;
+    position: relative;
+    overflow: hidden;
+  }
+
+  /* Button ripple effect */
+  .btn-brutal::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    border-radius: 50%;
+    background: rgba(0, 0, 0, 0.1);
+    transform: translate(-50%, -50%);
+    transition: width 0.6s, height 0.6s;
+  }
+
+  .btn-brutal:active::after {
+    width: 300px;
+    height: 300px;
   }
 
   /* Brutalist touch button (mobile) */
@@ -52,6 +110,32 @@
     @apply bg-light-secondary dark:bg-dark-secondary
            border-[5px] border-light-border dark:border-dark-border
            rounded-[20px] shadow-brutal-card;
+    position: relative;
+    transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+
+  /* Duotone image treatment */
+  .duotone-image {
+    position: relative;
+    mix-blend-mode: multiply;
+  }
+
+  .duotone-image::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    mix-blend-mode: screen;
+    opacity: 0;
+    transition: opacity 0.4s ease;
+    pointer-events: none;
+  }
+
+  .card-brutal:hover .duotone-image::after {
+    opacity: 0.15;
   }
 
   /* Bottom nav height constant */
@@ -135,6 +219,24 @@
 
   /* ===== MotherDuck Scroll Animations ===== */
 
+  /* Enhanced entrance animations with bounce */
+  @keyframes slamIn {
+    0% {
+      opacity: 0;
+      transform: translateY(60px) rotate(-2deg) scale(0.9);
+    }
+    60% {
+      transform: translateY(-10px) rotate(1deg) scale(1.02);
+    }
+    80% {
+      transform: translateY(5px) rotate(-0.5deg) scale(0.99);
+    }
+    100% {
+      opacity: 1;
+      transform: translateY(0) rotate(0deg) scale(1);
+    }
+  }
+
   @keyframes scrollFadeUp {
     from {
       opacity: 0;
@@ -157,6 +259,35 @@
     }
   }
 
+  @keyframes floatIn {
+    0% {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    100% {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes popIn {
+    0% {
+      opacity: 0;
+      transform: scale(0.8) rotate(-5deg);
+    }
+    50% {
+      transform: scale(1.05) rotate(2deg);
+    }
+    100% {
+      opacity: 1;
+      transform: scale(1) rotate(0deg);
+    }
+  }
+
+  .slam-in {
+    animation: slamIn 0.7s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+  }
+
   .scroll-animate-up {
     animation: scrollFadeUp 0.6s ease-out forwards;
   }
@@ -165,10 +296,25 @@
     animation: scrollFadeDown 0.6s ease-out forwards;
   }
 
+  .float-in {
+    animation: floatIn 0.5s ease-out forwards;
+  }
+
+  .pop-in {
+    animation: popIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+  }
+
   /* Initial state before animation triggers */
   .scroll-animate-initial {
     @apply opacity-0;
   }
+
+  /* Staggered animation delays */
+  .stagger-1 { animation-delay: 0.1s; }
+  .stagger-2 { animation-delay: 0.2s; }
+  .stagger-3 { animation-delay: 0.3s; }
+  .stagger-4 { animation-delay: 0.4s; }
+  .stagger-5 { animation-delay: 0.5s; }
 
   /* ===== MotherDuck Responsive Grid System ===== */
 

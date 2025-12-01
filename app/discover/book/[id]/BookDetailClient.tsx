@@ -125,7 +125,7 @@ export default function BookDetailClient({ bookId }: BookDetailClientProps) {
 
           {/* Social Proof Section */}
           <section className="mb-6">
-            <h2 className="font-black text-base uppercase mb-3 text-light-text dark:text-dark-text">
+            <h2 className="font-display font-black text-base uppercase mb-3 text-light-text dark:text-dark-text">
               What Readers Are Saying
             </h2>
 
@@ -163,7 +163,7 @@ export default function BookDetailClient({ bookId }: BookDetailClientProps) {
 
           {/* Why You'll Love This */}
           <section className="mb-6 p-5 bg-light-primary dark:bg-dark-primary border-[3px] border-light-border dark:border-dark-border rounded-xl shadow-brutal-badge">
-            <h2 className="font-black text-base uppercase mb-4 text-light-text dark:text-dark-text">
+            <h2 className="font-display font-black text-base uppercase mb-4 text-light-text dark:text-dark-text">
               Why You'll Love This
             </h2>
 
@@ -183,7 +183,7 @@ export default function BookDetailClient({ bookId }: BookDetailClientProps) {
 
           {/* Reviews Section */}
           <section className="mb-6">
-            <h2 className="font-black text-base uppercase mb-3 text-light-text dark:text-dark-text">
+            <h2 className="font-display font-black text-base uppercase mb-3 text-light-text dark:text-dark-text">
               Recent Reviews
             </h2>
 
@@ -224,7 +224,7 @@ export default function BookDetailClient({ bookId }: BookDetailClientProps) {
 
           {/* Description */}
           <section className="mb-6">
-            <h2 className="font-black text-base uppercase mb-3 text-light-text dark:text-dark-text">
+            <h2 className="font-display font-black text-base uppercase mb-3 text-light-text dark:text-dark-text">
               Description
             </h2>
             <p className="font-medium text-[15px] leading-relaxed text-light-textSecondary dark:text-dark-textSecondary">
@@ -234,7 +234,7 @@ export default function BookDetailClient({ bookId }: BookDetailClientProps) {
 
           {/* Get This Book */}
           <section>
-            <h2 className="font-black text-base uppercase mb-4 text-light-text dark:text-dark-text">
+            <h2 className="font-display font-black text-base uppercase mb-4 text-light-text dark:text-dark-text">
               Get This Book
             </h2>
 
@@ -267,7 +267,7 @@ export default function BookDetailClient({ bookId }: BookDetailClientProps) {
 
             {/* More Options */}
             <div className="mt-6 pt-5 border-t-2 border-light-borderSecondary dark:border-dark-borderSecondary">
-              <h3 className="font-black text-sm uppercase text-light-textTertiary dark:text-dark-textTertiary mb-3">
+              <h3 className="font-display font-black text-sm uppercase text-light-textTertiary dark:text-dark-textTertiary mb-3">
                 More Options
               </h3>
 

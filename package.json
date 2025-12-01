@@ -11,7 +11,7 @@
     "start": "next start",
     "clear:cache": "chmod +x scripts/clear-cache.sh && ./scripts/clear-cache.sh",
     "clear:cache:restart": "chmod +x scripts/clear-cache.sh && ./scripts/clear-cache.sh --restart",
-    "watch:clear": "nodemon --watch src --watch pages --ext ts,tsx,js,jsx --exec \"npm run clear:cache:lite\"",
+    "watch:clear": "nodemon --watch app --watch components --watch lib --ext ts,tsx,js,jsx --exec \"npm run clear:cache:lite\"",
     "clear:cache:lite": "rm -rf .next/cache && echo 'Cache cleared at' $(date)",
     "lint": "next lint",
     "lint:fix": "next lint --fix",
@@ -33,12 +33,9 @@
     "ios:sync": "npx cap sync ios",
     "ios:clean": "chmod +x scripts/ios-dev.sh && ./scripts/ios-dev.sh clean",
     "ios:logs": "chmod +x scripts/ios-dev.sh && ./scripts/ios-dev.sh logs",
-    "ios:fix": "python3 agents/ios-dev-agent.py fix",
-    "ios:monitor": "python3 agents/ios-dev-agent.py monitor",
     "ios:ip": "chmod +x scripts/ios-dev.sh && ./scripts/ios-dev.sh ip",
     "ai:setup": "chmod +x scripts/setup-ios-ai.sh && ./scripts/setup-ios-ai.sh",
-    "ai:test": "node scripts/test-ai-services.js",
-    "ai:test-web": "open test-ios-ai.html"
+    "ai:test": "node scripts/test-ai-services.js"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.70.1",

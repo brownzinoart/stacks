@@ -50,7 +50,7 @@ export default function BookCard({ book, size = "medium" }: BookCardProps) {
 
       {/* Book Info */}
       <div>
-        <h3 className="font-black text-sm uppercase tracking-tight line-clamp-2 mb-1">
+        <h3 className="font-display font-black text-sm uppercase tracking-tight line-clamp-2 mb-1">
           {book.title}
         </h3>
         <p className="text-xs font-semibold text-gray-600 dark:text-gray-400 line-clamp-1">

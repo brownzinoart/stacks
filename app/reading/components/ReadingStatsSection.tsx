@@ -28,7 +28,7 @@ export default function ReadingStatsSection() {
 
   return (
     <section className="mt-12 mb-24">
-      <h2 className="text-xl md:text-2xl font-black uppercase tracking-tight px-4 mb-4">
+      <h2 className="font-display text-xl md:text-2xl font-black uppercase tracking-tight px-4 mb-4">
         📊 Reading Statistics
       </h2>
 
@@ -82,7 +82,7 @@ export default function ReadingStatsSection() {
       {/* Fun Facts */}
       {funFacts.length > 0 && (
         <div className="px-4 mb-6">
-          <h3 className="text-lg md:text-xl font-black uppercase mb-3">
+          <h3 className="font-display text-lg md:text-xl font-black uppercase mb-3">
             🎉 Fun Facts
           </h3>
           <div className="bg-white dark:bg-dark-secondary border-4 border-black dark:border-white rounded-xl p-4 shadow-brutal-sm">

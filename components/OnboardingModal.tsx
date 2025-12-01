@@ -89,7 +89,7 @@ export default function OnboardingModal({
 
         {/* Content */}
         <div className="text-center space-y-4">
-          <h2 className="font-black text-2xl uppercase tracking-tight text-light-text dark:text-dark-text">
+          <h2 className="font-display font-black text-2xl uppercase tracking-tight text-light-text dark:text-dark-text">
             {screen.title}
           </h2>
           <p className="text-base font-semibold text-light-textSecondary dark:text-dark-textSecondary">

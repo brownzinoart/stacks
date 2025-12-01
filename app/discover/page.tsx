@@ -26,12 +26,17 @@ export default function DiscoverPage() {
   };
 
   return (
-    <div className="min-h-screen bg-white dark:bg-dark-primary pb-24">
+    <div className="min-h-screen bg-light-primary dark:bg-dark-primary pb-24 relative overflow-hidden">
+      {/* Atmospheric background mesh - subtle */}
+      <div className="fixed inset-0 opacity-[0.02] dark:opacity-[0.04] pointer-events-none mix-blend-multiply dark:mix-blend-screen">
+        <div className="absolute inset-0 bg-mesh-cool"></div>
+      </div>
+
       {/* Header with Search */}
-      <div className="sticky top-0 z-40 bg-white dark:bg-dark-secondary
-                    border-b-[5px] border-black dark:border-white">
+      <div className="sticky top-0 z-40 bg-light-secondary/95 dark:bg-dark-secondary/95 backdrop-blur-sm
+                    border-b-[5px] border-light-border dark:border-dark-border">
         <div className="max-w-lg mx-auto px-4 py-6">
-          <h1 className="font-black text-4xl uppercase tracking-tight text-black dark:text-white mb-6">
+          <h1 className="font-display font-black text-4xl uppercase tracking-tight text-light-text dark:text-dark-text mb-6">
             Discover
           </h1>
 

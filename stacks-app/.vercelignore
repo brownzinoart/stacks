@@ -1,6 +1,0 @@
-# Exclude non-runtime content from uploads
-docs/
-.DS_Store
-.claude/
-**/*.md
-

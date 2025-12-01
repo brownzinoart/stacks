@@ -70,7 +70,7 @@ export default function StatsTabContent() {
 
       {/* Reading Pace Chart */}
       <div className="mb-8 px-4">
-        <h3 className="text-lg md:text-xl font-black uppercase mb-4">📈 Reading Pace</h3>
+        <h3 className="font-display text-lg md:text-xl font-black uppercase mb-4">📈 Reading Pace</h3>
 
         <div className="bg-white dark:bg-dark-secondary border-[3px] border-black dark:border-white rounded-xl p-4 shadow-brutal-badge">
           <div className="overflow-x-auto">
@@ -123,7 +123,7 @@ export default function StatsTabContent() {
 
       {/* Reading Streak Heatmap */}
       <div className="mb-8 px-4">
-        <h3 className="text-lg md:text-xl font-black uppercase mb-4">🔥 Reading Streak</h3>
+        <h3 className="font-display text-lg md:text-xl font-black uppercase mb-4">🔥 Reading Streak</h3>
 
         <div className="bg-white dark:bg-dark-secondary border-[3px] border-black dark:border-white rounded-xl p-4 shadow-brutal-badge">
           {/* Day labels */}
@@ -168,7 +168,7 @@ export default function StatsTabContent() {
       {/* Fun Facts */}
       {funFacts.length > 0 && (
         <div className="px-4 mb-6">
-          <h3 className="text-lg md:text-xl font-black uppercase mb-4">🎉 Fun Facts</h3>
+          <h3 className="font-display text-lg md:text-xl font-black uppercase mb-4">🎉 Fun Facts</h3>
           <div className="bg-white dark:bg-dark-secondary border-[3px] border-black dark:border-white rounded-xl p-4 shadow-brutal-badge">
             <ul className="space-y-2">
               {funFacts.map((fact, index) => (

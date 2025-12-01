@@ -116,7 +116,7 @@ export default function SettingsPage() {
       {/* Header */}
       <div className="sticky top-0 z-40 bg-light-secondary dark:bg-dark-secondary border-b-[5px] border-light-border dark:border-dark-border">
         <div className="max-w-lg mx-auto px-4 py-6">
-          <h1 className="font-black text-2xl uppercase tracking-tight text-light-text dark:text-dark-text">
+          <h1 className="font-display font-black text-2xl uppercase tracking-tight text-light-text dark:text-dark-text">
             Settings
           </h1>
         </div>
@@ -129,7 +129,7 @@ export default function SettingsPage() {
           {/* Section Header */}
           <div className="flex items-center gap-3 px-4 py-3 bg-gradient-info border-b-[5px] border-light-border dark:border-dark-border">
             <BookOpen className="w-5 h-5 stroke-[3] text-white" />
-            <h2 className="font-black text-sm uppercase tracking-tight text-white">
+            <h2 className="font-display font-black text-sm uppercase tracking-tight text-white">
               Your Library
             </h2>
           </div>
@@ -210,7 +210,7 @@ export default function SettingsPage() {
               {/* Section Header */}
               <div className="flex items-center gap-3 px-4 py-3 bg-gradient-primary border-b-[5px] border-light-border dark:border-dark-border">
                 <SectionIcon className="w-5 h-5 stroke-[3] text-white" />
-                <h2 className="font-black text-sm uppercase tracking-tight text-white">
+                <h2 className="font-display font-black text-sm uppercase tracking-tight text-white">
                   {section.title}
                 </h2>
               </div>

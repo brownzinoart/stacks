@@ -1,5 +1,20 @@
+/**
+ * Google Books Service
+ * Consolidated Google Books API integration
+ * 
+ * Free API - requires API key (optional but recommended)
+ * Get key: https://console.cloud.google.com/apis/credentials
+ */
+
 const GOOGLE_BOOKS_API = 'https://www.googleapis.com/books/v1/volumes';
-const API_KEY = process.env.GOOGLE_BOOKS_API_KEY; // Optional
+
+// Use NEXT_PUBLIC_ env var for client-side, fallback to server-side
+const getApiKey = () => 
+  process.env.NEXT_PUBLIC_GOOGLE_BOOKS_API_KEY || process.env.GOOGLE_BOOKS_API_KEY;
+
+// ============================================
+// TYPES
+// ============================================
 
 export interface GoogleBook {
   id: string;
@@ -12,6 +27,7 @@ export interface GoogleBook {
   imageLinks?: {
     thumbnail?: string;
     small?: string;
+    smallThumbnail?: string;
   };
   averageRating?: number;
 }
@@ -23,6 +39,56 @@ export interface EnrichedBookMetadata {
   genres: string[];
   rating?: number;
 }
+
+export interface GoogleBooksData {
+  averageRating: number;
+  ratingsCount: number;
+  description: string;
+  coverUrl?: string;
+}
+
+// ============================================
+// ISBN-BASED LOOKUP (from api/googleBooksApi.ts)
+// ============================================
+
+/**
+ * Get book data by ISBN
+ * Used for book detail enrichment with ratings, description, and cover
+ */
+export async function getGoogleBooksData(isbn: string): Promise<GoogleBooksData | null> {
+  try {
+    const apiKey = getApiKey();
+    const url = `${GOOGLE_BOOKS_API}?q=isbn:${isbn}${apiKey ? `&key=${apiKey}` : ''}`;
+
+    const response = await fetch(url);
+    const data = await response.json();
+
+    if (!data.items || data.items.length === 0) {
+      return null;
+    }
+
+    const volumeInfo = data.items[0].volumeInfo;
+
+    // Extract cover image URL (prefer higher quality)
+    const coverUrl = volumeInfo.imageLinks?.thumbnail ||
+                     volumeInfo.imageLinks?.smallThumbnail ||
+                     undefined;
+
+    return {
+      averageRating: volumeInfo.averageRating || 0,
+      ratingsCount: volumeInfo.ratingsCount || 0,
+      description: volumeInfo.description || '',
+      coverUrl,
+    };
+  } catch (error) {
+    console.error('Google Books API error:', error);
+    return null;
+  }
+}
+
+// ============================================
+// TITLE/AUTHOR SEARCH
+// ============================================
 
 /**
  * Search Google Books API by title and/or author
@@ -38,8 +104,9 @@ export async function searchBooks(
       searchQuery += `+inauthor:${encodeURIComponent(author)}`;
     }
 
+    const apiKey = getApiKey();
     const url = `${GOOGLE_BOOKS_API}?q=${searchQuery}&maxResults=${maxResults}${
-      API_KEY ? `&key=${API_KEY}` : ''
+      apiKey ? `&key=${apiKey}` : ''
     }`;
 
     const response = await fetch(url);
@@ -72,6 +139,10 @@ export async function searchBooks(
   }
 }
 
+// ============================================
+// METADATA ENRICHMENT
+// ============================================
+
 /**
  * Enrich book metadata by fetching from Google Books
  */
@@ -99,6 +170,7 @@ export async function enrichBookWithMetadata(
 
 /**
  * Batch fetch metadata for multiple books
+ * Processes in batches of 5 to respect rate limits
  */
 export async function batchEnrichBooks(
   books: Array<{ title: string; author: string }>

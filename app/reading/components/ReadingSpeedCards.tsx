@@ -33,7 +33,7 @@ export default function ReadingSpeedCards({ stats }: ReadingSpeedCardsProps) {
 
   return (
     <div className="mb-6 px-4">
-      <h3 className="text-lg md:text-xl font-black uppercase mb-3">
+      <h3 className="font-display text-lg md:text-xl font-black uppercase mb-3">
         ⚡ Reading Speed
       </h3>
 

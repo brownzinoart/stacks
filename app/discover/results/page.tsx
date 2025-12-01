@@ -92,7 +92,7 @@ function SearchResultsContent() {
               >
                 <ArrowLeft size={24} strokeWidth={3} />
               </button>
-              <h1 className="font-black text-xl text-light-text dark:text-dark-text">Search Results</h1>
+              <h1 className="font-display font-black text-xl text-light-text dark:text-dark-text">Search Results</h1>
             </div>
           </div>
         </div>
@@ -124,7 +124,7 @@ function SearchResultsContent() {
               >
                 <ArrowLeft size={24} strokeWidth={3} />
               </button>
-              <h1 className="font-black text-xl text-light-text dark:text-dark-text">Search Results</h1>
+              <h1 className="font-display font-black text-xl text-light-text dark:text-dark-text">Search Results</h1>
             </div>
           </div>
         </div>
@@ -270,7 +270,7 @@ function ResultSection({ icon, title, tags, tagColor, books }: ResultSectionProp
       {/* Section Header */}
       <div className="flex items-center gap-3 mb-4">
         <span className="text-3xl">{icon}</span>
-        <h2 className="font-black text-2xl uppercase tracking-tight text-light-text dark:text-dark-text">
+        <h2 className="font-display font-black text-2xl uppercase tracking-tight text-light-text dark:text-dark-text">
           {title}
         </h2>
       </div>

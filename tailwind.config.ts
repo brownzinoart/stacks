@@ -3,7 +3,6 @@ import type { Config } from "tailwindcss";
 const config: Config = {
   darkMode: ["class"],
   content: [
-    "./pages/**/*.{ts,tsx}",
     "./components/**/*.{ts,tsx}",
     "./app/**/*.{ts,tsx}",
   ],
@@ -41,6 +40,17 @@ const config: Config = {
           teal: "#53DBC9",
           purple: "#667eea",
         },
+        // Risograph-inspired spot colors for zine aesthetic
+        riso: {
+          red: "#FF3C38",
+          orange: "#FF6F59",
+          yellow: "#FFD23F",
+          green: "#3EECAC",
+          blue: "#0078BF",
+          purple: "#765395",
+          pink: "#FF48B0",
+          black: "#383838",
+        },
       },
       backgroundImage: {
         "gradient-primary": "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
@@ -49,9 +59,20 @@ const config: Config = {
         "gradient-success": "linear-gradient(135deg, #11998e 0%, #38ef7d 100%)",
         "gradient-info": "linear-gradient(135deg, #2563eb 0%, #0891b2 100%)",
         "gradient-hero": "linear-gradient(135deg, #a8edea 0%, #fed6e3 100%)",
+        // Risograph-inspired duotone gradients
+        "riso-red-yellow": "linear-gradient(135deg, #FF3C38 0%, #FFD23F 100%)",
+        "riso-blue-green": "linear-gradient(135deg, #0078BF 0%, #3EECAC 100%)",
+        "riso-purple-pink": "linear-gradient(135deg, #765395 0%, #FF48B0 100%)",
+        "riso-orange-yellow": "linear-gradient(135deg, #FF6F59 0%, #FFD23F 100%)",
+        // Atmospheric mesh gradients
+        "mesh-warm": "radial-gradient(at 40% 20%, #FF6F59 0px, transparent 50%), radial-gradient(at 80% 0%, #FFD23F 0px, transparent 50%), radial-gradient(at 0% 50%, #FF48B0 0px, transparent 50%), radial-gradient(at 80% 50%, #765395 0px, transparent 50%), radial-gradient(at 0% 100%, #3EECAC 0px, transparent 50%)",
+        "mesh-cool": "radial-gradient(at 40% 20%, #0078BF 0px, transparent 50%), radial-gradient(at 80% 0%, #3EECAC 0px, transparent 50%), radial-gradient(at 0% 50%, #6FC2FF 0px, transparent 50%), radial-gradient(at 80% 50%, #765395 0px, transparent 50%)",
       },
       fontFamily: {
         sans: ["-apple-system", "BlinkMacSystemFont", "Segoe UI", "system-ui", "sans-serif"],
+        display: ["Unbounded", "system-ui", "sans-serif"],
+        mono: ["Space Mono", "monospace"],
+        headline: ["Archivo Black", "system-ui", "sans-serif"],
       },
       fontSize: {
         // MotherDuck-inspired responsive typography

@@ -69,7 +69,7 @@ export default function EmptyState({
       ) : null}
 
       {/* Title */}
-      <h3 className={`font-black uppercase tracking-tight text-white ${sizeConfig.title} mb-2`}>
+      <h3 className={`font-display font-black uppercase tracking-tight text-white ${sizeConfig.title} mb-2`}>
         {title}
       </h3>
 

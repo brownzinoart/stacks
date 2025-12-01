@@ -50,7 +50,7 @@ export default function BookDetailModal({
 
           {/* Info */}
           <div className="flex-1">
-            <h3 className="font-black text-2xl uppercase tracking-tight text-light-text dark:text-dark-text mb-2">
+            <h3 className="font-display font-black text-2xl uppercase tracking-tight text-light-text dark:text-dark-text mb-2">
               {book.title}
             </h3>
             <p className="font-bold text-sm text-light-textSecondary dark:text-dark-textSecondary mb-4">

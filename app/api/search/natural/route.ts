@@ -4,6 +4,8 @@ import { extractMovieReferences } from '@/lib/services/tmdb';
 import { mockCurrentUserProfile, mockBooksWithMetadata, getBooksReadByUser } from '@/lib/mockData';
 import type { NaturalLanguageSearchResult, Book } from '@/lib/mockData';
 
+export const dynamic = 'force-dynamic';
+
 // Cache for expensive search operations
 const searchCache = new Map<string, { results: NaturalLanguageSearchResult[]; timestamp: number }>();
 const CACHE_TTL = 5 * 60 * 1000; // 5 minutes

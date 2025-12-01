@@ -3,6 +3,8 @@ import { findMatchingBooks, callClaude } from '@/lib/services/claude';
 import { mockBooksWithMetadata } from '@/lib/mockData';
 import type { SearchResult, BookSearchMatch, NaturalLanguageSearchResult, Book, UserReadingProfile } from '@/lib/mockData';
 
+export const dynamic = 'force-dynamic';
+
 // Cache for expensive search operations
 const searchCache = new Map<string, { results: SearchResult; timestamp: number }>();
 const CACHE_TTL = 5 * 60 * 1000; // 5 minutes

@@ -19,7 +19,7 @@ export default function HeroDivider({ title, subtitle, gradient }: HeroDividerPr
       className={`px-4 py-6 md:px-8 md:py-10 ${gradientClasses[gradient]} border-4 md:border-[5px] border-black dark:border-white rounded-xl shadow-brutal mb-6 text-center`}
     >
       <h3
-        className="text-2xl md:text-4xl font-black uppercase mb-2 text-white"
+        className="font-display text-2xl md:text-4xl font-black uppercase mb-2 text-white"
         style={{ textShadow: "2px 2px 0 #000" }}
       >
         {title}

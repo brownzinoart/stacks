@@ -111,7 +111,7 @@ export default function ReadingPacingSection() {
   return (
     <section className="mt-6">
       <div className="px-4 mb-4 flex items-center justify-between">
-        <h2 className="text-xl md:text-2xl font-black uppercase tracking-tight">📖 Pacing</h2>
+        <h2 className="font-display text-xl md:text-2xl font-black uppercase tracking-tight">📖 Pacing</h2>
         <AddBookModal
           books={mockBooks.filter(b => !items.some(it => it.bookId === b.id))}
           onAdd={(bookId, start, target) => handleAddBook(bookId, start, target || undefined)}
@@ -143,7 +143,7 @@ export default function ReadingPacingSection() {
 
       {/* All Books List with Completion Status */}
       <div className="px-4 mt-8">
-        <h3 className="text-lg font-black uppercase tracking-tight mb-4">📚 All Books</h3>
+        <h3 className="font-display text-lg font-black uppercase tracking-tight mb-4">📚 All Books</h3>
         <div className="space-y-3">
           {mockReadingProgressEnhanced.map((progress) => {
             const book = getBookById(progress.bookId);

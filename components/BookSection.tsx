@@ -10,7 +10,7 @@ interface BookSectionProps {
 export default function BookSection({ title, books, size = "medium" }: BookSectionProps) {
   return (
     <div className="mb-8">
-      <h2 className="font-black text-xl uppercase tracking-tighter px-4 mb-4">
+      <h2 className="font-display font-black text-xl uppercase tracking-tighter px-4 mb-4">
         {title}
       </h2>
       <div className="overflow-x-auto px-4">

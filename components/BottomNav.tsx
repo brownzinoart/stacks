@@ -15,8 +15,11 @@ export default function BottomNav() {
   const pathname = usePathname();
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 bg-light-secondary dark:bg-dark-secondary border-t-[5px] border-light-border dark:border-dark-border">
-      <div className="flex items-center justify-around h-16 max-w-lg mx-auto">
+    <nav className="fixed bottom-0 left-0 right-0 z-50 bg-light-secondary/95 dark:bg-dark-secondary/95 backdrop-blur-md border-t-[5px] border-light-border dark:border-dark-border">
+      {/* Decorative gradient accent bar on top */}
+      <div className="absolute top-0 left-0 right-0 h-[3px] bg-riso-purple-pink opacity-20"></div>
+
+      <div className="flex items-center justify-around h-16 max-w-lg mx-auto relative">
         {navItems.map((item) => {
           const Icon = item.icon;
           const isActive = pathname?.startsWith(item.href) || false;
@@ -25,8 +28,13 @@ export default function BottomNav() {
             <Link
               key={item.href}
               href={item.href}
-              className="flex flex-col items-center justify-center flex-1 h-full group relative"
+              className="flex flex-col items-center justify-center flex-1 h-full group relative transition-transform active:scale-95"
             >
+              {/* Active indicator blob */}
+              {isActive && (
+                <div className="absolute -top-[5px] left-1/2 -translate-x-1/2 w-8 h-1 bg-riso-purple-pink rounded-full shadow-brutal-badge pop-in"></div>
+              )}
+
               {/* SVG gradient definition */}
               <svg width="0" height="0" style={{ position: 'absolute' }}>
                 <defs>
@@ -39,10 +47,10 @@ export default function BottomNav() {
               </svg>
 
               {/* Icon with gradient stroke */}
-              <div className="mb-1">
+              <div className={`mb-1 transition-all ${isActive ? 'scale-110' : 'group-hover:scale-105'}`}>
                 <Icon
-                  className={`w-6 h-6 stroke-[2.5] ${
-                    !isActive ? 'text-gray-600 dark:text-gray-400 group-hover:text-black dark:group-hover:text-white' : ''
+                  className={`w-6 h-6 stroke-[3] transition-all ${
+                    !isActive ? 'text-light-textSecondary dark:text-dark-textSecondary group-hover:text-light-text dark:group-hover:text-dark-text' : ''
                   }`}
                   style={
                     isActive
@@ -54,8 +62,8 @@ export default function BottomNav() {
 
               {/* Label with gradient text */}
               <span
-                className={`text-xs font-bold uppercase ${
-                  !isActive ? "text-gray-400 dark:text-gray-600 group-hover:text-gray-600 dark:group-hover:text-gray-400" : ""
+                className={`font-display text-xs font-black uppercase tracking-tight transition-all ${
+                  !isActive ? "text-light-textTertiary dark:text-dark-textTertiary group-hover:text-light-textSecondary dark:group-hover:text-dark-textSecondary" : ""
                 }`}
                 style={
                   isActive

@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
-import BottomNav from "../components/BottomNav";
+import ClientLayout from "../components/ClientLayout";
 
 export const metadata: Metadata = {
   title: "Stacks - Your Reading Community",
@@ -32,10 +32,9 @@ export default function RootLayout({
         />
       </head>
       <body className="antialiased">
-        <main className="min-h-screen pb-nav">
+        <ClientLayout>
           {children}
-        </main>
-        <BottomNav />
+        </ClientLayout>
       </body>
     </html>
   );

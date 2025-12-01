@@ -22,7 +22,7 @@ export default function ReadingPaceChart({ data }: ReadingPaceChartProps) {
 
   return (
     <div className="mb-6">
-      <h3 className="text-lg md:text-xl font-black uppercase mb-3 px-4">
+      <h3 className="font-display text-lg md:text-xl font-black uppercase mb-3 px-4">
         📈 Reading Pace
       </h3>
 

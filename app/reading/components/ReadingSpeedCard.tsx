@@ -9,7 +9,7 @@ interface ReadingSpeedCardProps {
 export default function ReadingSpeedCard({ stats }: ReadingSpeedCardProps) {
   return (
     <div className="mb-8 px-4">
-      <h3 className="text-lg md:text-xl font-black uppercase mb-4">
+      <h3 className="font-display text-lg md:text-xl font-black uppercase mb-4">
         ⚡ Reading Speed
       </h3>
 

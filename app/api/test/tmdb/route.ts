@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { searchMovie, extractThemesFromMovie, extractMovieReferences } from '@/lib/services/tmdb';
 
+export const dynamic = 'force-dynamic';
+
 /**
  * Test endpoint to verify TMDB API is working
  * GET /api/test/tmdb?movie=Succession

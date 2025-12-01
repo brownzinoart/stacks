@@ -108,7 +108,7 @@ export default function NaturalSearchResults({
     <div className="space-y-4">
       {/* Results Header */}
       <div className="flex items-center justify-between px-4">
-        <h2 className="font-black text-2xl uppercase tracking-tight text-black dark:text-white">
+        <h2 className="font-display font-black text-2xl uppercase tracking-tight text-black dark:text-white">
           {results.length} {results.length === 1 ? 'Match' : 'Matches'}
         </h2>
         <div className="flex items-center gap-2 px-4 py-2 bg-purple-100 dark:bg-purple-900/30

@@ -55,18 +55,23 @@ export default function HomePage() {
   };
 
   return (
-    <div className="min-h-screen bg-light-primary dark:bg-dark-primary px-4 py-14 md:py-20 lg:py-28 pb-nav">
+    <div className="min-h-screen bg-light-primary dark:bg-dark-primary px-4 py-14 md:py-20 lg:py-28 pb-nav relative overflow-hidden">
+      {/* Atmospheric background mesh - subtle */}
+      <div className="fixed inset-0 opacity-[0.03] dark:opacity-[0.05] pointer-events-none mix-blend-multiply dark:mix-blend-screen">
+        <div className="absolute inset-0 bg-mesh-warm"></div>
+      </div>
+
       {/* Filter Banner */}
       {activeHashtag && (
-        <div className="max-w-lg mx-auto mb-6 sticky top-14 md:top-20 lg:top-28 z-40">
-          <div className="bg-gradient-info text-white px-6 py-4 rounded-xl border-4 border-black dark:border-white shadow-brutal flex items-center justify-between">
-            <p className="font-black text-lg uppercase">
+        <div className="max-w-lg mx-auto mb-6 sticky top-14 md:top-20 lg:top-28 z-40 scroll-animate-initial slam-in">
+          <div className="bg-riso-blue text-white px-6 py-4 rounded-xl border-[5px] border-black dark:border-white shadow-brutal-button flex items-center justify-between">
+            <p className="font-display font-black text-lg uppercase tracking-tight">
               Showing #{activeHashtag}
             </p>
             <button
               onClick={handleClearFilter}
               aria-label="Clear filter"
-              className="p-2 rounded-lg"
+              className="p-2 rounded-lg hover:bg-white/20 transition-colors"
             >
               <X className="w-6 h-6 stroke-[3]" />
             </button>
